@@ -7,11 +7,12 @@ const HELP = {
     ['#fb923c', 'EV (chips)', 'Tes chips si chaque all-in avait été payé à ton équité au moment du tapis. C\'est ta vraie performance, sans la chance des all-in.']],
     f: 'Le badge en haut à gauche compare Chips et EV : l\'écart est ta chance aux all-in, et le pourcentage indique la probabilité d\'être au moins aussi chanceux (ou malchanceux) sur ce nombre d\'all-in. Clique sur un point de la courbe pour ouvrir la main dans le replayer.' },
   br: { t: 'Graphique de bankroll', i: [
-    ['#3b82f6', 'Profit', 'L\'argent réellement gagné : gains − buy-ins + rakeback.'],
-    ['#f472b6', 'EV Profit effectif', 'Ce que tu aurais gagné sans aucune chance : ta part de chips en EV × le prize pool moyen, calculé avec le rake effectif du format (réglable dans Réglages). Pas de chance aux all-in ni sur les multiplicateurs : le meilleur indicateur de ton niveau.'],
-    ['#fb923c', 'EV Multi Profit', 'Ta part de chips en EV × le prize pool réellement tiré à chaque spin. Enlève la chance aux all-in mais garde celle des multiplicateurs : l\'écart avec Profit = ta chance sur les all-in et l\'issue des spins, l\'écart avec EV Profit effectif = ta chance sur les multiplicateurs.'],
-    ['#a855f7', 'Multiplicateur neutralisé', 'Tes vraies victoires et défaites, mais chaque victoire payée au multiplicateur moyen. L\'écart avec Profit = la chance sur les multiplicateurs de tes victoires.'],
-    ['#ffffff', 'Évènements marquants', 'Points blancs sur la courbe Profit aux spins à gros multiplicateur (x10 et plus). ✓ = spin gagné.']],
+    ['#3b82f6', 'Profit', '<p>L\'<b>argent réellement gagné</b> : gains − buy-ins + rakeback.</p>'],
+    ['#f472b6', 'EV Profit effectif', '<p>L\'<b>argent que tu aurais dû gagner</b>, avec ton niveau de jeu (cEV), ton rakeback et des <b>multiplicateurs réalistes pour ton volume</b>.</p><p>Contrairement à <i class="hd" style="background:#a855f7"></i><b>EV Profit</b>, il ignore les très gros multiplicateurs que ton volume avait très peu de chances de toucher (moins d\'une fois attendue) et garde seulement ceux que tu pouvais raisonnablement rencontrer.</p><p>Le <b>pourcentage entre parenthèses</b> est ton <b>rake effectif</b> : la grille Betclic donne ~7 %, mais comme les très gros multiplicateurs sont très rares, le rake que tu paies réellement sur ce volume est plus élevé.</p>'],
+    ['#fb923c', 'EV Multi Profit', '<p>L\'<b>argent que tu aurais dû gagner</b> avec ton niveau de jeu, les <b>multiplicateurs réellement tirés</b> à tes tables et ton rakeback.</p><p>Il enlève la chance aux all-in mais garde celle des multiplicateurs : l\'écart avec <i class="hd" style="background:#3b82f6"></i><b>Profit</b> vient des all-in et de l\'issue des spins.</p>'],
+    ['#a855f7', 'EV Profit', '<p>Ton <b>gain théorique à long terme</b>, calculé avec ton niveau de jeu (cEV), la grille complète des multiplicateurs Betclic et ton rakeback.</p><p><i class="hd" style="background:#a855f7"></i><b>EV Profit</b>, contrairement à <i class="hd" style="background:#f472b6"></i><b>EV Profit effectif</b>, ne tient pas compte du fait qu\'à moins de jouer un volume énorme, <b>ta probabilité de tomber sur les très gros multiplicateurs est faible</b>.</p>'],
+    ['#2dd4bf', 'Multiplicateur neutralisé', '<p>Tes <b>vraies victoires et défaites</b>, mais chaque victoire payée au <b>multiplicateur moyen</b>.</p><p>L\'écart avec <i class="hd" style="background:#3b82f6"></i><b>Profit</b> = ta chance sur les multiplicateurs des spins que tu as gagnés.</p>'],
+    ['#ffffff', 'Évènements marquants', '<p>Les <b>moments clés</b> de ta bankroll sur la courbe bleue : plus gros jackpots (x10 et plus gagnés), downswings de 20 buy-ins ou plus, plus longues périodes <b>breakeven</b> (sans rien gagner), point haut et point bas.</p>']],
     f: 'Le badge compare Profit et EV Profit effectif, avec la probabilité d\'avoir au moins autant d\'écart par pure variance. Le rakeback (en bas à gauche) s\'ajoute à toutes les courbes. Clique sur un point pour rejouer le spin.' },
   multi: { t: 'D\'où vient ta chance (en €)', i: [
     ['#f472b6', 'Chance totale', 'Profit − EV profit : tout ce que la variance t\'a donné ou pris.'],
@@ -65,9 +66,66 @@ function openHelp(k) {
   const [topic, idx] = k.split(':'); let H = HELP[topic]; if (!H) return;
   if (idx != null && H.i[+idx]) H = { t: H.i[+idx][1], i: [H.i[+idx]] };
   $('#modalRoot').innerHTML = '<div class="modal-bg" data-act="closeModal"><div class="modal help-modal" role="dialog" aria-modal="true" aria-label="' + esc(H.t) + '"><div class="row"><h3 style="margin:0;font:700 22px var(--display)">' + esc(H.t) + '</h3><div class="grow" style="flex:1"></div><button class="btn small" data-act="closeModal">Fermer</button></div>' +
-    '<dl class="help-list">' + H.i.map(([c, n, d]) => '<dt>' + (c ? '<i style="background:' + c + '"></i>' : '') + esc(n) + '</dt><dd>' + esc(d) + '</dd>').join('') + '</dl>' + (H.f ? '<p class="note" style="margin:0;font-size:13px">' + esc(H.f) + '</p>' : '') + '</div></div>';
+    '<dl class="help-list">' + H.i.map(([c, n, d]) => '<dt>' + (c ? '<i style="background:' + c + '"></i>' : '') + esc(n) + '</dt><dd>' + (d[0] === '<' ? d : esc(d)) + '</dd>').join('') + '</dl>' + (H.f ? '<p class="note" style="margin:0;font-size:13px">' + esc(H.f) + '</p>' : '') + '</div></div>';
 }
-document.addEventListener('click', (e) => { const t = e.target.closest('[data-help]'); if (t) { e.stopPropagation(); openHelp(t.dataset.help); } }, true);
+// small "?" next to a curve: a card above it (hover to peek, click to pin)
+let HPOP = null;
+function hpopShow(btn, pin) {
+  const [topic, idx] = btn.dataset.help.split(':'), H = HELP[topic], it = H && H.i[+idx]; if (!it) return;
+  hpopHide(true);
+  const d = document.createElement('div'); d.className = 'hpop'; d.setAttribute('role', 'tooltip');
+  d.innerHTML = '<h4>' + esc(it[1]) + '</h4>' + (it[2][0] === '<' ? it[2] : '<p>' + esc(it[2]) + '</p>');
+  document.body.appendChild(d);
+  const r = btn.getBoundingClientRect();
+  d.style.left = Math.max(8, Math.min(r.left - 30, window.innerWidth - d.offsetWidth - 8)) + 'px';
+  if (r.top > d.offsetHeight + 16) d.style.bottom = (window.innerHeight - r.top + 8) + 'px'; else d.style.top = (r.bottom + 8) + 'px';
+  HPOP = { d, btn, pin };
+}
+function hpopHide(force) { if (HPOP && (force || !HPOP.pin)) { HPOP.d.remove(); HPOP = null; } }
+document.addEventListener('mouseover', (e) => { const b = e.target.closest('.qm.sm'); if (b && (!HPOP || HPOP.btn !== b)) hpopShow(b, false); });
+document.addEventListener('mouseout', (e) => { const b = e.target.closest('.qm.sm'); if (b && !b.contains(e.relatedTarget)) hpopHide(false); });
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-help]');
+  if (t && t.classList.contains('sm')) { e.stopPropagation(); if (HPOP && HPOP.btn === t && HPOP.pin) hpopHide(true); else hpopShow(t, true); return; }
+  if (HPOP && !e.target.closest('.hpop')) hpopHide(true);
+  if (t) { e.stopPropagation(); openHelp(t.dataset.help); }
+}, true);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hpopHide(true); });
+
+// ---------- "Évènements marquants" on the bankroll curve ----------
+function brEvents(P, C) {
+  const n = P.length; if (n < 20) return null;
+  const bi = C.reduce((x, t) => x + t.bi, 0) / n, pts = [], lines = [];
+  let hi = 0, lo = 0; for (let i = 0; i < n; i++) { if (P[i] > P[hi]) hi = i; if (P[i] < P[lo]) lo = i; }
+  pts.push({ i: hi, v: P[hi], label: 'Plus haut ' + fmtS(P[hi], 0) + ' €', up: 1 });
+  pts.push({ i: lo, v: P[lo], label: 'Plus bas ' + fmtS(P[lo], 0) + ' €' });
+  // downswings of 20 buy-ins or more: biggest drop, then the biggest ones before its peak and after its trough
+  const dd = [];
+  (function rec(a, b) {
+    if (b - a < 2 || dd.length >= 4) return;
+    let pk = a, best = 0, bp = -1, bt = -1;
+    for (let i = a; i <= b; i++) { if (P[i] > P[pk]) pk = i; if (P[pk] - P[i] > best) { best = P[pk] - P[i]; bp = pk; bt = i; } }
+    if (best < 20 * bi) return; dd.push([bp, bt, best]); rec(a, bp); rec(bt, b);
+  })(0, n - 1);
+  for (const [p, t, d] of dd) { lines.push({ i1: p, v1: P[p], i2: t, v2: P[t] }); const lab = 'Downswing −' + fmtN(d / bi, 0) + ' BI (−' + fmtN(d, 0) + ' €)'; if (t !== lo) pts.push({ i: t, v: P[t], label: lab }); else pts[1].label = lab + ' · plus bas ' + fmtS(P[lo], 0) + ' €'; }
+  // longest stretches without making money (end no higher than the start)
+  const minLen = Math.max(40, Math.round(n * 0.12)), be = [];
+  (function rec(a, b) {
+    if (b - a < minLen || be.length >= 3) return;
+    const ix = []; let bi0 = -1, bj = -1;
+    for (let j = a; j <= b; j++) {
+      if (!ix.length || P[j] > P[ix[ix.length - 1]]) ix.push(j);
+      let l = 0, h = ix.length - 1; while (l < h) { const m = (l + h) >> 1; if (P[ix[m]] >= P[j]) h = m; else l = m + 1; }
+      if (j - ix[l] > bj - bi0) { bi0 = ix[l]; bj = j; }
+    }
+    if (bj - bi0 < minLen) return; be.push([bi0, bj]); rec(a, bi0); rec(bj, b);
+  })(0, n - 1);
+  for (const [i, j] of be) lines.push({ i1: i, v1: P[i], i2: j, v2: P[i], label: fmtN(j - i) + ' spins breakeven' });
+  // biggest jackpots won
+  C.map((t, i) => ({ t, i })).filter(x => x.t.place === 1 && x.t.mult >= 10).sort((a, b) => b.t.mult - a.t.mult || b.t.eur - a.t.eur).slice(0, 3)
+    .forEach(x => pts.push({ i: x.i, v: P[x.i], label: 'Jackpot x' + fmtN(x.t.mult) + ' (+' + fmtN(x.t.eur, 0) + ' €)', up: 1 }));
+  return { pts, lines };
+}
 
 // ---------- styled dropdowns: native <select> kept for logic, custom menu for looks ----------
 let DD = null;

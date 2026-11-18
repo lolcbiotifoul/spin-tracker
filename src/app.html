@@ -91,7 +91,8 @@ button { cursor: pointer; }
 .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .legend button { border: 1px solid var(--line); background: var(--panel2); border-radius: 7px; padding: 4px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
 .legend .lg { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--line); background: var(--panel2); border-radius: 8px; padding: 0 6px 0 0; }
-.legend .lg > button:first-child { border: 0; background: transparent; padding: 5px 6px 5px 10px; font-weight: 500; }
+.legend .lg > button:first-child { border: 0; background: transparent; padding: 5px 3px 5px 9px; font-weight: 500; }
+.legend { gap: 5px; }
 .legend .lg.off > button:first-child { opacity: .4; }
 .qm.sm { width: 16px; height: 16px; font-size: 10px; border: 0; background: transparent; color: #8a8a8a; }
 .qm.sm:hover { color: var(--text); background: var(--hover); }
@@ -103,6 +104,18 @@ button { cursor: pointer; }
 .lg-row:hover, .lg-row.on { background: #262626; }
 .legend .lg-row > button:first-child { flex: 1; border: 0; background: transparent; padding: 7px 8px; font-size: 13px; font-weight: 500; gap: 10px; justify-content: flex-start; color: #8f8f8f;  white-space: nowrap; text-align: left; }
 .lg-row.on > button:first-child { color: var(--text); }
+.legend .lg-chk > button:first-child { gap: 8px; color: #8f8f8f; opacity: 1; }
+.legend .lg-chk.on > button:first-child { color: var(--text); }
+.lg-chk .ck { width: 15px; height: 15px; border-radius: 4px; border: 1px solid #4a4a4a; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.lg-chk.on .ck { background: #e5e5e5; border-color: #e5e5e5; }
+.lg-chk.on .ck::after { content: ''; width: 7px; height: 4px; border: solid #171717; border-width: 0 0 2px 2px; transform: rotate(-45deg) translate(1px, -1px); }
+.legend-row { grid-template-columns: auto 1fr auto !important; }
+.legend-row .legend { flex-wrap: wrap; }
+.hpop { position: fixed; z-index: 90; width: 340px; background: #1f1f1f; border: 1px solid #2e2e2e; border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.6); padding: 14px 16px; font-size: 13px; line-height: 1.5; color: #d4d4d4; }
+.hpop h4 { margin: -14px -16px 12px; padding: 12px 16px; border-bottom: 1px solid #2e2e2e; font: 700 15px var(--body); color: var(--text); }
+.hpop p { margin: 0 0 10px; } .hpop p:last-child { margin: 0; }
+.hpop b { color: var(--text); }
+.hd { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin: 0 4px 1px 1px; vertical-align: middle; }
 .lg-row .ck { width: 15px; height: 15px; border-radius: 4px; border: 1px solid #4a4a4a; display: inline-flex; align-items: center; justify-content: center; flex: none; }
 .lg-row.on .ck { background: #e5e5e5; border-color: #e5e5e5; }
 .lg-row.on .ck::after { content: ''; width: 7px; height: 4px; border: solid #171717; border-width: 0 0 2px 2px; transform: rotate(-45deg) translate(1px, -1px); }
@@ -346,7 +359,7 @@ const AGG = { raise: 1, shove: 1 };
 const S = {
   hands: [], byId: new Map(), players: new Map(), tours: [], hero: null,
   prefs: null, filters: defaultFilters(),
-  ui: { dash: 'chips', posMode: 'hand', mtMode: 'eh', review: 'hands', rv: { pos: 'all', prof: 'all', kind: 'all', page: 0, sort: 'date', dir: -1, gid: null }, pl: { q: '', tag: 'all', sort: 'hands', dir: -1, page: 0 }, lf: { prof: 'hero', pos: 'all', ref: 'reg', sub: 'hud3', who: '', hudSrc: 'reg' }, series: { chips: { c: 1, sd: 0, nsd: 0, ev: 1 }, br: { p: 1, ev: 1, evm: 1, nm: 0, mk: 0 }, mu: { t: 1, m: 1, g: 1 } } },
+  ui: { dash: 'chips', posMode: 'hand', mtMode: 'eh', review: 'hands', rv: { pos: 'all', prof: 'all', kind: 'all', page: 0, sort: 'date', dir: -1, gid: null }, pl: { q: '', tag: 'all', sort: 'hands', dir: -1, page: 0 }, lf: { prof: 'hero', pos: 'all', ref: 'reg', sub: 'hud3', who: '', hudSrc: 'reg' }, series: { chips: { c: 1, sd: 0, nsd: 0, ev: 1 }, br: { p: 1, ev: 1, evm: 1, evp: 0, nm: 0, mk: 1 }, mu: { t: 1, m: 1, g: 1 } } },
   storage: 'memory', seedLoaded: false, imports: [], skipIds: new Set(), skipped: { other: 0, bad: [] }, rvList: []
 };
 // Official Betclic Spin & Rush multiplier grids (chances per 1 000 000), payouts 1st/2nd/3rd
@@ -501,7 +514,7 @@ function buildTours() {
     t.place = fin ? fin.place : null; t.complete = !!fin; t.eur = fin ? fin.eur : 0;
     t.rb = t.bi * r * rb;
     t.profit = t.eur - t.bi + t.rb;
-    const share = Math.max(0, Math.min(1, (t.startStack + t.ev) / (t.totalChips || 1500)));
+    const share = Math.max(0, Math.min(1, (t.startStack + t.ev) / (t.totalChips || 1500))); t.share = share;
     t.evProfit = 3 * t.bi * (1 - r) * share - t.bi + t.rb;
     t.evmProfit = t.bi * t.mult * share - t.bi + t.rb;
     t.nmProfit = (t.place === 1 ? 3 * t.bi * (1 - r) : 0) - t.bi + t.rb;
@@ -562,9 +575,15 @@ function lineChart(wrap, cfg) {
       for (let i = 0; i < d.length; i += stride) { if (d[i] == null) { pen = false; continue; } const x = X(i), y = Y(d[i]); if (!pen) g.moveTo(x, y); else g.lineTo(x, y); pen = true; }
       if (d[d.length - 1] != null) { g.lineTo(X(d.length - 1), Y(d[d.length - 1])); g.stroke(); g.setLineDash([]); g.fillStyle = s.color; g.beginPath(); g.arc(X(d.length - 1), Y(d[d.length - 1]), 3.5, 0, 7); g.fill(); } else { g.stroke(); g.setLineDash([]); }
     }
-    if (cfg.marks && cfg.markOn) {
-      g.font = '700 10px Inter, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'bottom';
-      for (const m of cfg.marks) { const v = cfg.markOn[m.i]; if (v == null) continue; const x = X(m.i), y = Y(v); g.fillStyle = '#fff'; g.strokeStyle = '#171717'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, 4.5, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#fafafa'; g.fillText(m.label, x, y - 8); }
+    if (cfg.events) {
+      const ev = cfg.events, tx = (t, x, y, below) => { g.textAlign = x < L + 70 ? 'left' : x > W - R - 70 ? 'right' : 'center'; g.textBaseline = below ? 'top' : 'bottom'; g.lineWidth = 3; g.strokeStyle = 'rgba(23,23,23,.85)'; g.strokeText(t, x, y); g.fillStyle = '#fafafa'; g.fillText(t, x, y); };
+      g.save(); g.setLineDash([4, 4]); g.strokeStyle = 'rgba(230,230,230,.7)'; g.lineWidth = 1;
+      for (const l of ev.lines) { g.beginPath(); g.moveTo(X(l.i1), Y(l.v1)); g.lineTo(X(l.i2), Y(l.v2)); g.stroke(); }
+      g.setLineDash([]); g.font = '600 10.5px Inter, Arial, sans-serif';
+      for (const l of ev.lines) for (const [i, v] of [[l.i1, l.v1], [l.i2, l.v2]]) { g.fillStyle = '#fff'; g.beginPath(); g.arc(X(i), Y(v), 2.6, 0, 7); g.fill(); }
+      for (const l of ev.lines) if (l.label) { const xm = (X(l.i1) + X(l.i2)) / 2, ym = (Y(l.v1) + Y(l.v2)) / 2; g.fillStyle = '#fff'; g.beginPath(); g.arc(xm, ym, 2.6, 0, 7); g.fill(); tx(l.label, xm, ym - 5); }
+      for (const p of ev.pts) { const x = X(p.i), y = Y(p.v); g.fillStyle = '#fff'; g.beginPath(); g.arc(x, y, 3.2, 0, 7); g.fill(); tx(p.label, x, p.up ? y - 9 : y + 9, !p.up); }
+      g.restore();
     }
     if (hover != null) {
       const x = X(hover); g.strokeStyle = '#555b63'; g.lineWidth = 1; g.beginPath(); g.moveTo(x, T); g.lineTo(x, H - B); g.stroke();
@@ -675,26 +694,34 @@ function afterDashboard() {
     lineChart($('#chart'), { series, xLabel: 'Mains jouées', yFmt: (v) => fmtN(v), tipHead: (i) => 'Main ' + fmtN(i + 1) + ' · ' + fmtDate(hs[i].ts, true) + ' · net ' + fmtS(NET(hs[i], hs[i].hero)) + ' · EV ' + fmtS(EVc(hs[i], hs[i].hero)), onPick: (i) => openReplayer(hs, i, 'Graphique des chips'), badge: LB.html, badgeCls: LB.cls });
     legend(series, 'chips');
   } else if (u.dash === 'br') {
-    const C = F.C; const p = [], ev = [], nm = [], evm = []; let a = 0, b = 0, c = 0, d = 0;
-    let vr = 0;
+    const C = F.C;
+    // "effective" multiplier for this volume: only multipliers you could reasonably hit (at least one expected occurrence)
+    const nBy = new Map(); for (const t of C) { const g = gridFor(t.bi); nBy.set(g, (nBy.get(g) || 0) + 1); }
+    const effM = new Map(); for (const [g, n] of nBy) effM.set(g, g.reduce((x, q) => x + (n * q[1] / 1e6 >= 1 ? q[0] * q[1] / 1e6 : 0), 0));
+    let sb = 0, se = 0; for (const t of C) { sb += t.bi; se += t.bi * effM.get(gridFor(t.bi)); }
+    const effRake = sb ? (1 - se / sb / 3) * 100 : GRID_RAKE;
+    const p = [], ev = [], evp = [], nm = [], evm = []; let a = 0, b = 0, c = 0, d = 0, e = 0, vr = 0;
     for (const t of C) {
-      a += t.profit; b += t.evProfit; c += t.nmProfit; d += t.evmProfit; p.push(a); ev.push(b); nm.push(c); evm.push(d);
+      a += t.profit; b += t.share * t.bi * effM.get(gridFor(t.bi)) - t.bi + t.rb; c += t.nmProfit; d += t.evmProfit; e += t.evProfit;
+      p.push(a); ev.push(b); nm.push(c); evm.push(d); evp.push(e);
       // variance of the payout around its EV: win prob = EV chip share, prize = random multiplier from the Betclic grid
-      const g = gridFor(t.bi), sh = Math.max(0, Math.min(1, (t.startStack + t.ev) / t.totalChips));
+      const g = gridFor(t.bi), sh = Math.max(0, Math.min(1, t.share));
       const m1 = g.reduce((x, q) => x + q[0] * q[1], 0) / 1e6, m2 = g.reduce((x, q) => x + q[0] * q[0] * q[1], 0) / 1e6;
       vr += t.bi * t.bi * (sh * m2 - sh * sh * m1 * m1);
     }
     const BL = luckBadge(a - b, vr, '€');
     const ser = S.ui.series.br;
-    const series = [{ k: 'p', name: 'Profit', color: '#3b82f6', data: p, help: 'br:0' }, { k: 'ev', name: 'EV Profit effectif (' + fmtN(S.prefs.rakeEff, 1) + ' %)', color: '#f472b6', data: ev, help: 'br:1' }, { k: 'evm', name: 'EV Multi Profit', color: '#fb923c', data: evm, help: 'br:2', more: 1 }, { k: 'nm', name: 'Multiplicateur neutralisé', color: '#a855f7', data: nm, help: 'br:3', more: 1 }, { k: 'mk', name: 'Évènements marquants', color: '#ffffff', marker: 1, help: 'br:4', more: 1 }].map(s => Object.assign(s, { on: !!ser[s.k] }));
-    const marks = ser.mk ? C.map((t, i) => t.mult >= 10 ? { i, label: 'x' + fmtN(t.mult) + (t.place === 1 ? ' ✓' : '') } : null).filter(Boolean) : null;
-    lineChart($('#chart'), { series: series.filter(s => !s.marker), marks, markOn: p, xLabel: 'Tournois joués', yFmt: (v) => fmtN(v, Math.abs(v) < 10 && v % 1 ? 1 : 0) + ' €', tipHead: (i) => 'Tournoi ' + fmtN(i + 1) + ' · ' + fmtDate(C[i].start, true) + ' · x' + C[i].mult, onPick: (i) => openSpin(C[i].gid), badge: BL.html, badgeCls: BL.cls });
+    const series = [{ k: 'p', name: 'Profit', color: '#3b82f6', data: p, help: 'br:0' }, { k: 'ev', name: 'EV Profit effectif (' + fmtN(effRake, 1) + ' %)', color: '#f472b6', data: ev, help: 'br:1' },
+      { k: 'evm', name: 'EV Multi Profit', color: '#fb923c', data: evm, help: 'br:2', chk: 1 }, { k: 'evp', name: 'EV Profit', color: '#a855f7', data: evp, help: 'br:3', chk: 1 },
+      { k: 'nm', name: 'Multiplicateur neutralisé', color: '#2dd4bf', data: nm, help: 'br:4', chk: 1 }, { k: 'mk', name: 'Évènements marquants', color: '#ffffff', marker: 1, help: 'br:5', chk: 1 }].map(s => Object.assign(s, { on: !!ser[s.k] }));
+    lineChart($('#chart'), { series: series.filter(s => !s.marker), events: ser.mk ? brEvents(p, C) : null, xLabel: 'Tournois joués', yFmt: (v) => fmtN(v, Math.abs(v) < 10 && v % 1 ? 1 : 0) + ' €', tipHead: (i) => 'Tournoi ' + fmtN(i + 1) + ' · ' + fmtDate(C[i].start, true) + ' · x' + C[i].mult, onPick: (i) => openSpin(C[i].gid), badge: BL.html, badgeCls: BL.cls });
     legend(series, 'br');
   } else if (u.dash === 'multi') afterMulti();
 }
 function legend(series, key) {
   const q = (s) => s.help ? '<button class="qm sm" data-help="' + s.help + '" aria-label="À quoi correspond ' + esc(s.name) + ' ?">?</button>' : '';
-  let h = series.filter(s => !s.more).map(s => '<span class="lg' + (s.on ? '' : ' off') + '"><button data-ser="' + key + ':' + s.k + '" aria-pressed="' + s.on + '"><i style="background:' + s.color + '"></i>' + esc(s.name) + '</button>' + q(s) + '</span>').join('');
+  let h = series.filter(s => !s.more && !s.chk).map(s => '<span class="lg' + (s.on ? '' : ' off') + '"><button data-ser="' + key + ':' + s.k + '" aria-pressed="' + s.on + '"><i style="background:' + s.color + '"></i>' + esc(s.name) + '</button>' + q(s) + '</span>').join('');
+  h += series.filter(s => s.chk).map(s => '<span class="lg lg-chk' + (s.on ? ' on' : '') + '"><button role="checkbox" aria-checked="' + s.on + '" data-ser="' + key + ':' + s.k + '"><span class="ck"></span><i style="background:' + s.color + '"></i>' + esc(s.name) + '</button>' + q(s) + '</span>').join('');
   const more = series.filter(s => s.more);
   if (more.length) {
     const open = S.ui.moreOpen === key, n = more.filter(s => s.on).length;
@@ -943,7 +970,7 @@ function viewSettings() {
     '<label class="f" for="sUnk">Joueurs sous le seuil de mains, sans limp<select id="sUnk"><option value="fish"' + (c.unknownAs === 'fish' ? ' selected' : '') + '>Fish</option><option value="unknown"' + (c.unknownAs === 'unknown' ? ' selected' : '') + '>Inconnu (exclus des stats vs Reg / vs Fish)</option><option value="reg"' + (c.unknownAs === 'reg' ? ' selected' : '') + '>Reg</option></select></label>' +
     '<div class="row"><button class="btn primary" data-act="saveCls">Appliquer</button><span class="note">' + Object.keys(S.prefs.overrides).length + ' joueur(s) corrigé(s) à la main, ils gardent leur statut.</span></div>' +
     '<div class="row"><button class="btn" data-act="resetOv">Effacer les corrections manuelles</button></div></div>' +
-    '<div class="panel"><h3>Argent</h3><label class="f" for="sRake">Rake effectif du format (%)<input type="number" id="sRake" step="0.1" min="0" max="30" value="' + S.prefs.rakeEff + '"><span class="note">Sert à l\'EV profit : prize pool moyen = 3 × buy-in × (1 − rake). La grille officielle Betclic donne ' + fmtN(GRID_RAKE, 1) + ' % (multiplicateur moyen x' + fmtN(expMult(10), 2) + ').</span></label>' +
+    '<div class="panel"><h3>Argent</h3><label class="f" for="sRake">Rake de la grille (%)<input type="number" id="sRake" step="0.1" min="0" max="30" value="' + S.prefs.rakeEff + '"><span class="note">Sert à l\'EV profit : prize pool moyen = 3 × buy-in × (1 − rake). La grille officielle Betclic donne ' + fmtN(GRID_RAKE, 1) + ' % (multiplicateur moyen x' + fmtN(expMult(10), 2) + ').</span></label>' +
     '<label class="f" for="sRb">Rakeback (% du rake payé)<input type="number" id="sRb" step="1" min="0" max="100" value="' + S.prefs.rakeback + '"></label><div class="row"><button class="btn primary" data-act="saveMoney">Appliquer</button></div></div>' +
     '<div class="panel"><h3>Où sont gardées tes données</h3><p class="note" style="font-size:13px">Les mains sont stockées dans ce navigateur. Tes réglages, corrections de statut et favoris ' + (S.cloud ? 'sont aussi sauvegardés sur ton compte Claude et te suivent sur tes autres appareils.' : 'sont gardés dans ce navigateur.') + '</p><p class="note">Heures affichées dans le fuseau de ton appareil (' + esc(Intl.DateTimeFormat().resolvedOptions().timeZone || 'local') + ').</p></div></div>';
 }

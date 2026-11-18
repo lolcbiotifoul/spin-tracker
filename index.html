@@ -99,7 +99,8 @@ button { cursor: pointer; }
 .legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .legend button { border: 1px solid var(--line); background: var(--panel2); border-radius: 7px; padding: 4px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
 .legend .lg { display: inline-flex; align-items: center; gap: 2px; border: 1px solid var(--line); background: var(--panel2); border-radius: 8px; padding: 0 6px 0 0; }
-.legend .lg > button:first-child { border: 0; background: transparent; padding: 5px 6px 5px 10px; font-weight: 500; }
+.legend .lg > button:first-child { border: 0; background: transparent; padding: 5px 3px 5px 9px; font-weight: 500; }
+.legend { gap: 5px; }
 .legend .lg.off > button:first-child { opacity: .4; }
 .qm.sm { width: 16px; height: 16px; font-size: 10px; border: 0; background: transparent; color: #8a8a8a; }
 .qm.sm:hover { color: var(--text); background: var(--hover); }
@@ -111,6 +112,18 @@ button { cursor: pointer; }
 .lg-row:hover, .lg-row.on { background: #262626; }
 .legend .lg-row > button:first-child { flex: 1; border: 0; background: transparent; padding: 7px 8px; font-size: 13px; font-weight: 500; gap: 10px; justify-content: flex-start; color: #8f8f8f;  white-space: nowrap; text-align: left; }
 .lg-row.on > button:first-child { color: var(--text); }
+.legend .lg-chk > button:first-child { gap: 8px; color: #8f8f8f; opacity: 1; }
+.legend .lg-chk.on > button:first-child { color: var(--text); }
+.lg-chk .ck { width: 15px; height: 15px; border-radius: 4px; border: 1px solid #4a4a4a; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.lg-chk.on .ck { background: #e5e5e5; border-color: #e5e5e5; }
+.lg-chk.on .ck::after { content: ''; width: 7px; height: 4px; border: solid #171717; border-width: 0 0 2px 2px; transform: rotate(-45deg) translate(1px, -1px); }
+.legend-row { grid-template-columns: auto 1fr auto !important; }
+.legend-row .legend { flex-wrap: wrap; }
+.hpop { position: fixed; z-index: 90; width: 340px; background: #1f1f1f; border: 1px solid #2e2e2e; border-radius: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.6); padding: 14px 16px; font-size: 13px; line-height: 1.5; color: #d4d4d4; }
+.hpop h4 { margin: -14px -16px 12px; padding: 12px 16px; border-bottom: 1px solid #2e2e2e; font: 700 15px var(--body); color: var(--text); }
+.hpop p { margin: 0 0 10px; } .hpop p:last-child { margin: 0; }
+.hpop b { color: var(--text); }
+.hd { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin: 0 4px 1px 1px; vertical-align: middle; }
 .lg-row .ck { width: 15px; height: 15px; border-radius: 4px; border: 1px solid #4a4a4a; display: inline-flex; align-items: center; justify-content: center; flex: none; }
 .lg-row.on .ck { background: #e5e5e5; border-color: #e5e5e5; }
 .lg-row.on .ck::after { content: ''; width: 7px; height: 4px; border: solid #171717; border-width: 0 0 2px 2px; transform: rotate(-45deg) translate(1px, -1px); }
@@ -809,7 +822,7 @@ const AGG = { raise: 1, shove: 1 };
 const S = {
   hands: [], byId: new Map(), players: new Map(), tours: [], hero: null,
   prefs: null, filters: defaultFilters(),
-  ui: { dash: 'chips', posMode: 'hand', mtMode: 'eh', review: 'hands', rv: { pos: 'all', prof: 'all', kind: 'all', page: 0, sort: 'date', dir: -1, gid: null }, pl: { q: '', tag: 'all', sort: 'hands', dir: -1, page: 0 }, lf: { prof: 'hero', pos: 'all', ref: 'reg', sub: 'hud3', who: '', hudSrc: 'reg' }, series: { chips: { c: 1, sd: 0, nsd: 0, ev: 1 }, br: { p: 1, ev: 1, evm: 1, nm: 0, mk: 0 }, mu: { t: 1, m: 1, g: 1 } } },
+  ui: { dash: 'chips', posMode: 'hand', mtMode: 'eh', review: 'hands', rv: { pos: 'all', prof: 'all', kind: 'all', page: 0, sort: 'date', dir: -1, gid: null }, pl: { q: '', tag: 'all', sort: 'hands', dir: -1, page: 0 }, lf: { prof: 'hero', pos: 'all', ref: 'reg', sub: 'hud3', who: '', hudSrc: 'reg' }, series: { chips: { c: 1, sd: 0, nsd: 0, ev: 1 }, br: { p: 1, ev: 1, evm: 1, evp: 0, nm: 0, mk: 1 }, mu: { t: 1, m: 1, g: 1 } } },
   storage: 'memory', seedLoaded: false, imports: [], skipIds: new Set(), skipped: { other: 0, bad: [] }, rvList: []
 };
 // Official Betclic Spin & Rush multiplier grids (chances per 1 000 000), payouts 1st/2nd/3rd
@@ -964,7 +977,7 @@ function buildTours() {
     t.place = fin ? fin.place : null; t.complete = !!fin; t.eur = fin ? fin.eur : 0;
     t.rb = t.bi * r * rb;
     t.profit = t.eur - t.bi + t.rb;
-    const share = Math.max(0, Math.min(1, (t.startStack + t.ev) / (t.totalChips || 1500)));
+    const share = Math.max(0, Math.min(1, (t.startStack + t.ev) / (t.totalChips || 1500))); t.share = share;
     t.evProfit = 3 * t.bi * (1 - r) * share - t.bi + t.rb;
     t.evmProfit = t.bi * t.mult * share - t.bi + t.rb;
     t.nmProfit = (t.place === 1 ? 3 * t.bi * (1 - r) : 0) - t.bi + t.rb;
@@ -1150,9 +1163,15 @@ function lineChart(wrap, cfg) {
       for (let i = 0; i < d.length; i += stride) { if (d[i] == null) { pen = false; continue; } const x = X(i), y = Y(d[i]); if (!pen) g.moveTo(x, y); else g.lineTo(x, y); pen = true; }
       if (d[d.length - 1] != null) { g.lineTo(X(d.length - 1), Y(d[d.length - 1])); g.stroke(); g.setLineDash([]); g.fillStyle = s.color; g.beginPath(); g.arc(X(d.length - 1), Y(d[d.length - 1]), 3.5, 0, 7); g.fill(); } else { g.stroke(); g.setLineDash([]); }
     }
-    if (cfg.marks && cfg.markOn) {
-      g.font = '700 10px Inter, Arial, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'bottom';
-      for (const m of cfg.marks) { const v = cfg.markOn[m.i]; if (v == null) continue; const x = X(m.i), y = Y(v); g.fillStyle = '#fff'; g.strokeStyle = '#171717'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, 4.5, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#fafafa'; g.fillText(m.label, x, y - 8); }
+    if (cfg.events) {
+      const ev = cfg.events, tx = (t, x, y, below) => { g.textAlign = x < L + 70 ? 'left' : x > W - R - 70 ? 'right' : 'center'; g.textBaseline = below ? 'top' : 'bottom'; g.lineWidth = 3; g.strokeStyle = 'rgba(23,23,23,.85)'; g.strokeText(t, x, y); g.fillStyle = '#fafafa'; g.fillText(t, x, y); };
+      g.save(); g.setLineDash([4, 4]); g.strokeStyle = 'rgba(230,230,230,.7)'; g.lineWidth = 1;
+      for (const l of ev.lines) { g.beginPath(); g.moveTo(X(l.i1), Y(l.v1)); g.lineTo(X(l.i2), Y(l.v2)); g.stroke(); }
+      g.setLineDash([]); g.font = '600 10.5px Inter, Arial, sans-serif';
+      for (const l of ev.lines) for (const [i, v] of [[l.i1, l.v1], [l.i2, l.v2]]) { g.fillStyle = '#fff'; g.beginPath(); g.arc(X(i), Y(v), 2.6, 0, 7); g.fill(); }
+      for (const l of ev.lines) if (l.label) { const xm = (X(l.i1) + X(l.i2)) / 2, ym = (Y(l.v1) + Y(l.v2)) / 2; g.fillStyle = '#fff'; g.beginPath(); g.arc(xm, ym, 2.6, 0, 7); g.fill(); tx(l.label, xm, ym - 5); }
+      for (const p of ev.pts) { const x = X(p.i), y = Y(p.v); g.fillStyle = '#fff'; g.beginPath(); g.arc(x, y, 3.2, 0, 7); g.fill(); tx(p.label, x, p.up ? y - 9 : y + 9, !p.up); }
+      g.restore();
     }
     if (hover != null) {
       const x = X(hover); g.strokeStyle = '#555b63'; g.lineWidth = 1; g.beginPath(); g.moveTo(x, T); g.lineTo(x, H - B); g.stroke();
@@ -1263,26 +1282,34 @@ function afterDashboard() {
     lineChart($('#chart'), { series, xLabel: 'Mains jouées', yFmt: (v) => fmtN(v), tipHead: (i) => 'Main ' + fmtN(i + 1) + ' · ' + fmtDate(hs[i].ts, true) + ' · net ' + fmtS(NET(hs[i], hs[i].hero)) + ' · EV ' + fmtS(EVc(hs[i], hs[i].hero)), onPick: (i) => openReplayer(hs, i, 'Graphique des chips'), badge: LB.html, badgeCls: LB.cls });
     legend(series, 'chips');
   } else if (u.dash === 'br') {
-    const C = F.C; const p = [], ev = [], nm = [], evm = []; let a = 0, b = 0, c = 0, d = 0;
-    let vr = 0;
+    const C = F.C;
+    // "effective" multiplier for this volume: only multipliers you could reasonably hit (at least one expected occurrence)
+    const nBy = new Map(); for (const t of C) { const g = gridFor(t.bi); nBy.set(g, (nBy.get(g) || 0) + 1); }
+    const effM = new Map(); for (const [g, n] of nBy) effM.set(g, g.reduce((x, q) => x + (n * q[1] / 1e6 >= 1 ? q[0] * q[1] / 1e6 : 0), 0));
+    let sb = 0, se = 0; for (const t of C) { sb += t.bi; se += t.bi * effM.get(gridFor(t.bi)); }
+    const effRake = sb ? (1 - se / sb / 3) * 100 : GRID_RAKE;
+    const p = [], ev = [], evp = [], nm = [], evm = []; let a = 0, b = 0, c = 0, d = 0, e = 0, vr = 0;
     for (const t of C) {
-      a += t.profit; b += t.evProfit; c += t.nmProfit; d += t.evmProfit; p.push(a); ev.push(b); nm.push(c); evm.push(d);
+      a += t.profit; b += t.share * t.bi * effM.get(gridFor(t.bi)) - t.bi + t.rb; c += t.nmProfit; d += t.evmProfit; e += t.evProfit;
+      p.push(a); ev.push(b); nm.push(c); evm.push(d); evp.push(e);
       // variance of the payout around its EV: win prob = EV chip share, prize = random multiplier from the Betclic grid
-      const g = gridFor(t.bi), sh = Math.max(0, Math.min(1, (t.startStack + t.ev) / t.totalChips));
+      const g = gridFor(t.bi), sh = Math.max(0, Math.min(1, t.share));
       const m1 = g.reduce((x, q) => x + q[0] * q[1], 0) / 1e6, m2 = g.reduce((x, q) => x + q[0] * q[0] * q[1], 0) / 1e6;
       vr += t.bi * t.bi * (sh * m2 - sh * sh * m1 * m1);
     }
     const BL = luckBadge(a - b, vr, '€');
     const ser = S.ui.series.br;
-    const series = [{ k: 'p', name: 'Profit', color: '#3b82f6', data: p, help: 'br:0' }, { k: 'ev', name: 'EV Profit effectif (' + fmtN(S.prefs.rakeEff, 1) + ' %)', color: '#f472b6', data: ev, help: 'br:1' }, { k: 'evm', name: 'EV Multi Profit', color: '#fb923c', data: evm, help: 'br:2', more: 1 }, { k: 'nm', name: 'Multiplicateur neutralisé', color: '#a855f7', data: nm, help: 'br:3', more: 1 }, { k: 'mk', name: 'Évènements marquants', color: '#ffffff', marker: 1, help: 'br:4', more: 1 }].map(s => Object.assign(s, { on: !!ser[s.k] }));
-    const marks = ser.mk ? C.map((t, i) => t.mult >= 10 ? { i, label: 'x' + fmtN(t.mult) + (t.place === 1 ? ' ✓' : '') } : null).filter(Boolean) : null;
-    lineChart($('#chart'), { series: series.filter(s => !s.marker), marks, markOn: p, xLabel: 'Tournois joués', yFmt: (v) => fmtN(v, Math.abs(v) < 10 && v % 1 ? 1 : 0) + ' €', tipHead: (i) => 'Tournoi ' + fmtN(i + 1) + ' · ' + fmtDate(C[i].start, true) + ' · x' + C[i].mult, onPick: (i) => openSpin(C[i].gid), badge: BL.html, badgeCls: BL.cls });
+    const series = [{ k: 'p', name: 'Profit', color: '#3b82f6', data: p, help: 'br:0' }, { k: 'ev', name: 'EV Profit effectif (' + fmtN(effRake, 1) + ' %)', color: '#f472b6', data: ev, help: 'br:1' },
+      { k: 'evm', name: 'EV Multi Profit', color: '#fb923c', data: evm, help: 'br:2', chk: 1 }, { k: 'evp', name: 'EV Profit', color: '#a855f7', data: evp, help: 'br:3', chk: 1 },
+      { k: 'nm', name: 'Multiplicateur neutralisé', color: '#2dd4bf', data: nm, help: 'br:4', chk: 1 }, { k: 'mk', name: 'Évènements marquants', color: '#ffffff', marker: 1, help: 'br:5', chk: 1 }].map(s => Object.assign(s, { on: !!ser[s.k] }));
+    lineChart($('#chart'), { series: series.filter(s => !s.marker), events: ser.mk ? brEvents(p, C) : null, xLabel: 'Tournois joués', yFmt: (v) => fmtN(v, Math.abs(v) < 10 && v % 1 ? 1 : 0) + ' €', tipHead: (i) => 'Tournoi ' + fmtN(i + 1) + ' · ' + fmtDate(C[i].start, true) + ' · x' + C[i].mult, onPick: (i) => openSpin(C[i].gid), badge: BL.html, badgeCls: BL.cls });
     legend(series, 'br');
   } else if (u.dash === 'multi') afterMulti();
 }
 function legend(series, key) {
   const q = (s) => s.help ? '<button class="qm sm" data-help="' + s.help + '" aria-label="À quoi correspond ' + esc(s.name) + ' ?">?</button>' : '';
-  let h = series.filter(s => !s.more).map(s => '<span class="lg' + (s.on ? '' : ' off') + '"><button data-ser="' + key + ':' + s.k + '" aria-pressed="' + s.on + '"><i style="background:' + s.color + '"></i>' + esc(s.name) + '</button>' + q(s) + '</span>').join('');
+  let h = series.filter(s => !s.more && !s.chk).map(s => '<span class="lg' + (s.on ? '' : ' off') + '"><button data-ser="' + key + ':' + s.k + '" aria-pressed="' + s.on + '"><i style="background:' + s.color + '"></i>' + esc(s.name) + '</button>' + q(s) + '</span>').join('');
+  h += series.filter(s => s.chk).map(s => '<span class="lg lg-chk' + (s.on ? ' on' : '') + '"><button role="checkbox" aria-checked="' + s.on + '" data-ser="' + key + ':' + s.k + '"><span class="ck"></span><i style="background:' + s.color + '"></i>' + esc(s.name) + '</button>' + q(s) + '</span>').join('');
   const more = series.filter(s => s.more);
   if (more.length) {
     const open = S.ui.moreOpen === key, n = more.filter(s => s.on).length;
@@ -1531,7 +1558,7 @@ function viewSettings() {
     '<label class="f" for="sUnk">Joueurs sous le seuil de mains, sans limp<select id="sUnk"><option value="fish"' + (c.unknownAs === 'fish' ? ' selected' : '') + '>Fish</option><option value="unknown"' + (c.unknownAs === 'unknown' ? ' selected' : '') + '>Inconnu (exclus des stats vs Reg / vs Fish)</option><option value="reg"' + (c.unknownAs === 'reg' ? ' selected' : '') + '>Reg</option></select></label>' +
     '<div class="row"><button class="btn primary" data-act="saveCls">Appliquer</button><span class="note">' + Object.keys(S.prefs.overrides).length + ' joueur(s) corrigé(s) à la main, ils gardent leur statut.</span></div>' +
     '<div class="row"><button class="btn" data-act="resetOv">Effacer les corrections manuelles</button></div></div>' +
-    '<div class="panel"><h3>Argent</h3><label class="f" for="sRake">Rake effectif du format (%)<input type="number" id="sRake" step="0.1" min="0" max="30" value="' + S.prefs.rakeEff + '"><span class="note">Sert à l\'EV profit : prize pool moyen = 3 × buy-in × (1 − rake). La grille officielle Betclic donne ' + fmtN(GRID_RAKE, 1) + ' % (multiplicateur moyen x' + fmtN(expMult(10), 2) + ').</span></label>' +
+    '<div class="panel"><h3>Argent</h3><label class="f" for="sRake">Rake de la grille (%)<input type="number" id="sRake" step="0.1" min="0" max="30" value="' + S.prefs.rakeEff + '"><span class="note">Sert à l\'EV profit : prize pool moyen = 3 × buy-in × (1 − rake). La grille officielle Betclic donne ' + fmtN(GRID_RAKE, 1) + ' % (multiplicateur moyen x' + fmtN(expMult(10), 2) + ').</span></label>' +
     '<label class="f" for="sRb">Rakeback (% du rake payé)<input type="number" id="sRb" step="1" min="0" max="100" value="' + S.prefs.rakeback + '"></label><div class="row"><button class="btn primary" data-act="saveMoney">Appliquer</button></div></div>' +
     '<div class="panel"><h3>Sauvegarde des réglages</h3><p class="note" style="font-size:13px">Tes corrections Reg/Fish, favoris et réglages restent dans ce navigateur. Exporte-les de temps en temps, ou pour les passer sur un autre ordinateur.</p><div class="row"><button class="btn" data-exportprefs="1">Exporter mes réglages</button><label class="btn" for="prefsIn" style="cursor:pointer">Restaurer une sauvegarde</label><input type="file" id="prefsIn" accept=".json,application/json" style="display:none"></div></div>' +
     '<div class="panel"><h3>Où sont gardées tes données</h3><p class="note" style="font-size:13px">Les mains sont stockées dans ce navigateur, sur ton ordinateur : rien n\'est envoyé sur internet. Si tu vides la base, un clic sur « Mettre à jour » relit tout ton dossier. Tes réglages, corrections de statut et favoris ' + (S.cloud ? 'sont aussi sauvegardés sur ton compte Claude et te suivent sur tes autres appareils.' : 'sont gardés dans ce navigateur.') + '</p><p class="note">Heures affichées dans le fuseau de ton appareil (' + esc(Intl.DateTimeFormat().resolvedOptions().timeZone || 'local') + ').</p></div></div>';
@@ -1853,11 +1880,12 @@ const HELP = {
     ['#fb923c', 'EV (chips)', 'Tes chips si chaque all-in avait été payé à ton équité au moment du tapis. C\'est ta vraie performance, sans la chance des all-in.']],
     f: 'Le badge en haut à gauche compare Chips et EV : l\'écart est ta chance aux all-in, et le pourcentage indique la probabilité d\'être au moins aussi chanceux (ou malchanceux) sur ce nombre d\'all-in. Clique sur un point de la courbe pour ouvrir la main dans le replayer.' },
   br: { t: 'Graphique de bankroll', i: [
-    ['#3b82f6', 'Profit', 'L\'argent réellement gagné : gains − buy-ins + rakeback.'],
-    ['#f472b6', 'EV Profit effectif', 'Ce que tu aurais gagné sans aucune chance : ta part de chips en EV × le prize pool moyen, calculé avec le rake effectif du format (réglable dans Réglages). Pas de chance aux all-in ni sur les multiplicateurs : le meilleur indicateur de ton niveau.'],
-    ['#fb923c', 'EV Multi Profit', 'Ta part de chips en EV × le prize pool réellement tiré à chaque spin. Enlève la chance aux all-in mais garde celle des multiplicateurs : l\'écart avec Profit = ta chance sur les all-in et l\'issue des spins, l\'écart avec EV Profit effectif = ta chance sur les multiplicateurs.'],
-    ['#a855f7', 'Multiplicateur neutralisé', 'Tes vraies victoires et défaites, mais chaque victoire payée au multiplicateur moyen. L\'écart avec Profit = la chance sur les multiplicateurs de tes victoires.'],
-    ['#ffffff', 'Évènements marquants', 'Points blancs sur la courbe Profit aux spins à gros multiplicateur (x10 et plus). ✓ = spin gagné.']],
+    ['#3b82f6', 'Profit', '<p>L\'<b>argent réellement gagné</b> : gains − buy-ins + rakeback.</p>'],
+    ['#f472b6', 'EV Profit effectif', '<p>L\'<b>argent que tu aurais dû gagner</b>, avec ton niveau de jeu (cEV), ton rakeback et des <b>multiplicateurs réalistes pour ton volume</b>.</p><p>Contrairement à <i class="hd" style="background:#a855f7"></i><b>EV Profit</b>, il ignore les très gros multiplicateurs que ton volume avait très peu de chances de toucher (moins d\'une fois attendue) et garde seulement ceux que tu pouvais raisonnablement rencontrer.</p><p>Le <b>pourcentage entre parenthèses</b> est ton <b>rake effectif</b> : la grille Betclic donne ~7 %, mais comme les très gros multiplicateurs sont très rares, le rake que tu paies réellement sur ce volume est plus élevé.</p>'],
+    ['#fb923c', 'EV Multi Profit', '<p>L\'<b>argent que tu aurais dû gagner</b> avec ton niveau de jeu, les <b>multiplicateurs réellement tirés</b> à tes tables et ton rakeback.</p><p>Il enlève la chance aux all-in mais garde celle des multiplicateurs : l\'écart avec <i class="hd" style="background:#3b82f6"></i><b>Profit</b> vient des all-in et de l\'issue des spins.</p>'],
+    ['#a855f7', 'EV Profit', '<p>Ton <b>gain théorique à long terme</b>, calculé avec ton niveau de jeu (cEV), la grille complète des multiplicateurs Betclic et ton rakeback.</p><p><i class="hd" style="background:#a855f7"></i><b>EV Profit</b>, contrairement à <i class="hd" style="background:#f472b6"></i><b>EV Profit effectif</b>, ne tient pas compte du fait qu\'à moins de jouer un volume énorme, <b>ta probabilité de tomber sur les très gros multiplicateurs est faible</b>.</p>'],
+    ['#2dd4bf', 'Multiplicateur neutralisé', '<p>Tes <b>vraies victoires et défaites</b>, mais chaque victoire payée au <b>multiplicateur moyen</b>.</p><p>L\'écart avec <i class="hd" style="background:#3b82f6"></i><b>Profit</b> = ta chance sur les multiplicateurs des spins que tu as gagnés.</p>'],
+    ['#ffffff', 'Évènements marquants', '<p>Les <b>moments clés</b> de ta bankroll sur la courbe bleue : plus gros jackpots (x10 et plus gagnés), downswings de 20 buy-ins ou plus, plus longues périodes <b>breakeven</b> (sans rien gagner), point haut et point bas.</p>']],
     f: 'Le badge compare Profit et EV Profit effectif, avec la probabilité d\'avoir au moins autant d\'écart par pure variance. Le rakeback (en bas à gauche) s\'ajoute à toutes les courbes. Clique sur un point pour rejouer le spin.' },
   multi: { t: 'D\'où vient ta chance (en €)', i: [
     ['#f472b6', 'Chance totale', 'Profit − EV profit : tout ce que la variance t\'a donné ou pris.'],
@@ -1911,9 +1939,66 @@ function openHelp(k) {
   const [topic, idx] = k.split(':'); let H = HELP[topic]; if (!H) return;
   if (idx != null && H.i[+idx]) H = { t: H.i[+idx][1], i: [H.i[+idx]] };
   $('#modalRoot').innerHTML = '<div class="modal-bg" data-act="closeModal"><div class="modal help-modal" role="dialog" aria-modal="true" aria-label="' + esc(H.t) + '"><div class="row"><h3 style="margin:0;font:700 22px var(--display)">' + esc(H.t) + '</h3><div class="grow" style="flex:1"></div><button class="btn small" data-act="closeModal">Fermer</button></div>' +
-    '<dl class="help-list">' + H.i.map(([c, n, d]) => '<dt>' + (c ? '<i style="background:' + c + '"></i>' : '') + esc(n) + '</dt><dd>' + esc(d) + '</dd>').join('') + '</dl>' + (H.f ? '<p class="note" style="margin:0;font-size:13px">' + esc(H.f) + '</p>' : '') + '</div></div>';
+    '<dl class="help-list">' + H.i.map(([c, n, d]) => '<dt>' + (c ? '<i style="background:' + c + '"></i>' : '') + esc(n) + '</dt><dd>' + (d[0] === '<' ? d : esc(d)) + '</dd>').join('') + '</dl>' + (H.f ? '<p class="note" style="margin:0;font-size:13px">' + esc(H.f) + '</p>' : '') + '</div></div>';
 }
-document.addEventListener('click', (e) => { const t = e.target.closest('[data-help]'); if (t) { e.stopPropagation(); openHelp(t.dataset.help); } }, true);
+// small "?" next to a curve: a card above it (hover to peek, click to pin)
+let HPOP = null;
+function hpopShow(btn, pin) {
+  const [topic, idx] = btn.dataset.help.split(':'), H = HELP[topic], it = H && H.i[+idx]; if (!it) return;
+  hpopHide(true);
+  const d = document.createElement('div'); d.className = 'hpop'; d.setAttribute('role', 'tooltip');
+  d.innerHTML = '<h4>' + esc(it[1]) + '</h4>' + (it[2][0] === '<' ? it[2] : '<p>' + esc(it[2]) + '</p>');
+  document.body.appendChild(d);
+  const r = btn.getBoundingClientRect();
+  d.style.left = Math.max(8, Math.min(r.left - 30, window.innerWidth - d.offsetWidth - 8)) + 'px';
+  if (r.top > d.offsetHeight + 16) d.style.bottom = (window.innerHeight - r.top + 8) + 'px'; else d.style.top = (r.bottom + 8) + 'px';
+  HPOP = { d, btn, pin };
+}
+function hpopHide(force) { if (HPOP && (force || !HPOP.pin)) { HPOP.d.remove(); HPOP = null; } }
+document.addEventListener('mouseover', (e) => { const b = e.target.closest('.qm.sm'); if (b && (!HPOP || HPOP.btn !== b)) hpopShow(b, false); });
+document.addEventListener('mouseout', (e) => { const b = e.target.closest('.qm.sm'); if (b && !b.contains(e.relatedTarget)) hpopHide(false); });
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-help]');
+  if (t && t.classList.contains('sm')) { e.stopPropagation(); if (HPOP && HPOP.btn === t && HPOP.pin) hpopHide(true); else hpopShow(t, true); return; }
+  if (HPOP && !e.target.closest('.hpop')) hpopHide(true);
+  if (t) { e.stopPropagation(); openHelp(t.dataset.help); }
+}, true);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hpopHide(true); });
+
+// ---------- "Évènements marquants" on the bankroll curve ----------
+function brEvents(P, C) {
+  const n = P.length; if (n < 20) return null;
+  const bi = C.reduce((x, t) => x + t.bi, 0) / n, pts = [], lines = [];
+  let hi = 0, lo = 0; for (let i = 0; i < n; i++) { if (P[i] > P[hi]) hi = i; if (P[i] < P[lo]) lo = i; }
+  pts.push({ i: hi, v: P[hi], label: 'Plus haut ' + fmtS(P[hi], 0) + ' €', up: 1 });
+  pts.push({ i: lo, v: P[lo], label: 'Plus bas ' + fmtS(P[lo], 0) + ' €' });
+  // downswings of 20 buy-ins or more: biggest drop, then the biggest ones before its peak and after its trough
+  const dd = [];
+  (function rec(a, b) {
+    if (b - a < 2 || dd.length >= 4) return;
+    let pk = a, best = 0, bp = -1, bt = -1;
+    for (let i = a; i <= b; i++) { if (P[i] > P[pk]) pk = i; if (P[pk] - P[i] > best) { best = P[pk] - P[i]; bp = pk; bt = i; } }
+    if (best < 20 * bi) return; dd.push([bp, bt, best]); rec(a, bp); rec(bt, b);
+  })(0, n - 1);
+  for (const [p, t, d] of dd) { lines.push({ i1: p, v1: P[p], i2: t, v2: P[t] }); const lab = 'Downswing −' + fmtN(d / bi, 0) + ' BI (−' + fmtN(d, 0) + ' €)'; if (t !== lo) pts.push({ i: t, v: P[t], label: lab }); else pts[1].label = lab + ' · plus bas ' + fmtS(P[lo], 0) + ' €'; }
+  // longest stretches without making money (end no higher than the start)
+  const minLen = Math.max(40, Math.round(n * 0.12)), be = [];
+  (function rec(a, b) {
+    if (b - a < minLen || be.length >= 3) return;
+    const ix = []; let bi0 = -1, bj = -1;
+    for (let j = a; j <= b; j++) {
+      if (!ix.length || P[j] > P[ix[ix.length - 1]]) ix.push(j);
+      let l = 0, h = ix.length - 1; while (l < h) { const m = (l + h) >> 1; if (P[ix[m]] >= P[j]) h = m; else l = m + 1; }
+      if (j - ix[l] > bj - bi0) { bi0 = ix[l]; bj = j; }
+    }
+    if (bj - bi0 < minLen) return; be.push([bi0, bj]); rec(a, bi0); rec(bj, b);
+  })(0, n - 1);
+  for (const [i, j] of be) lines.push({ i1: i, v1: P[i], i2: j, v2: P[i], label: fmtN(j - i) + ' spins breakeven' });
+  // biggest jackpots won
+  C.map((t, i) => ({ t, i })).filter(x => x.t.place === 1 && x.t.mult >= 10).sort((a, b) => b.t.mult - a.t.mult || b.t.eur - a.t.eur).slice(0, 3)
+    .forEach(x => pts.push({ i: x.i, v: P[x.i], label: 'Jackpot x' + fmtN(x.t.mult) + ' (+' + fmtN(x.t.eur, 0) + ' €)', up: 1 }));
+  return { pts, lines };
+}
 
 // ---------- styled dropdowns: native <select> kept for logic, custom menu for looks ----------
 let DD = null;
