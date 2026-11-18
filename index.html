@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spin Tracker</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d0e10">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout: fixed left rail + scrolling workspace of dense dark panels, like a grinder's desk at night */
+  --bg: #0d0e10;
+  --panel: #16181b;
+  --panel2: #1e2125;
+  --line: #2b2f35;
+  --text: #ece8df;
+  --muted: #8d9198;
+  --accent: #f2a93b;
+  --good: #33c27a;
+  --bad: #ec5257;
+  --fish: #4a90ff;
+  --reg: #ec5257;
+  --pink: #e861ae;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--text); font: 14px/1.4 var(--body); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num, td.n, .mono { font-variant-numeric: tabular-nums; }
+.app { display: grid; grid-template-columns: 210px 1fr; height: 100%; }
+/* rail */
+.rail { background: #0a0b0c; border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 16px 10px; gap: 4px; min-height: 0; }
+.brand { font: 700 24px/1 var(--display); letter-spacing: .01em; padding: 4px 8px 14px; display: flex; align-items: center; gap: 8px; }
+.brand b { color: var(--accent); }
+.brand svg { flex: none; }
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 7px; color: #c9c6bf; text-decoration: none; font-weight: 500; }
+.nav a:hover { background: var(--panel); }
+.nav a.on { background: var(--panel2); color: var(--text); box-shadow: inset 2px 0 0 var(--accent); }
+.nav svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.7; flex: none; }
+.rail .spacer { flex: 1; }
+.sync-btn { margin: 0 4px 2px; justify-content: center; }
+.sync-btn:disabled { opacity: .6; cursor: progress; }
+.sync-state { font-size: 11px; color: var(--muted); padding: 2px 10px 10px; text-align: center; }
+@media (max-width: 760px) { .sync-state { display: none; } .sync-btn { margin: 0; white-space: nowrap; } }
+.store-state { font-size: 12px; color: var(--muted); padding: 8px 10px; line-height: 1.35; }
+.store-state i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--good); margin-right: 6px; }
+.store-state i.warn { background: var(--accent); }
+/* main */
+.main { overflow: auto; min-width: 0; padding: 18px 20px 40px; display: flex; flex-direction: column; gap: 14px; }
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; text-align: center; }
+.kpi .l { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kpi .v { font: 700 26px/1.15 var(--display); font-variant-numeric: tabular-nums; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.bar .grow { flex: 1; }
+.seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; padding: 5px 11px; border-radius: 6px; color: #cfccc5; font-weight: 500; font-size: 13px; }
+.seg button.on { background: var(--text); color: #111; }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 6px 12px; font-weight: 500; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: #444a52; }
+.btn.primary { background: var(--accent); color: #1a1205; border-color: var(--accent); font-weight: 600; }
+.btn.danger { border-color: #5a2a2c; color: #ff9a9d; }
+.btn.small { padding: 3px 8px; font-size: 12px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 3px 10px; font-size: 12px; }
+.chip.on { border-color: var(--accent); color: var(--accent); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+.panel h3 { margin: 0 0 8px; font: 600 15px/1.2 var(--body); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.panel h3 .help { color: var(--muted); font-weight: 400; font-size: 12px; }
+.panel h3 .r { margin-left: auto; display: flex; gap: 6px; }
+.grid2 { display: grid; grid-template-columns: 1.55fr 1fr; gap: 12px; }
+.grid2b { display: grid; grid-template-columns: 1fr 1.25fr; gap: 12px; }
+.grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
+.tile .l { font-size: 12px; color: var(--muted); }
+.tile .v { font: 700 22px/1.2 var(--display); font-variant-numeric: tabular-nums; }
+.pos { color: var(--good); } .neg { color: var(--bad); } .mut { color: var(--muted); }
+.chart-wrap { position: relative; height: max(420px, calc(100vh - 290px)); }
+.chart-wrap canvas { width: 100%; height: 100%; display: block; }
+.tip { position: absolute; pointer-events: none; background: #0b0c0e; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font-size: 12px; white-space: nowrap; display: none; z-index: 5; }
+.legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.legend button { border: 1px solid var(--line); background: var(--panel2); border-radius: 7px; padding: 4px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+.legend button.off { opacity: .4; }
+.legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.luck { position: absolute; left: 10px; top: 8px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; font-size: 12px; z-index: 2; }
+.luck b { display: block; font-size: 13px; }
+.luck.good { border-color: rgba(51,194,122,.55); background: rgba(51,194,122,.12); } .luck.good b { color: var(--good); }
+.luck.bad { border-color: rgba(236,82,87,.55); background: rgba(236,82,87,.12); } .luck.bad b { color: var(--bad); }
+table { border-collapse: collapse; width: 100%; }
+th { text-align: left; font-weight: 600; font-size: 12px; color: var(--muted); padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th.sort { cursor: pointer; } th.sort:hover { color: var(--text); }
+td { padding: 7px 8px; border-bottom: 1px solid #202328; vertical-align: middle; }
+td.n, th.n { text-align: right; }
+tr.click { cursor: pointer; } tr.click:hover td { background: #1b1e22; }
+tr.tot td { font-weight: 700; border-top: 1px solid var(--line); }
+.scroll { overflow-x: auto; }
+.sub { font-size: 11px; color: var(--muted); }
+.ci { font-size: 10px; color: var(--muted); margin-left: 3px; }
+.tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; border-radius: 5px; padding: 1px 7px; }
+.tag.reg { color: #ff8f93; background: rgba(236, 82, 87, .13); }
+.tag.fish { color: #8dbaff; background: rgba(74, 144, 255, .14); }
+.tag.unknown { color: var(--muted); background: #23262b; }
+.tag .man { font-weight: 400; opacity: .7; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.dot.reg { background: var(--reg); } .dot.fish { background: var(--fish); } .dot.unknown { background: #666; }
+.cards { display: inline-flex; gap: 3px; }
+.card { width: 22px; height: 30px; border-radius: 4px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; font: 700 13px/1 var(--display); color: #fff; }
+.card small { font-size: 10px; line-height: 1; }
+.c-s { background: #5b6069; } .c-h { background: #d2393f; } .c-d { background: #2f6fd6; } .c-c { background: #2a9a52; }
+.card.back { background: #2a2d33; }
+.acts { display: flex; gap: 14px; font-family: var(--mono); font-size: 12px; }
+.acts span.st { color: var(--muted); font: 10px var(--body); display: block; }
+.acts b { font-weight: 600; color: #7fb2ff; } .acts em { font-style: normal; color: #6e737b; }
+.acts sub { font-size: 8px; }
+.star { background: none; border: 0; color: #555; font-size: 16px; padding: 0 4px; }
+.star.on { color: var(--accent); }
+.pill { font-size: 11px; font-weight: 600; background: var(--panel2); border: 1px solid var(--line); border-radius: 5px; padding: 2px 6px; }
+.pager { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px; color: var(--muted); font-size: 13px; }
+input[type=text], input[type=number], input[type=date], select { background: var(--panel2); border: 1px solid var(--line); border-radius: 7px; padding: 5px 9px; }
+input[type=number] { width: 80px; }
+label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.pop { position: absolute; right: 0; top: calc(100% + 6px); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; z-index: 30; width: 340px; box-shadow: 0 12px 40px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 12px; }
+.pop h4 { margin: 0 0 6px; font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.pop .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.rel { position: relative; }
+.drop { border: 2px dashed #3a3f46; border-radius: 12px; padding: 34px; text-align: center; background: var(--panel); }
+.drop.over { border-color: var(--accent); background: #1d1a14; }
+.drop h2 { font: 700 26px var(--display); margin: 0 0 6px; }
+.progress { height: 8px; background: var(--panel2); border-radius: 4px; overflow: hidden; }
+.progress div { height: 100%; background: var(--accent); width: 0; transition: width .15s; }
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; z-index: 50; overflow: auto; }
+.modal { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; width: min(820px, 100%); padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.modal pre { background: #0b0c0e; border: 1px solid var(--line); border-radius: 8px; padding: 10px; font: 12px/1.45 var(--mono); max-height: 320px; overflow: auto; white-space: pre-wrap; }
+.seats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.seat { background: var(--panel2); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+.seat.hero { box-shadow: inset 0 0 0 1px var(--accent); }
+.street { display: grid; grid-template-columns: 70px 1fr; gap: 8px; padding: 6px 0; border-top: 1px solid #23262b; font-size: 13px; }
+.street .nm { color: var(--muted); font-weight: 600; }
+.lf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(430px, 1fr)); gap: 12px; }
+.lf h3 { font-size: 14px; }
+.lf .head { display: flex; gap: 6px; margin-bottom: 8px; }
+.lf .head div { flex: 1; background: var(--panel2); border-radius: 7px; text-align: center; padding: 6px 2px; }
+.lf .head b { display: block; font: 700 21px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.lf .head span { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.lf td, .lf th { padding: 3px 6px; font-size: 12px; }
+.c-ok { color: var(--good); } .c-agg { color: var(--bad); } .c-pas { color: var(--fish); } .c-na { color: #686c73; }
+.donuts { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+.donuts .grp { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.donuts .grp > div { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 330px; }
+.donut { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--muted); }
+.empty { padding: 30px; text-align: center; color: var(--muted); }
+.note { font-size: 12px; color: var(--muted); }
+.settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+.settings .panel { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.banner { background: #1d1a14; border: 1px solid #4a3a1d; border-radius: 10px; padding: 10px 14px; font-size: 13px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.toast { position: fixed; right: 20px; bottom: 20px; background: var(--panel2); border: 1px solid var(--line); border-radius: 9px; padding: 10px 14px; z-index: 60; }
+@media (max-width: 1100px) { .grid2, .grid2b { grid-template-columns: 1fr; } .grid5 { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .rail { flex-direction: row; overflow-x: auto; padding: 8px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .nav { flex-direction: row; } .brand { padding: 4px 8px; font-size: 18px; } .rail .spacer, .store-state { display: none; }
+  .kpis { grid-template-columns: repeat(2, 1fr); } .grid5 { grid-template-columns: repeat(2, 1fr); }
+  .main { padding: 12px 16px 30px; } .chart-wrap { height: 340px; } .lf-grid { grid-template-columns: 1fr; }
+}
+/* replayer */
+.rp-bg { position: fixed; inset: 0; background: rgba(0,0,0,.72); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px; }
+.rp { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; width: min(1320px, 100%); max-height: 100%; display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; overflow: auto; }
+.rp-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rp-title { font: 700 21px/1.2 var(--display); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rp-nav { display: flex; gap: 8px; align-items: center; }
+.rp-body { display: grid; grid-template-columns: 1fr 320px; gap: 14px; min-height: 0; }
+.rp-main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.felt { position: relative; aspect-ratio: 16 / 9.2; width: 100%; max-height: calc(100vh - 260px); margin: 0 auto; }
+.felt-in { position: absolute; inset: 9% 7%; border-radius: 999px; background: radial-gradient(ellipse at 50% 45%, #22654c 0%, #164735 55%, #0f3326 100%); border: 12px solid #2b1f15; box-shadow: inset 0 0 40px rgba(0,0,0,.55), 0 10px 30px rgba(0,0,0,.5); }
+.rp-pot { position: absolute; left: 50%; top: 35%; transform: translate(-50%,-50%); font: 700 18px var(--display); color: #f3e7c8; background: rgba(0,0,0,.35); border-radius: 999px; padding: 2px 14px; white-space: nowrap; }
+.rp-board { position: absolute; left: 50%; top: 49%; transform: translate(-50%,-50%); display: flex; gap: 6px; }
+.rp-note { position: absolute; left: 50%; top: 61%; transform: translateX(-50%); font-size: 13px; color: #cfccc5; background: #0c0d0f; border: 1px solid var(--line); border-radius: 999px; padding: 3px 14px; white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis; }
+.card.big { width: 40px; height: 56px; font-size: 20px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
+.card.big small { font-size: 14px; }
+.card.big.back { background: repeating-linear-gradient(45deg, #3a2f6b 0 6px, #2c2454 6px 12px); border: 2px solid #ddd; }
+.card.slot { background: rgba(255,255,255,.05); box-shadow: none; border: 1px dashed rgba(255,255,255,.15); }
+.rp-seat { position: absolute; transform: translate(-50%,-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; width: 190px; transition: opacity .2s; }
+.rp-seat.folded { opacity: .38; }
+.rp-cards { display: flex; gap: 3px; margin-bottom: -14px; z-index: 1; }
+.rp-box { background: #101113; border: 1px solid #353a41; border-radius: 10px; padding: 6px 10px 5px; width: 100%; text-align: center; z-index: 2; }
+.rp-seat.hero .rp-box { border-color: #7a5a22; }
+.rp-seat.active .rp-box { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(242,169,59,.35), 0 0 18px rgba(242,169,59,.35); }
+.rp-seat.winner .rp-box { border-color: var(--good); box-shadow: 0 0 16px rgba(51,194,122,.35); }
+.rp-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-stack { font: 700 17px var(--display); font-variant-numeric: tabular-nums; display: flex; justify-content: center; gap: 8px; align-items: center; }
+.rp-eq { font: 600 12px var(--body); color: #111; background: var(--accent); border-radius: 4px; padding: 0 5px; }
+.rp-act { font-size: 12px; font-weight: 700; border-radius: 6px; padding: 2px 8px; background: #2a2e34; color: #e8e5de; white-space: nowrap; }
+.rp-act.a-r, .rp-act.a-b { background: #6b2f22; color: #ffd8cf; } .rp-act.a-c { background: #1f4a7a; color: #d5e6ff; } .rp-act.a-f { background: #2a2e34; color: #9aa0a8; } .rp-act.a-x { background: #2c3a2f; color: #c8e8cf; }
+.rp-act.ai { background: var(--accent); color: #1a1205; } .rp-act.win { background: var(--good); color: #062014; }
+.rp-bet { position: absolute; transform: translate(-50%,-50%); font: 700 14px var(--display); color: #f3e7c8; display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,.4); border-radius: 999px; padding: 1px 9px 1px 3px; white-space: nowrap; }
+.rp-bet i { width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle, #f2a93b 35%, #fff 36% 45%, #c9811f 46%); display: inline-block; }
+.rp-dealer { position: absolute; transform: translate(-50%,-50%); width: 22px; height: 22px; border-radius: 50%; background: #f1ede4; color: #111; font: 700 12px/22px var(--body); text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,.5); }
+.rp-ctrl { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.rp-ctrl .btn { min-width: 40px; justify-content: center; }
+.rp-play { min-width: 56px !important; }
+#rpSlider { flex: 1; min-width: 140px; accent-color: var(--accent); }
+.rp-chk { display: inline-flex; gap: 5px; align-items: center; font-size: 12px; color: var(--muted); }
+.rp-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 0; }
+.rp-res { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.rp-res > div { background: var(--panel2); border-radius: 8px; padding: 6px; text-align: center; display: flex; flex-direction: column; }
+.rp-res b { font: 700 20px var(--display); font-variant-numeric: tabular-nums; }
+.rp-log { flex: 1; min-height: 160px; max-height: 360px; overflow: auto; background: #0f1012; border: 1px solid var(--line); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 1px; }
+.rp-st { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding: 6px 4px 3px; display: flex; gap: 6px; align-items: center; }
+.rp-line { text-align: left; border: 0; background: transparent; padding: 3px 6px; border-radius: 5px; font-size: 13px; color: var(--text); }
+.rp-line.me { color: #9cc3ff; }
+.rp-line.todo { opacity: .4; }
+.rp-line.on { background: #2b2410; outline: 1px solid var(--accent); }
+.rp-line:hover { background: #1c1f23; }
+.chart-wrap canvas { cursor: pointer; }
+.legend-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin-top: 8px; }
+.legend-row .legend { margin-top: 0; }
+.rb-ctl { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.rb-ctl input { width: 70px; }
+@media (max-width: 1000px) { .rp-body { grid-template-columns: 1fr; } .rp-seat { width: 150px; } .card.big { width: 30px; height: 42px; font-size: 15px; } .felt { aspect-ratio: 4 / 3.4; } }
+
+.fm { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; width: min(980px, 100%); display: flex; flex-direction: column; max-height: calc(100vh - 60px); }
+.fm-tabs { display: flex; gap: 4px; padding: 14px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; align-items: center; }
+.fm-tabs button { border: 1px solid transparent; background: none; border-radius: 8px; padding: 8px 14px; font-weight: 500; color: #d6d3cc; }
+.fm-tabs button.on { background: var(--panel2); border-color: #4a4f56; color: var(--text); font-weight: 600; }
+.fm-tabs .fm-x { margin-left: auto; color: var(--muted); }
+.fm-body { padding: 14px 20px 18px; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+.fm-body h4 { margin: 10px 0 2px; font-size: 13px; font-weight: 600; color: #d6d3cc; }
+.fm-chip { align-self: flex-start; font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; background: var(--panel2); }
+.fm-row6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.fm-roll { display: flex; gap: 8px; flex-wrap: wrap; }
+.fm-roll .fm-card { flex: 1 1 auto; }
+.fm-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fm-card { background: #1a1c20; border: 1px solid #2b2f35; border-radius: 9px; padding: 12px 14px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-size: 14px; text-align: center; flex-wrap: wrap; min-height: 48px; }
+.fm-grid2 .fm-card, .fm-tog { justify-content: flex-start; text-align: left; min-height: 54px; }
+.fm-tog { align-self: flex-start; }
+.fm-card .sub { width: 100%; }
+.fm-card:hover { border-color: #444a52; }
+.fm-card.on { background: #2a2b2e; border-color: #8a8f96; box-shadow: inset 0 0 0 1px #8a8f96; font-weight: 600; }
+.fm-card input[type=number] { width: 58px; text-align: center; }
+.fm-card input[type=date] { margin-left: 6px; }
+.fm-ic { color: var(--muted); display: inline-flex; }
+.fm-foot { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.btn.on-acc { border-color: var(--accent); color: var(--accent); }
+.grid6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.tile .theo { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.tile .theo b { font-variant-numeric: tabular-nums; }
+@media (max-width: 1100px) { .grid6 { grid-template-columns: repeat(3, 1fr); } .fm-row6 { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px) { .grid6 { grid-template-columns: repeat(2, 1fr); } .fm-row6, .fm-grid2 { grid-template-columns: 1fr 1fr; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="rail" aria-label="Navigation">
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z" fill="#f2a93b"/></svg><span>Spin <b>Tracker</b></span></div>
+    <button class="btn primary sync-btn" id="syncBtn" data-sync="1">⟳ Mettre à jour</button><div class="sync-state" id="syncState"></div>
+    <div class="nav" id="nav">
+      <a href="#tableau" data-v="tableau"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Tableau de bord</a>
+      <a href="#joueurs" data-v="joueurs"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 4a4 4 0 0 1 0 8M22 21c0-3-2-5-4-6"/></svg>Joueurs</a>
+      <a href="#review" data-v="review"><svg viewBox="0 0 24 24"><path d="M11 5 4 12l7 7M20 5l-7 7 7 7"/></svg>Review</a>
+      <a href="#leaks" data-v="leaks"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>Leak Finder</a>
+    </div>
+    <div class="spacer"></div>
+    <div class="nav">
+      <a href="#imports" data-v="imports"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Imports</a>
+      <a href="#reglages" data-v="reglages"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.3l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2.2-1.3L14 3h-4l-.4 2.4a7 7 0 0 0-2.2 1.3l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .9.1 1.3l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2.2 1.3L10 21h4l.4-2.4a7 7 0 0 0 2.2-1.3l2.4 1 2-3.4-2-1.6c.1-.4.1-.9.1-1.3z"/></svg>Réglages</a>
+    </div>
+    <div class="store-state" id="storeState"></div>
+  </nav>
+  <main class="main" id="main"></main>
+</div>
+<div id="modalRoot"></div>
+<script>
+// ===== Spin Tracker engine: Betclic parser, pots, evaluator, all-in EV =====
+(function (G) {
+  'use strict';
+  const RANKS = '23456789TJQKA', SUITS = 'cdhs';
+  function cardId(s) { return RANKS.indexOf(s[0]) * 4 + SUITS.indexOf(s[1]); }
+
+  // ---------- Parser ----------
+  const VERBS = 'Posts SB|Posts BB|Folds|Checks|Calls|Bets|Raises to|Sits out|Sits in|Reconnected|Disconnected|Posts ante';
+  const RE_ACT = new RegExp('^(\\d\\d):(\\d\\d):(\\d\\d) - (.+): (' + VERBS + ')(?: (\\d+))?( and is all-in)?\\s*$');
+  const RE_SEAT = /^Seat (\d+): (.+) \((\d+)\) \[([^\]]*)\]\s*$/;
+  const RE_HOLE = /^(.+): \[(\w\w) (\w\w)\]\s*$/;
+  const RE_WIN = /^(.+) wins (?:main pot|\d+\w\w side pot) of (\d+)\s*$/;
+  const RE_FIN = /^(.+) finished (\d+)\w\w(?: and wins ([\d.,]+) EUR)?\s*$/;
+  const RE_SHOW = /^(.+) shows \[(\w\w) (\w\w)\]/;
+  const STREETS = { 'PRE-FLOP': 0, 'FLOP': 1, 'TURN': 2, 'RIVER': 3, 'SHOWDOWN': 4, 'SUMMARY': 5, 'HEADER': -3, 'PLAYERS': -2, 'HOLE CARDS': -1 };
+  const num = (s) => parseFloat(String(s).replace(',', '.').replace(/[^\d.\-]/g, '')) || 0;
+
+  function parseHand(block) {
+    const lines = block.split(/\r?\n/);
+    const h = { players: [], acts: [], board: [], hole: {}, won: {}, fin: [], shown: {} };
+    let sec = null;
+    for (let raw of lines) {
+      const line = raw.replace(/\s+$/, '');
+      if (!line) continue;
+      const m0 = /^\*\*\* ([A-Z\- ]+) \*\*\*(?: \[([^\]]*)\])?/.exec(line);
+      if (m0) {
+        sec = STREETS[m0[1]] !== undefined ? STREETS[m0[1]] : sec;
+        if (m0[2] && (sec === 1 || sec === 2 || sec === 3)) h.board = m0[2].trim().split(/\s+/);
+        continue;
+      }
+      if (sec === -3) {
+        const i = line.indexOf(': ');
+        if (i < 0) continue;
+        const k = line.slice(0, i), v = line.slice(i + 2);
+        switch (k) {
+          case 'Site': h.site = v; break;
+          case 'Game Mode': h.mode = v; break;
+          case 'Game Name': h.gname = v; break;
+          case 'Game ID': h.gid = v; break;
+          case 'Prize pool': h.prize = num(v); break;
+          case 'Multiplier': h.mult = num(v); break;
+          case 'Buy In': h.bi = num(v); break;
+          case 'Hand ID': h.id = v; break;
+          case 'Date & Time': {
+            const m = /(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/.exec(v);
+            if (m) h.ts = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+            break;
+          }
+          case 'Table ID': h.tid = v; break;
+          case 'Blinds': { const p = v.split('/'); h.sb = num(p[0]); h.bb = num(p[1]); break; }
+          case 'Total Pot': h.pot = num(v); break;
+          case 'Rake': h.rake = num(v); break;
+        }
+      } else if (sec === -2) {
+        const m = RE_SEAT.exec(line);
+        if (m) {
+          const tags = m[4].split(/\s+/);
+          h.players.push({ seat: +m[1], name: m[2], stack: +m[3], btn: tags.includes('BTN'), sbp: tags.includes('SB'), bbp: tags.includes('BB'), hero: tags.includes('Hero') });
+        }
+      } else if (sec === -1) {
+        const m = RE_HOLE.exec(line);
+        if (m) h.hole[m[1]] = [m[2], m[3]];
+      } else if (sec >= 0 && sec <= 3) {
+        const m = RE_ACT.exec(line);
+        if (m) {
+          const v = m[5];
+          let a = null;
+          if (v === 'Posts SB') a = 'sb'; else if (v === 'Posts BB') a = 'bb'; else if (v === 'Posts ante') a = 'ante';
+          else if (v === 'Folds') a = 'f'; else if (v === 'Checks') a = 'x'; else if (v === 'Calls') a = 'c';
+          else if (v === 'Bets') a = 'b'; else if (v === 'Raises to') a = 'r';
+          if (a) h.acts.push({ st: sec, p: m[4], a, n: m[6] ? +m[6] : 0, ai: !!m[7] });
+        }
+      } else if (sec === 4) {
+        const m = RE_SHOW.exec(line);
+        if (m) h.shown[m[1]] = [m[2], m[3]];
+      } else if (sec === 5) {
+        let m = RE_WIN.exec(line);
+        if (m) { h.won[m[1]] = (h.won[m[1]] || 0) + (+m[2]); continue; }
+        m = RE_FIN.exec(line);
+        if (m) h.fin.push({ p: m[1], place: +m[2], eur: m[3] ? num(m[3]) : 0 });
+      }
+    }
+    if (!h.id || !h.players.length) return null;
+    for (const k in h.shown) if (!h.hole[k]) h.hole[k] = h.shown[k];
+    finalize(h);
+    return h;
+  }
+
+  function finalize(h) {
+    const n = h.players.length; h.n = n;
+    const hero = h.players.find(p => p.hero); h.hero = hero ? hero.name : null;
+    for (const p of h.players) {
+      if (n === 2) p.pos = p.btn ? 'SB' : 'BB';
+      else p.pos = p.btn ? 'BTN' : p.sbp ? 'SB' : p.bbp ? 'BB' : '?';
+    }
+    // contributions, per-street commitments
+    const contrib = {}, folded = {}, committed = {};
+    let st = -1;
+    for (const p of h.players) { contrib[p.name] = 0; folded[p.name] = false; }
+    for (const a of h.acts) {
+      if (a.st !== st) { st = a.st; for (const k in committed) committed[k] = 0; }
+      if (!(a.p in committed)) committed[a.p] = 0;
+      let add = 0;
+      if (a.a === 'sb' || a.a === 'bb' || a.a === 'c' || a.a === 'b' || a.a === 'ante') add = a.n;
+      else if (a.a === 'r') add = a.n - committed[a.p];
+      else if (a.a === 'f') folded[a.p] = true;
+      if (a.a !== 'ante') committed[a.p] += add;
+      contrib[a.p] = (contrib[a.p] || 0) + add;
+      a.add = add;
+    }
+    // uncalled excess (not written in Betclic HH) is returned to the top contributor
+    // (Betclic's "Total Pot" excludes it when the bet was partially called by an all-in player)
+    const order = Object.keys(contrib).sort((a, b) => contrib[b] - contrib[a]);
+    const totC = Object.values(contrib).reduce((x, y) => x + y, 0);
+    const wonTot = Object.values(h.won).reduce((x, y) => x + y, 0);
+    if (h.pot == null && wonTot > 0) h.pot = wonTot;
+    if (h.pot != null && totC > h.pot && order.length) { h.uncalled = totC - h.pot; h.uncalledTo = order[0]; contrib[order[0]] -= h.uncalled; }
+    h.contrib = contrib; h.folded = folded;
+    h.net = {};
+    for (const p of h.players) h.net[p.name] = (h.won[p.name] || 0) - contrib[p.name];
+    h.sd = h.players.filter(p => !folded[p.name]).length >= 2 && Object.keys(h.shown).length >= 2;
+  }
+
+  function parseFile(text) {
+    const out = [];
+    const blocks = text.split(/\r?\n-{6,}\s*\r?\n/);
+    for (const b of blocks) {
+      if (b.indexOf('*** HEADER ***') < 0) continue;
+      try { const h = parseHand(b.slice(b.indexOf('*** HEADER ***'))); if (h) { h.raw = b.trim(); out.push(h); } } catch (e) { /* skip */ }
+    }
+    return out;
+  }
+
+  // ---------- Evaluator (7 cards -> comparable int) ----------
+  const bitCount = (x) => { let c = 0; while (x) { x &= x - 1; c++; } return c; };
+  function topBits(mask, k) { let r = 0, c = 0; for (let i = 12; i >= 0 && c < k; i--) if (mask & (1 << i)) { r = (r << 4) | i; c++; } while (c < k) { r <<= 4; c++; } return r; }
+  function straightHigh(mask) {
+    const m = mask;
+    for (let hi = 12; hi >= 4; hi--) { const need = 0x1f << (hi - 4); if ((m & need) === need) return hi; }
+    if ((m & 0x100f) === 0x100f) return 3; // wheel A-2-3-4-5
+    return -1;
+  }
+  const cnt = new Int32Array(13), sc = new Int32Array(4), sm = new Int32Array(4);
+  function eval7(cards, len) {
+    cnt.fill(0); sc.fill(0); sm.fill(0);
+    let mask = 0;
+    for (let i = 0; i < len; i++) { const c = cards[i], r = c >> 2, s = c & 3; cnt[r]++; sc[s]++; sm[s] |= 1 << r; mask |= 1 << r; }
+    for (let s = 0; s < 4; s++) if (sc[s] >= 5) {
+      const sh = straightHigh(sm[s]);
+      if (sh >= 0) return (8 << 20) | sh;
+      return (5 << 20) | topBits(sm[s], 5);
+    }
+    let quad = -1, trips = -1, trips2 = -1, p1 = -1, p2 = -1;
+    for (let r = 12; r >= 0; r--) {
+      const c = cnt[r];
+      if (c === 4) quad = r;
+      else if (c === 3) { if (trips < 0) trips = r; else if (trips2 < 0) trips2 = r; }
+      else if (c === 2) { if (p1 < 0) p1 = r; else if (p2 < 0) p2 = r; }
+    }
+    if (quad >= 0) return (7 << 20) | (quad << 4) | topBits(mask & ~(1 << quad), 1);
+    if (trips >= 0 && (trips2 >= 0 || p1 >= 0)) { const pr = Math.max(trips2, p1); return (6 << 20) | (trips << 4) | pr; }
+    const sh = straightHigh(mask);
+    if (sh >= 0) return (4 << 20) | sh;
+    if (trips >= 0) return (3 << 20) | (trips << 8) | topBits(mask & ~(1 << trips), 2);
+    if (p1 >= 0 && p2 >= 0) return (2 << 20) | (p1 << 8) | (p2 << 4) | topBits(mask & ~(1 << p1) & ~(1 << p2), 1);
+    if (p1 >= 0) return (1 << 20) | (p1 << 12) | topBits(mask & ~(1 << p1), 3);
+    return topBits(mask, 5);
+  }
+
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+
+  // ---------- Pots ----------
+  function buildPots(h) {
+    const live = h.players.map(p => p.name).filter(n => !h.folded[n]);
+    const levels = [...new Set(live.map(n => h.contrib[n]))].sort((a, b) => a - b);
+    const pots = []; let prev = 0;
+    for (const L of levels) {
+      let amt = 0;
+      for (const p of h.players) { const c = h.contrib[p.name]; amt += Math.max(0, Math.min(c, L) - Math.min(c, prev)); }
+      const elig = live.filter(n => h.contrib[n] >= L);
+      if (amt > 0) pots.push({ amt, elig });
+      prev = L;
+    }
+    // dead money above highest live level (shouldn't happen) goes to last pot
+    let rest = 0; for (const p of h.players) rest += Math.max(0, h.contrib[p.name] - prev);
+    if (rest && pots.length) pots[pots.length - 1].amt += rest;
+    return pots;
+  }
+
+  // ---------- All-in EV ----------
+  // returns { adj:bool, ev:{name:netEV}, vr:{name:variance}, eq:{name:equity of total}, st }
+  function computeEV(h, trials) {
+    trials = trials || 12000;
+    const res = { adj: false, ev: Object.assign({}, h.net), vr: {}, st: -1 };
+    const live = h.players.map(p => p.name).filter(n => !h.folded[n]);
+    if (live.length < 2) return res;
+    let S = 0; for (const a of h.acts) if (a.st > S) S = a.st;
+    const boardKnown = S === 0 ? 0 : S + 2;
+    if (boardKnown >= 5) return res;
+    for (const n of live) if (!h.hole[n]) return res;
+    const stackOf = {}; for (const p of h.players) stackOf[p.name] = p.stack;
+    const notAllIn = live.filter(n => h.contrib[n] < stackOf[n]);
+    if (notAllIn.length > 1) return res;
+    const pots = buildPots(h);
+    const board = h.board.slice(0, boardKnown).map(cardId);
+    const holes = live.map(n => h.hole[n].map(cardId));
+    const dead = new Set(board); holes.forEach(x => x.forEach(c => dead.add(c)));
+    // include any other known hole cards as dead
+    for (const k in h.hole) if (!live.includes(k)) h.hole[k].forEach(c => dead.add(cardId(c)));
+    const deck = []; for (let c = 0; c < 52; c++) if (!dead.has(c)) deck.push(c);
+    const need = 5 - boardKnown;
+    const L = live.length, sum = new Float64Array(L), sum2 = new Float64Array(L);
+    const cards = new Int32Array(7), full = new Int32Array(5), score = new Int32Array(L), take = new Float64Array(L);
+    const potElig = pots.map(p => p.elig.map(n => live.indexOf(n)));
+    function settle() {
+      for (let i = 0; i < L; i++) {
+        cards[0] = holes[i][0]; cards[1] = holes[i][1];
+        for (let j = 0; j < 5; j++) cards[2 + j] = full[j];
+        score[i] = eval7(cards, 7);
+      }
+      take.fill(0);
+      for (let k = 0; k < pots.length; k++) {
+        const el = potElig[k]; let best = -1, nb = 0;
+        for (const i of el) { if (score[i] > best) { best = score[i]; nb = 1; } else if (score[i] === best) nb++; }
+        const share = pots[k].amt / nb;
+        for (const i of el) if (score[i] === best) take[i] += share;
+      }
+      for (let i = 0; i < L; i++) { sum[i] += take[i]; sum2[i] += take[i] * take[i]; }
+    }
+    for (let j = 0; j < boardKnown; j++) full[j] = board[j];
+    let N = 0;
+    if (need <= 2) {
+      if (need === 1) { for (let a = 0; a < deck.length; a++) { full[4] = deck[a]; settle(); N++; } }
+      else { for (let a = 0; a < deck.length; a++) for (let b = a + 1; b < deck.length; b++) { full[3] = deck[a]; full[4] = deck[b]; settle(); N++; } }
+    } else {
+      const rnd = mulberry32(hashStr(h.id)); const d = deck.slice(); const D = d.length;
+      for (let t = 0; t < trials; t++) {
+        for (let j = 0; j < need; j++) { const k = j + Math.floor(rnd() * (D - j)); const tmp = d[j]; d[j] = d[k]; d[k] = tmp; full[boardKnown + j] = d[j]; }
+        settle(); N++;
+      }
+    }
+    res.adj = true; res.st = S; res.eq = {};
+    const totalPot = pots.reduce((s, p) => s + p.amt, 0);
+    live.forEach((n, i) => {
+      const m = sum[i] / N;
+      res.ev[n] = m - h.contrib[n];
+      res.vr[n] = Math.max(0, sum2[i] / N - m * m);
+      res.eq[n] = totalPot ? m / totalPot : 0;
+    });
+    return res;
+  }
+
+  // ---------- Preflop analysis helpers ----------
+  // Per player preflop decisions with situation key
+  function preflopInfo(h) {
+    const info = {}; // name -> {vpip, pfr, limp, decisions:[{key, act}] , btnFirstIn, btnLimp}
+    for (const p of h.players) info[p.name] = { vpip: false, pfr: false, decisions: [], btnOpp: false, btnLimp: false, threeBet: false, threeBetOpp: false };
+    const posOf = {}; for (const p of h.players) posOf[p.name] = p.pos;
+    const stackOf = {}; for (const p of h.players) stackOf[p.name] = p.stack;
+    const bbAllInPost = h.acts.some(a => a.st === 0 && a.a === 'bb' && a.ai);
+    let raises = 0, curBet = 0; const committed = {}; const seq = [];
+    for (const a of h.acts) {
+      if (a.st !== 0) break;
+      if (a.a === 'sb' || a.a === 'bb' || a.a === 'ante') { if (a.a !== 'ante') { committed[a.p] = (committed[a.p] || 0) + a.n; curBet = Math.max(curBet, committed[a.p]); } continue; }
+      const I = info[a.p]; if (!I) continue;
+      const pos = posOf[a.p];
+      const label = h.n === 2 ? 'HU ' + pos : pos;
+      // classify action
+      let act;
+      const allin = a.ai || ((committed[a.p] || 0) + a.add >= stackOf[a.p]);
+      if (a.a === 'f') act = 'fold';
+      else if (a.a === 'x') act = 'check';
+      else if (a.a === 'c') act = raises === 0 ? 'limp' : 'call';
+      else if (a.a === 'r' || a.a === 'b') act = allin ? 'shove' : 'raise';
+      else act = a.a;
+      if (a.a === 'c' && allin && raises === 0) act = 'limp';
+      // situation key (actions faced, by others and self, before this decision)
+      const key = label + ' | ' + (seq.length ? seq.join(', ') : 'premier à parler');
+      const effBB = effStackBB(h, a.p);
+      I.decisions.push({ key, act, eff: effBB, first: !I.decisions.length });
+      // stats
+      if (act === 'limp' || act === 'call' || act === 'raise' || act === 'shove') I.vpip = true;
+      if (act === 'raise' || act === 'shove') I.pfr = true;
+      if (h.n === 3 && pos === 'BTN' && I.decisions.length === 1 && !bbAllInPost) { I.btnOpp = true; if (act === 'limp') I.btnLimp = true; }
+      if (raises === 1 && I.decisions.length === 1) { I.threeBetOpp = true; if (act === 'raise' || act === 'shove') I.threeBet = true; }
+      // update sequence
+      const shortPos = h.n === 2 ? pos : pos;
+      seq.push(shortPos + ' ' + act);
+      if (a.a === 'r' || a.a === 'b') raises++;
+      committed[a.p] = (committed[a.p] || 0) + a.add;
+      curBet = Math.max(curBet, committed[a.p]);
+    }
+    return info;
+  }
+
+  function effStackBB(h, name) {
+    const me = h.players.find(p => p.name === name); if (!me || !h.bb) return 0;
+    let mx = 0; for (const p of h.players) if (p.name !== name) mx = Math.max(mx, p.stack);
+    return Math.min(me.stack, mx) / h.bb;
+  }
+
+  // Postflop stats for a player in a hand
+  function postflopInfo(h, name) {
+    const r = { sawFlop: false, cbOpp: false, cb: false, fcbOpp: false, fcb: false, wtsd: false, wsd: false, af_b: 0, af_c: 0 };
+    if (h.folded[name] && !h.acts.some(a => a.st >= 1 && a.p === name)) {
+      // folded preflop or never saw flop
+    }
+    const sawFlop = h.board.length >= 3 && !h.acts.some(a => a.st === 0 && a.p === name && a.a === 'f');
+    r.sawFlop = sawFlop;
+    if (!sawFlop) return r;
+    // preflop aggressor
+    let pfa = null; for (const a of h.acts) if (a.st === 0 && (a.a === 'r' || a.a === 'b')) pfa = a.p;
+    const flop = h.acts.filter(a => a.st === 1);
+    let betSeen = false, cbetBy = null;
+    for (const a of flop) {
+      if (a.p === name && (a.a === 'b' || a.a === 'r')) r.af_b++;
+      if (a.p === name && a.a === 'c') r.af_c++;
+      if (!betSeen) {
+        if (a.p === name && pfa === name) { r.cbOpp = true; if (a.a === 'b') r.cb = true; }
+        if (a.a === 'b') { betSeen = true; cbetBy = a.p === pfa ? a.p : null; }
+      } else if (cbetBy && a.p === name && name !== cbetBy && !r.fcbOpp) { r.fcbOpp = true; if (a.a === 'f') r.fcb = true; }
+    }
+    for (const a of h.acts) if (a.st >= 2 && a.p === name) { if (a.a === 'b' || a.a === 'r') r.af_b++; if (a.a === 'c') r.af_c++; }
+    r.wtsd = !h.folded[name] && h.sd;
+    r.wsd = r.wtsd && (h.won[name] || 0) > 0;
+    return r;
+  }
+
+  // Compact action string per street for hero (like PST: F C X B R, A for all-in)
+  function actionLine(h, name) {
+    const out = [[], [], [], []];
+    for (const a of h.acts) {
+      if (a.st < 0 || a.st > 3 || a.a === 'sb' || a.a === 'bb' || a.a === 'ante') continue;
+      const L = { f: 'F', x: 'X', c: 'C', b: 'B', r: 'R' }[a.a];
+      out[a.st].push({ L, me: a.p === name, ai: a.ai });
+    }
+    return out;
+  }
+
+
+  // ---------- Compact storage format ----------
+  function pack(h) {
+    const idx = {}; h.players.forEach((p, i) => idx[p.name] = i);
+    const I = (n) => (n in idx ? idx[n] : n);
+    const o = {
+      i: h.id, g: h.gid, t: h.tid, ts: h.ts, bi: h.bi, pz: h.prize, m: h.mult, b: [h.sb, h.bb], pt: h.pot, gn: h.gname, si: h.site, mo: h.mode,
+      P: h.players.map(p => [p.seat, p.name, p.stack, (p.btn ? 1 : 0) | (p.sbp ? 2 : 0) | (p.bbp ? 4 : 0) | (p.hero ? 8 : 0)]),
+      A: h.acts.map(a => [a.st, I(a.p), a.a, a.n, a.ai ? 1 : 0]),
+      B: h.board.join(' '), H: {}, W: {}, F: h.fin.map(f => [I(f.p), f.place, f.eur]), S: Object.keys(h.shown).map(I)
+    };
+    for (const k in h.hole) o.H[I(k)] = h.hole[k].join(' ');
+    for (const k in h.won) o.W[I(k)] = h.won[k];
+    if (h.E) o.E = h.E.adj ? { st: h.E.st, ev: h.players.map(p => +(h.E.ev[p.name] || 0).toFixed(2)), vr: h.players.map(p => Math.round(h.E.vr[p.name] || 0)), eq: h.players.map(p => h.E.eq[p.name] != null ? +h.E.eq[p.name].toFixed(4) : null) } : 0;
+    return o;
+  }
+  function unpack(o) {
+    const players = o.P.map(x => ({ seat: x[0], name: x[1], stack: x[2], btn: !!(x[3] & 1), sbp: !!(x[3] & 2), bbp: !!(x[3] & 4), hero: !!(x[3] & 8) }));
+    const N = (v) => (typeof v === 'number' && players[v] ? players[v].name : v);
+    const h = { id: o.i, gid: o.g, tid: o.t, ts: o.ts, bi: o.bi, prize: o.pz, mult: o.m, sb: o.b[0], bb: o.b[1], pot: o.pt, gname: o.gn, site: o.si, mode: o.mo, rake: 0,
+      players, acts: o.A.map(a => ({ st: a[0], p: N(a[1]), a: a[2], n: a[3], ai: !!a[4] })), board: o.B ? o.B.split(' ') : [], hole: {}, won: {}, shown: {},
+      fin: o.F.map(f => ({ p: N(f[0]), place: f[1], eur: f[2] })) };
+    for (const k in o.H) h.hole[N(isNaN(+k) ? k : +k)] = o.H[k].split(' ');
+    for (const k in o.W) h.won[N(isNaN(+k) ? k : +k)] = o.W[k];
+    for (const k of o.S) { const n = N(k); h.shown[n] = h.hole[n]; }
+    finalize(h);
+    if (o.E !== undefined) {
+      if (!o.E) h.E = { adj: false, ev: Object.assign({}, h.net), vr: {}, st: -1 };
+      else { const ev = {}, vr = {}, eq = {}; players.forEach((p, i) => { ev[p.name] = o.E.ev[i]; vr[p.name] = o.E.vr[i]; if (o.E.eq[i] != null) eq[p.name] = o.E.eq[i]; }); h.E = { adj: true, st: o.E.st, ev, vr, eq }; }
+    }
+    return h;
+  }
+  // Rebuild a Betclic-style text history from parsed data
+  function toText(h) {
+    const d = new Date(h.ts), z = (x) => String(x).padStart(2, '0');
+    const dt = d.getUTCFullYear() + '-' + z(d.getUTCMonth() + 1) + '-' + z(d.getUTCDate()) + ' ' + z(d.getUTCHours()) + ':' + z(d.getUTCMinutes()) + ':' + z(d.getUTCSeconds());
+    const tm = dt.slice(11);
+    const L = ['*** HEADER ***', 'Site: ' + (h.site || 'Betclic.fr'), 'Game Mode: Spin', "Game Type: NL Texas Hold'em", 'Game Name: ' + (h.gname || ''), 'Game ID: ' + h.gid,
+      'Prize pool: ' + (h.prize || 0).toFixed(2) + '€', 'Multiplier: x' + h.mult, 'Buy In: ' + (h.bi || 0).toFixed(2) + '€', 'Hand ID: ' + h.id, 'Date & Time: ' + dt + ' (UTC)',
+      'Table ID: ' + h.tid, 'Blinds: ' + h.sb + '/' + h.bb, 'Total Pot: ' + h.pot, 'Rake: 0', '*** PLAYERS ***'];
+    for (const p of h.players) { const t = []; if (p.btn) t.push('BTN'); if (p.sbp) t.push('SB'); if (p.bbp) t.push('BB'); if (p.hero) t.push('Hero'); L.push('Seat ' + p.seat + ': ' + p.name + ' (' + p.stack + ') [' + t.join(' ') + ']'); }
+    L.push('*** HOLE CARDS ***');
+    for (const k in h.hole) L.push(k + ': [' + h.hole[k].join(' ') + ']');
+    const names = ['*** PRE-FLOP ***', '*** FLOP *** [' + h.board.slice(0, 3).join(' ') + ']', '*** TURN *** [' + h.board.slice(0, 4).join(' ') + ']', '*** RIVER *** [' + h.board.join(' ') + ']'];
+    const V = { sb: 'Posts SB', bb: 'Posts BB', f: 'Folds', x: 'Checks', c: 'Calls', b: 'Bets', r: 'Raises to', ante: 'Posts ante' };
+    for (let s = 0; s < 4; s++) {
+      if (s > 0 && h.board.length < s + 2) break;
+      L.push(names[s]);
+      for (const a of h.acts) if (a.st === s) L.push(tm + ' - ' + a.p + ': ' + V[a.a] + (a.a === 'f' || a.a === 'x' ? '' : ' ' + a.n) + (a.ai ? ' and is all-in' : ''));
+    }
+    if (Object.keys(h.shown).length) { L.push('*** SHOWDOWN ***'); for (const k in h.shown) L.push(k + ' shows [' + h.shown[k].join(' ') + ']'); }
+    L.push('*** SUMMARY ***');
+    for (const k in h.won) L.push(k + ' wins main pot of ' + h.won[k]);
+    for (const f of h.fin) L.push(f.p + ' finished ' + f.place + (f.place === 1 ? 'st' : f.place === 2 ? 'nd' : f.place === 3 ? 'rd' : 'th') + (f.eur ? ' and wins ' + f.eur.toFixed(2) + ' EUR' : ''));
+    return L.join('\n');
+  }
+
+  G.SpinEngine = { parseFile, parseHand, computeEV, buildPots, eval7, cardId, preflopInfo, postflopInfo, effStackBB, actionLine, pack, unpack, toText, finalize };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+'use strict';
+const E = SpinEngine;
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtN = (v, d = 0) => (v == null || !isFinite(v)) ? '—' : v.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtS = (v, d = 0) => (v == null || !isFinite(v)) ? '—' : (v > 0 ? '+' : '') + fmtN(v, d);
+const fmtE = (v, d = 0) => (v == null || !isFinite(v)) ? '—' : fmtN(v, d) + ' €';
+const fmtP = (v, d = 0) => (v == null || !isFinite(v)) ? '—' : fmtN(v, d) + ' %';
+const cls = (v) => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN;
+function ci95(a) { if (a.length < 2) return NaN; const m = mean(a); let v = 0; for (const x of a) v += (x - m) * (x - m); return 1.96 * Math.sqrt(v / (a.length - 1) / a.length); }
+const DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+const SLOTS = ['00-03h', '03-06h', '06-09h', '09-12h', '12-15h', '15-18h', '18-21h', '21-00h'];
+const BUCKETS = [[0, 4], [4, 6], [6, 8], [8, 10], [10, 12], [12, 14], [14, 16], [16, 18], [18, 20], [20, 1e9]];
+const bucketOf = (bb) => { for (let i = 0; i < BUCKETS.length; i++) if (bb < BUCKETS[i][1]) return i; return BUCKETS.length - 1; };
+const bucketName = (i) => i === BUCKETS.length - 1 ? '20+' : BUCKETS[i][0] + '-' + BUCKETS[i][1];
+const POSKEYS = ['BTN', 'SB vs BTN', 'SB vs BB', 'BB vs BTN', 'BB vs SB', 'BB vs 2', 'HU SB', 'HU BB'];
+const ACT_LABEL = { fold: 'Fold', limp: 'Limp', check: 'Check', call: 'Call', raise: 'Raise', shove: 'All-in' };
+const AGG = { raise: 1, shove: 1 };
+
+// ---------- state ----------
+const S = {
+  hands: [], byId: new Map(), players: new Map(), tours: [], hero: null,
+  prefs: null, filters: defaultFilters(),
+  ui: { dash: 'chips', posMode: 'hand', mtMode: 'eh', review: 'hands', rv: { pos: 'all', prof: 'all', kind: 'all', page: 0, sort: 'date', dir: -1, gid: null }, pl: { q: '', tag: 'all', sort: 'hands', dir: -1, page: 0 }, lf: { prof: 'hero', pos: 'all', ref: 'reg', sub: 'sit', who: '' }, series: { chips: { c: 1, sd: 0, nsd: 0, ev: 1 }, br: { p: 1, ev: 1, nm: 0 } } },
+  storage: 'memory', seedLoaded: false, imports: [], skipIds: new Set(), skipped: { other: 0, bad: [] }, rvList: []
+};
+// Official Betclic Spin & Rush multiplier grids (chances per 1 000 000), payouts 1st/2nd/3rd
+const GRIDS = {
+  std: [[2, 478185, 0], [3, 346210, 0], [4, 130000, 0], [5, 40000, 0], [10, 5000, 0], [20, 500, 1], [100, 100, 1], [1000, 5, 1]],
+  hi: [[2, 479337, 0], [3, 345442, 0], [4, 130000, 0], [5, 40000, 0], [10, 5000, 0], [50, 200, 1], [500, 20, 1], [5000, 1, 1]]
+};
+const gridFor = (bi) => bi >= 200 ? GRIDS.hi : GRIDS.std;
+const expMult = (bi) => gridFor(bi).reduce((x, g) => x + g[0] * g[1], 0) / 1e6;
+const GRID_RAKE = +((1 - expMult(10) / 3) * 100).toFixed(1);
+function defaultPrefs() { return { v: 2, cls: { minHands: 50, maxLimpPct: 0, maxVpip: 0, unknownAs: 'fish' }, overrides: {}, favs: {}, rakeEff: GRID_RAKE, rakeback: 0 }; }
+function migrate(p) { if (!p.v) { if (p.rakeEff === 7.8) p.rakeEff = GRID_RAKE; p.v = 2; } return p; }
+
+// ---------- persistence: IndexedDB for hands, localStorage + Claude db for prefs ----------
+const IDB = {
+  db: null,
+  open() { return new Promise(res => { try { const r = indexedDB.open('spintracker', 2); r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains('hands')) d.createObjectStore('hands', { keyPath: 'i' }); if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv'); }; r.onsuccess = () => { this.db = r.result; res(true); }; r.onerror = () => res(false); r.onblocked = () => res(false); } catch (e) { res(false); } }); },
+  all() { return new Promise(res => { try { const q = this.db.transaction('hands').objectStore('hands').getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => res([]); } catch (e) { res([]); } }); },
+  put(list) { return new Promise(res => { try { const tx = this.db.transaction('hands', 'readwrite'); const st = tx.objectStore('hands'); for (const o of list) st.put(o); tx.oncomplete = () => res(true); tx.onerror = () => res(false); } catch (e) { res(false); } }); },
+  clear() { return new Promise(res => { try { const tx = this.db.transaction('hands', 'readwrite'); tx.objectStore('hands').clear(); tx.oncomplete = () => res(true); tx.onerror = () => res(false); } catch (e) { res(false); } }); }
+};
+const LS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } } };
+let cloudDoc = null, saveTimer = null;
+function loadPrefs() {
+  let p = defaultPrefs();
+  try { const raw = LS.get('st_prefs'); if (raw) p = Object.assign(p, JSON.parse(raw)); } catch (e) { }
+  p.cls = Object.assign(defaultPrefs().cls, p.cls || {}); migrate(p);
+  S.prefs = p;
+}
+function savePrefs() {
+  LS.set('st_prefs', JSON.stringify(S.prefs));
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { if (cloudDoc) cloudDoc.set({ prefs: JSON.stringify(S.prefs), at: Date.now() }).catch(() => { }); }, 800);
+}
+async function connectCloud() {
+  try {
+    if (!window.claude || !window.claude.use) return;
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if (!db || !user) return;
+    const id = await user.id(); if (!id) return;
+    cloudDoc = db.collection('data/users/' + id).doc('prefs');
+    const snap = await cloudDoc.get();
+    const data = snap && (typeof snap.data === 'function' ? snap.data() : snap);
+    if (data && data.prefs) {
+      const remote = JSON.parse(data.prefs);
+      S.prefs = migrate(Object.assign(defaultPrefs(), remote, { v: remote.v })); S.prefs.cls = Object.assign(defaultPrefs().cls, remote.cls || {});
+      LS.set('st_prefs', JSON.stringify(S.prefs)); recompute(); render();
+    } else savePrefs();
+    S.cloud = true; renderStore();
+  } catch (e) { cloudDoc = null; }
+}
+
+// ---------- preparing hands ----------
+function prep(h) {
+  h.pf = E.preflopInfo(h);
+  const hp = h.players.find(p => p.hero);
+  h.opps = h.players.filter(p => !p.hero).map(p => p.name);
+  if (hp) {
+    if (h.n === 3) {
+      const btn = h.players.find(p => p.pos === 'BTN'), sb = h.players.find(p => p.pos === 'SB'), bb = h.players.find(p => p.pos === 'BB');
+      const first = btn && h.acts.find(a => a.st === 0 && a.p === btn.name && a.a !== 'sb' && a.a !== 'bb' && a.a !== 'ante');
+      const btnFold = !first || first.a === 'f';
+      if (hp.pos === 'BTN') { h.posKey = 'BTN'; h.mainOpp = null; }
+      else if (hp.pos === 'SB') { h.posKey = btnFold ? 'SB vs BB' : 'SB vs BTN'; h.mainOpp = btnFold ? (bb && bb.name) : (btn && btn.name); }
+      else {
+        const sbFirst = sb && h.acts.find(a => a.st === 0 && a.p === sb.name && a.a !== 'sb' && a.a !== 'bb' && a.a !== 'ante');
+        const sbFold = !sbFirst || sbFirst.a === 'f';
+        if (btnFold) { h.posKey = 'BB vs SB'; h.mainOpp = sb && sb.name; }
+        else if (sbFold) { h.posKey = 'BB vs BTN'; h.mainOpp = btn.name; }
+        else { h.posKey = 'BB vs 2'; h.mainOpp = null; }
+      }
+    } else { h.posKey = 'HU ' + hp.pos; h.mainOpp = h.opps[0]; }
+  }
+  if (!h.E) h.E = { adj: false, ev: Object.assign({}, h.net), vr: {}, st: -1 };
+  const tot = h.players.reduce((x, p) => x + p.stack, 0); h.cf = tot > 0 ? 1500 / tot : 1;
+  return h;
+}
+const NET = (h, n) => (h.net[n] || 0) * h.cf, EVc = (h, n) => (h.E.ev[n] || 0) * h.cf, VRc = (h, n) => (h.E.vr[n] || 0) * h.cf * h.cf;
+function isSpin(h) { const m = (h.mode || '') + ' ' + (h.gname || ''); return !m.trim() || /spin/i.test(m); }
+function integrity(h) {
+  let sc = 0, sw = 0;
+  for (const p of h.players) { const c = h.contrib[p.name] || 0; if (c < 0 || c > p.stack + 0.5) return 'mise supérieure au tapis (' + p.name + ')'; sc += c; }
+  for (const k in h.won) { if (!h.players.some(p => p.name === k)) return 'gagnant absent de la table (' + k + ')'; sw += h.won[k]; }
+  if (Math.abs(sc - sw) > 0.5) return 'pot incohérent (' + fmtN(sc) + ' misés, ' + fmtN(sw) + ' gagnés)';
+  for (const a of h.acts) if (!h.players.some(p => p.name === a.p)) return 'action d\'un joueur absent (' + a.p + ')';
+  return null;
+}
+function addHands(list) {
+  let added = 0;
+  for (const h of list) {
+    if (S.byId.has(h.id) || S.skipIds.has(h.id)) continue;
+    if (!isSpin(h)) { S.skipIds.add(h.id); S.skipped.other++; continue; }
+    const bad = integrity(h); if (bad) { S.skipIds.add(h.id); prep(h); S.skipped.bad.push({ h, why: bad }); continue; }
+    prep(h); S.byId.set(h.id, h); S.hands.push(h); added++;
+  }
+  S.hands.sort((a, b) => a.ts - b.ts || (a.id < b.id ? -1 : 1));
+  return added;
+}
+
+// ---------- players & classification ----------
+function computePlayers() {
+  const P = new Map();
+  const get = (n) => { let s = P.get(n); if (!s) { s = { name: n, hands: 0, vpip: 0, pfr: 0, btnOpp: 0, btnLimp: 0, tbOpp: 0, tb: 0, last: 0, evG: new Map(), huG: new Map(), hero: false }; P.set(n, s); } return s; };
+  for (const h of S.hands) {
+    for (const p of h.players) {
+      const s = get(p.name); s.hands++; if (h.ts > s.last) s.last = h.ts; if (p.hero) s.hero = true;
+      const I = h.pf[p.name];
+      if (I) { if (I.vpip) s.vpip++; if (I.pfr) s.pfr++; if (I.btnOpp) s.btnOpp++; if (I.btnLimp) s.btnLimp++; if (I.threeBetOpp) s.tbOpp++; if (I.threeBet) s.tb++; }
+      const ev = EVc(h, p.name);
+      s.evG.set(h.gid, (s.evG.get(h.gid) || 0) + ev);
+      if (h.n === 2) s.huG.set(h.gid, (s.huG.get(h.gid) || 0) + ev);
+    }
+  }
+  for (const s of P.values()) {
+    s.auto = autoClass(s);
+    const ev = [...s.evG.values()], hu = [...s.huG.values()];
+    s.cev = mean(ev); s.cevCi = ci95(ev); s.cevHu = mean(hu); s.cevHuCi = ci95(hu); s.tours = ev.length; s.hus = hu.length;
+  }
+  S.players = P;
+  const heroes = [...P.values()].filter(s => s.hero).sort((a, b) => b.hands - a.hands);
+  S.hero = heroes.length ? heroes[0].name : null;
+}
+function autoClass(s) {
+  const c = S.prefs.cls;
+  const limpPct = s.btnOpp ? s.btnLimp / s.btnOpp * 100 : 0;
+  if (s.btnLimp > 0 && limpPct > c.maxLimpPct) return 'fish';
+  if (c.maxVpip > 0 && s.hands >= c.minHands && s.vpip / s.hands * 100 > c.maxVpip) return 'fish';
+  if (s.hands >= c.minHands) return 'reg';
+  return c.unknownAs;
+}
+function tagOf(name) { const o = S.prefs.overrides[name]; if (o) return o; const s = S.players.get(name); return s ? s.auto : 'unknown'; }
+
+// ---------- tournaments ----------
+function buildTours() {
+  const G = new Map();
+  for (const h of S.hands) { if (!h.hero) continue; let t = G.get(h.gid); if (!t) { t = { gid: h.gid, hands: [] }; G.set(h.gid, t); } t.hands.push(h); }
+  const r = S.prefs.rakeEff / 100, rb = S.prefs.rakeback / 100;
+  const tours = [];
+  for (const t of G.values()) {
+    const hs = t.hands; const f = hs[0], l = hs[hs.length - 1]; const hero = f.hero;
+    t.bi = f.bi; t.mult = f.mult; t.prize = f.prize; t.start = f.ts; t.end = l.ts + 20000; t.hero = hero;
+    t.startStack = ((f.players.find(p => p.name === hero) || {}).stack || 500) * f.cf;
+    t.totalChips = 1500;
+    t.full = f.players.length === 3 && f.sb === Math.min(...hs.map(h => h.sb));
+    t.opps = f.players.filter(p => p.name !== hero).map(p => p.name);
+    let net = 0, ev = 0, vr = 0, huNet = 0, huEv = 0, huN = 0;
+    for (const h of hs) { net += NET(h, hero); ev += EVc(h, hero); vr += VRc(h, hero); if (h.n === 2) { huNet += NET(h, hero); huEv += EVc(h, hero); huN++; } }
+    t.gap = 0; for (let k = 1; k < hs.length; k++) { const a = hs[k - 1].players.find(p => p.name === hero), b = hs[k].players.find(p => p.name === hero); if (a && b && a.stack + (hs[k - 1].net[hero] || 0) !== b.stack) t.gap++; }
+    t.net = net; t.ev = ev; t.vr = vr;
+    const hu = hs.find(h => h.n === 2); t.huOpp = hu ? hu.opps[0] : null; t.huEv = huN ? huEv : null; t.huStart = hu ? (hu.players.find(p => p.name === hero) || {}).stack : null;
+    let fin = null; for (const h of hs) for (const x of h.fin) if (x.p === hero) fin = x;
+    t.place = fin ? fin.place : null; t.complete = !!fin; t.eur = fin ? fin.eur : 0;
+    t.rb = t.bi * r * rb;
+    t.profit = t.eur - t.bi + t.rb;
+    const share = Math.max(0, Math.min(1, (t.startStack + t.ev) / (t.totalChips || 1500)));
+    t.evProfit = 3 * t.bi * (1 - r) * share - t.bi + t.rb;
+    t.nmProfit = (t.place === 1 ? 3 * t.bi * (1 - r) : 0) - t.bi + t.rb;
+    tours.push(t);
+  }
+  tours.sort((a, b) => a.start - b.start);
+  // concurrency (time-weighted average of open tournaments)
+  for (let i = 0; i < tours.length; i++) {
+    const t = tours[i]; let w = 0;
+    for (let j = i; j >= 0 && j > i - 60; j--) { const u = tours[j]; w += Math.max(0, Math.min(t.end, u.end) - Math.max(t.start, u.start)); }
+    for (let j = i + 1; j < tours.length && tours[j].start < t.end; j++) { const u = tours[j]; w += Math.max(0, Math.min(t.end, u.end) - Math.max(t.start, u.start)); }
+    t.conc = Math.max(1, w / Math.max(1, t.end - t.start)); t.tables = Math.min(6, Math.max(1, Math.round(t.conc)));
+  }
+  S.tours = tours;
+}
+function tourProfile(t) {
+  const tags = t.opps.map(tagOf);
+  const nr = tags.filter(x => x === 'reg').length, nf = tags.filter(x => x === 'fish').length;
+  if (t.opps.length === 2) return nr === 2 ? 'RR' : nf === 2 ? 'FF' : (nr === 1 && nf === 1) ? 'RF' : 'U';
+  return nr === 1 ? 'R' : nf === 1 ? 'F' : 'U';
+}
+
+// ---------- filters ----------
+// ---------- filters (modal like the old tracker) ----------
+function defaultFilters() { return { date: { mode: 'all', hours: 6, spins: 100, d1: '', d2: '' }, dom: { on: false, a: 1, b: 15 }, hod: { on: false, a: 20, b: 2 }, bis: [], mults: [], tables: [], profile: 'all' }; }
+const sod = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x.getTime(); };
+const dayMs = (s, end) => s ? new Date(s + (end ? 'T23:59:59' : 'T00:00:00')).getTime() : (end ? Infinity : -Infinity);
+function dateRange(f) {
+  const d = (f || S.filters).date, now = new Date(), t0 = sod(now);
+  switch (d.mode) {
+    case 'today': return [t0, Infinity];
+    case 'yesterday': return [t0 - 864e5, t0 - 1];
+    case 'week': { const dow = (now.getDay() + 6) % 7; return [t0 - dow * 864e5, Infinity]; }
+    case 'month': return [new Date(now.getFullYear(), now.getMonth(), 1).getTime(), Infinity];
+    case 'year': return [new Date(now.getFullYear(), 0, 1).getTime(), Infinity];
+    case 'hours': return [Date.now() - Math.max(1, +d.hours || 1) * 3600e3, Infinity];
+    case 'd7': return [t0 - 6 * 864e5, Infinity];
+    case 'd30': return [t0 - 29 * 864e5, Infinity];
+    case 'd365': return [t0 - 364 * 864e5, Infinity];
+    case 'since': return [dayMs(d.d1), Infinity];
+    case 'until': return [-Infinity, dayMs(d.d1, true)];
+    case 'between': return [dayMs(d.d1), dayMs(d.d2, true)];
+    case 'on': return [dayMs(d.d1), dayMs(d.d1, true)];
+    default: return [-Infinity, Infinity];
+  }
+}
+function inRangeWrap(v, a, b) { return a <= b ? v >= a && v <= b : v >= a || v <= b; }
+function filtered() {
+  const f = S.filters; const [a, b] = dateRange(f);
+  let T = S.tours.filter(t => {
+    if (t.start < a || t.start > b) return false;
+    if (f.bis.length && !f.bis.includes(t.bi)) return false;
+    if (f.mults.length && !f.mults.includes(t.mult)) return false;
+    if (f.tables.length && !f.tables.includes(t.tables)) return false;
+    const d = new Date(t.start);
+    if (f.dom.on && !inRangeWrap(d.getDate(), +f.dom.a, +f.dom.b)) return false;
+    if (f.hod.on) { const h = d.getHours(), A = +f.hod.a % 24, B = +f.hod.b % 24; if (!(A <= B ? h >= A && h < B : h >= A || h < B) && A !== B) return false; }
+    if (f.profile !== 'all') { const reg = t.opps.some(o => tagOf(o) === 'reg'); if (f.profile === 'noreg' ? reg : !reg) return false; }
+    return true;
+  });
+  if (f.date.mode === 'spins') T = T.slice(-Math.max(1, +f.date.spins || 1));
+  const hands = []; for (const t of T) for (const h of t.hands) hands.push(h);
+  hands.sort((x, y) => x.ts - y.ts);
+  return { T, C: T.filter(t => t.complete), H: hands };
+}
+function frDate(s) { if (!s) return '…'; const [y, m, d] = s.split('-'); return d + '/' + m + '/' + y.slice(2); }
+function dateLabel(f) {
+  const d = f.date;
+  return ({ all: 'Tout', today: "Aujourd'hui", yesterday: 'Hier', week: 'Cette semaine', month: 'Ce mois-ci', year: 'Cette année', hours: d.hours + ' dernières heures', spins: d.spins + ' derniers spins', d7: '7 derniers jours', d30: '30 derniers jours', d365: '365 derniers jours',
+    since: 'Depuis le ' + frDate(d.d1), until: "Jusqu'au " + frDate(d.d1), between: frDate(d.d1) + ' → ' + frDate(d.d2), on: 'Le ' + frDate(d.d1) })[d.mode] || 'Tout';
+}
+function activeCount(f) { return f.bis.length + f.mults.length + f.tables.length + (f.profile !== 'all' ? 1 : 0) + (f.dom.on ? 1 : 0) + (f.hod.on ? 1 : 0); }
+function filterBar(extra) {
+  const f = S.filters, n = activeCount(f);
+  return '<div style="display:flex;gap:6px"><button class="btn" data-fopen="date">Date : ' + esc(dateLabel(f)) + '</button><button class="btn' + (n ? ' on-acc' : '') + '" data-fopen="bis"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filtres' + (n ? ' (' + n + ')' : '') + '</button></div>' + (extra || '');
+}
+const FM = { tab: 'date', draft: null };
+function openFilters(tab) { FM.tab = tab || 'date'; FM.draft = JSON.parse(JSON.stringify(S.filters)); renderFilters(); }
+function closeFilters() { FM.draft = null; $('#modalRoot').innerHTML = ''; }
+function fmCard(mode, inner, icon) {
+  const on = FM.draft.date.mode === mode;
+  return '<div class="fm-card' + (on ? ' on' : '') + '" data-fmode="' + mode + '" role="button" tabindex="0">' + (icon ? '<span class="fm-ic">' + icon + '</span>' : '') + inner + '</div>';
+}
+const IC_CAL = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+const IC_CLK = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+function renderFilters() {
+  const f = FM.draft, d = f.date, tab = FM.tab;
+  const tabs = [['date', 'Date'], ['bis', 'Buy-ins'], ['mults', 'Multiplicateurs'], ['tables', 'Nombre de tables'], ['opp', 'Adversaires']];
+  let body = '';
+  if (tab === 'date') {
+    const di = (id, v) => '<input type="date" id="' + id + '" value="' + esc(v) + '">';
+    body = '<div class="fm-chip">Date : ' + esc(dateLabel(f)) + '</div>' +
+      '<h4>Période</h4><div class="fm-row6">' + [['all', 'Tout'], ['today', "Aujourd'hui"], ['yesterday', 'Hier'], ['week', 'Cette semaine'], ['month', 'Ce mois-ci'], ['year', 'Cette année']].map(([k, l]) => fmCard(k, l)).join('') + '</div>' +
+      '<h4>Période glissante</h4><div class="fm-roll">' +
+      fmCard('hours', 'Dernières <input type="number" id="fmHours" min="1" value="' + d.hours + '" aria-label="Nombre d\'heures"> heures', IC_CLK) +
+      fmCard('spins', 'Derniers <input type="number" id="fmSpins" min="1" value="' + d.spins + '" aria-label="Nombre de spins"> spins', IC_CLK) +
+      fmCard('d7', '7 derniers jours') + fmCard('d30', '30 derniers jours') + fmCard('d365', '365 derniers jours') + '</div>' +
+      '<h4>Personnalisé</h4><div class="fm-grid2">' +
+      fmCard('since', 'Depuis une date' + (d.mode === 'since' ? di('fmD1', d.d1) : ''), IC_CAL) +
+      fmCard('until', "Jusqu'à une date" + (d.mode === 'until' ? di('fmD1', d.d1) : ''), IC_CAL) +
+      fmCard('between', 'Entre deux dates' + (d.mode === 'between' ? di('fmD1', d.d1) + ' et ' + di('fmD2', d.d2) : ''), IC_CAL) +
+      fmCard('on', 'À une date précise' + (d.mode === 'on' ? di('fmD1', d.d1) : ''), IC_CAL) + '</div>' +
+      '<h4>Jours du mois</h4><div class="fm-card fm-tog' + (f.dom.on ? ' on' : '') + '" data-ftoggle="dom" role="button" tabindex="0"><span class="fm-ic">' + IC_CAL + '</span>Du <input type="number" id="fmDomA" min="1" max="31" value="' + f.dom.a + '" aria-label="Premier jour"> au <input type="number" id="fmDomB" min="1" max="31" value="' + f.dom.b + '" aria-label="Dernier jour"> de chaque mois</div>' +
+      '<h4>Heures de la journée</h4><div class="fm-card fm-tog' + (f.hod.on ? ' on' : '') + '" data-ftoggle="hod" role="button" tabindex="0"><span class="fm-ic">' + IC_CLK + '</span>De <input type="number" id="fmHodA" min="0" max="23" value="' + f.hod.a + '" aria-label="Heure de début"> h à <input type="number" id="fmHodB" min="0" max="24" value="' + f.hod.b + '" aria-label="Heure de fin"> h, tous les jours</div>' +
+      '<p class="note">Les filtres de date portent sur l\'heure de début du spin, dans ton fuseau horaire. Une plage d\'heures peut passer minuit (de 20 h à 2 h).</p>';
+  } else if (tab === 'opp') {
+    body = '<h4>Adversaires du spin</h4><div class="fm-row6" style="grid-template-columns:repeat(3,1fr)">' + [['all', 'Tous'], ['noreg', 'Sans reg'], ['reg', 'Avec au moins un reg']].map(([k, l]) => '<div class="fm-card' + (f.profile === k ? ' on' : '') + '" data-fprof="' + k + '" role="button" tabindex="0">' + l + '</div>').join('') + '</div>';
+  } else {
+    const vals = tab === 'bis' ? [...new Set(S.tours.map(t => t.bi))].sort((a, b) => a - b) : tab === 'mults' ? [...new Set(S.tours.map(t => t.mult).concat(gridFor(10).map(g => g[0])))].sort((a, b) => a - b) : [1, 2, 3, 4, 5, 6];
+    const lab = (v) => tab === 'bis' ? fmtE(v, v % 1 ? 2 : 0) : tab === 'mults' ? 'x' + fmtN(v) : (v === 6 ? '6 tables et +' : v + (v > 1 ? ' tables' : ' table'));
+    const cnt = (v) => S.tours.filter(t => (tab === 'bis' ? t.bi : tab === 'mults' ? t.mult : t.tables) === v).length;
+    body = '<h4>' + (tab === 'bis' ? 'Buy-ins' : tab === 'mults' ? 'Multiplicateurs' : 'Spins ouverts en même temps') + ' <span class="sub">(aucun sélectionné = tous)</span></h4><div class="fm-row6">' +
+      vals.map(v => '<div class="fm-card' + (f[tab].includes(v) ? ' on' : '') + '" data-ftog="' + tab + '" data-val="' + v + '" role="button" tabindex="0">' + lab(v) + '<span class="sub">' + fmtN(cnt(v)) + ' spins</span></div>').join('') + '</div>';
+  }
+  const prev = (() => { const keep = S.filters; S.filters = f; const r = filtered(); S.filters = keep; return r; })();
+  $('#modalRoot').innerHTML = '<div class="modal-bg" data-fclose="bg"><div class="fm" role="dialog" aria-modal="true" aria-label="Filtres">' +
+    '<div class="fm-tabs">' + tabs.map(([k, l]) => '<button class="' + (tab === k ? 'on' : '') + '" data-ftab="' + k + '">' + l + (k !== 'date' && (k === 'opp' ? f.profile !== 'all' : f[k] && f[k].length) ? ' •' : '') + '</button>').join('') + '<button class="fm-x" data-fclose="x" aria-label="Fermer">✕</button></div>' +
+    '<div class="fm-body">' + body + '</div>' +
+    '<div class="fm-foot"><button class="btn" data-fact="reset" style="border:0;background:none;color:var(--muted)">Réinitialiser</button><span class="note">' + fmtN(prev.T.length) + ' spins correspondent</span><div style="flex:1"></div><button class="btn" data-fclose="x" style="border:0;background:none">Annuler</button><button class="btn primary" data-fact="apply" style="padding:8px 34px">Appliquer</button></div></div></div>';
+}
+function fmReadInputs() {
+  const f = FM.draft; if (!f) return; const v = (id) => { const e = $('#' + id); return e ? e.value : null; };
+  if (v('fmHours') != null) f.date.hours = Math.max(1, +v('fmHours') || 1);
+  if (v('fmSpins') != null) f.date.spins = Math.max(1, +v('fmSpins') || 1);
+  if (v('fmD1') != null) f.date.d1 = v('fmD1');
+  if (v('fmD2') != null) f.date.d2 = v('fmD2');
+  if (v('fmDomA') != null) { f.dom.a = Math.min(31, Math.max(1, +v('fmDomA') || 1)); f.dom.b = Math.min(31, Math.max(1, +v('fmDomB') || 31)); }
+  if (v('fmHodA') != null) { f.hod.a = Math.min(23, Math.max(0, +v('fmHodA') || 0)); f.hod.b = Math.min(24, Math.max(0, +v('fmHodB') || 0)); }
+}
+function fmClick(e) {
+  const t = e.target.closest('[data-ftab],[data-fmode],[data-ftoggle],[data-ftog],[data-fprof],[data-fact],[data-fclose]'); if (!t) return true;
+  const d = t.dataset, f = FM.draft;
+  if (e.target.tagName === 'INPUT') { // typing in a card selects it, but does not toggle it off
+    if (d.fmode && f.date.mode !== d.fmode) { fmReadInputs(); f.date.mode = d.fmode; renderFilters(); const i = $('#' + e.target.id); if (i) i.focus(); }
+    if (d.ftoggle && !f[d.ftoggle].on) { fmReadInputs(); f[d.ftoggle].on = true; renderFilters(); const i = $('#' + e.target.id); if (i) i.focus(); }
+    return false;
+  }
+  if (d.fclose) { if (d.fclose === 'bg' && e.target !== t) return false; closeFilters(); return false; }
+  fmReadInputs();
+  if (d.ftab) FM.tab = d.ftab;
+  else if (d.fmode) f.date.mode = d.fmode;
+  else if (d.ftoggle) f[d.ftoggle].on = !f[d.ftoggle].on;
+  else if (d.ftog) { const arr = f[d.ftog], v = +d.val, i = arr.indexOf(v); if (i >= 0) arr.splice(i, 1); else arr.push(v); }
+  else if (d.fprof) f.profile = d.fprof;
+  else if (d.fact === 'reset') FM.draft = defaultFilters();
+  else if (d.fact === 'apply') { S.filters = FM.draft; closeFilters(); F = filtered(); render(); return false; }
+  renderFilters(); return false;
+}
+
+let F = { T: [], C: [], H: [] };
+function recompute() { computePlayers(); buildTours(); F = filtered(); }
+
+// ---------- canvas line chart ----------
+function lineChart(wrap, cfg) {
+  wrap.innerHTML = '';
+  const cv = document.createElement('canvas'); wrap.appendChild(cv);
+  const tip = document.createElement('div'); tip.className = 'tip'; wrap.appendChild(tip);
+  if (cfg.badge) { const b = document.createElement('div'); b.className = 'luck' + (cfg.badgeCls ? ' ' + cfg.badgeCls : ''); b.innerHTML = cfg.badge; wrap.appendChild(b); }
+  const ser = cfg.series.filter(s => s.on);
+  const n = Math.max(0, ...cfg.series.map(s => s.data.length));
+  let geo = null;
+  function draw(hover) {
+    const r = wrap.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1;
+    cv.width = Math.max(1, r.width * dpr); cv.height = Math.max(1, r.height * dpr);
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const W = r.width, H = r.height, L = 16, R = 70, T = cfg.badge ? 54 : 16, B = 46;
+    g.clearRect(0, 0, W, H);
+    if (!n) { g.fillStyle = '#8d9198'; g.font = '14px Barlow, Arial, sans-serif'; g.fillText('Aucune donnée pour ces filtres', W / 2 - 90, H / 2); return; }
+    let lo = 0, hi = 0; for (const s of ser) for (const v of s.data) { if (v < lo) lo = v; if (v > hi) hi = v; }
+    const pad = (hi - lo) * 0.03 || 1; lo -= pad; hi += pad;
+    if (hi === lo) hi = lo + 1;
+    const step = niceStep((hi - lo) / 8);
+    const X = (i) => L + (W - L - R) * (n <= 1 ? 0 : i / (n - 1)), Y = (v) => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+    geo = { X, Y, L, R, W, n };
+    g.font = '600 11px Barlow, Arial, sans-serif'; g.fillStyle = '#c9c6bf'; g.textAlign = 'left'; g.textBaseline = 'middle';
+    for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) { const y = Y(v); g.strokeStyle = v === 0 ? '#5a5f66' : '#202328'; g.lineWidth = v === 0 ? 1.2 : 1; g.beginPath(); g.moveTo(L, y); g.lineTo(W - R + 4, y); g.stroke(); g.fillText(cfg.yFmt(Math.abs(v) < step * 1e-6 ? 0 : v), W - R + 10, y); }
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    for (let k = 0; k <= 8; k++) { const i = Math.round((n - 1) * k / 8); g.fillText(fmtN(i + (cfg.x0 || 0)), X(i), H - B + 10); }
+    g.fillStyle = '#8d9198'; g.font = '12px Barlow, Arial, sans-serif'; g.fillText(cfg.xLabel, L + (W - L - R) / 2, H - 18);
+    for (const s of ser) {
+      g.strokeStyle = s.color; g.lineWidth = 1.4; g.beginPath();
+      const d = s.data; const stride = Math.max(1, Math.floor(d.length / ((W - L - R) * 2)));
+      for (let i = 0; i < d.length; i += stride) { const x = X(i), y = Y(d[i]); if (i === 0) g.moveTo(x, y); else g.lineTo(x, y); }
+      g.lineTo(X(d.length - 1), Y(d[d.length - 1])); g.stroke();
+      g.fillStyle = s.color; g.beginPath(); g.arc(X(d.length - 1), Y(d[d.length - 1]), 3.5, 0, 7); g.fill();
+    }
+    if (hover != null) {
+      const x = X(hover); g.strokeStyle = '#555b63'; g.lineWidth = 1; g.beginPath(); g.moveTo(x, T); g.lineTo(x, H - B); g.stroke();
+      for (const s of ser) if (s.data[hover] != null) { g.fillStyle = s.color; g.beginPath(); g.arc(x, Y(s.data[hover]), 3.5, 0, 7); g.fill(); }
+    }
+  }
+  draw();
+  cv.onmousemove = (e) => {
+    if (!geo) return; const r = cv.getBoundingClientRect(); const x = e.clientX - r.left;
+    const i = Math.max(0, Math.min(n - 1, Math.round((x - geo.L) / (geo.W - geo.L - geo.R) * (n - 1))));
+    draw(i);
+    tip.style.display = 'block';
+    tip.innerHTML = '<div class="sub">' + esc(cfg.tipHead(i)) + '</div>' + (cfg.onPick ? '<div class="sub" style="color:var(--accent)">Clic : ouvrir dans le replayer</div>' : '') + ser.map(s => '<div><span class="dot" style="background:' + s.color + '"></span> ' + esc(s.name) + ' : <b>' + cfg.yFmt(s.data[i]) + '</b></div>').join('');
+    const tw = tip.offsetWidth; tip.style.left = (x + 14 + tw > r.width ? x - tw - 14 : x + 14) + 'px'; tip.style.top = '60px';
+  };
+  cv.onmouseleave = () => { tip.style.display = 'none'; draw(); };
+  cv.onclick = (e) => { if (!geo || !cfg.onPick) return; const r = cv.getBoundingClientRect(); const i = Math.max(0, Math.min(n - 1, Math.round((e.clientX - r.left - geo.L) / (geo.W - geo.L - geo.R) * (n - 1)))); cfg.onPick(i); };
+  const ro = new ResizeObserver(() => draw()); ro.observe(wrap);
+}
+function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 1e-9)))); const m = raw / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
+
+// ---------- SVG bar chart with 95% intervals ----------
+function barChart(cfg) {
+  const W = cfg.w || 760, H = cfg.h || 280, L = 44, R = 10, T = 18, B = 34;
+  const cats = cfg.cats, ser = cfg.series;
+  let lo = 0, hi = 0;
+  for (const s of ser) for (const v of s.vals) if (v && isFinite(v.v)) { const c = isFinite(v.ci) && cfg.ci !== false ? v.ci : 0; lo = Math.min(lo, v.v - c); hi = Math.max(hi, v.v + c); }
+  if (hi === lo) hi = 1;
+  const step = niceStep((hi - lo) / 5); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  const Y = (v) => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+  const gw = (W - L - R) / cats.length, bw = Math.min(30, gw * 0.7 / ser.length);
+  let o = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="' + esc(cfg.label || '') + '" style="font-family:Barlow,Arial,sans-serif;font-size:11px">';
+  for (let v = lo; v <= hi + 1e-9; v += step) o += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="' + (Math.abs(v) < 1e-9 ? '#4a4f56' : '#22252a') + '"/><text x="' + (L - 6) + '" y="' + (Y(v) + 4) + '" text-anchor="end" fill="#a7a49d">' + (cfg.yFmt ? cfg.yFmt(v) : fmtN(v)) + '</text>';
+  cats.forEach((c, ci) => {
+    const gx = L + gw * ci + gw / 2 - (bw * ser.length + 4 * (ser.length - 1)) / 2;
+    ser.forEach((s, si) => {
+      const v = s.vals[ci]; if (!v || !isFinite(v.v)) return;
+      const x = gx + si * (bw + 4), y0 = Y(0), y1 = Y(v.v), col = s.colors ? s.colors[ci] : s.color;
+      o += '<rect x="' + x + '" y="' + Math.min(y0, y1) + '" width="' + bw + '" height="' + Math.max(1, Math.abs(y1 - y0)) + '" rx="3" fill="' + col + '"><title>' + esc(s.name + ' · ' + c + ' : ' + fmtN(v.v, 1) + (isFinite(v.ci) ? ' ± ' + fmtN(v.ci, 1) : '') + (v.n != null ? ' (' + fmtN(v.n) + ')' : '')) + '</title></rect>';
+      if (cfg.ci !== false && isFinite(v.ci)) { const a = Y(v.v + v.ci), b = Y(v.v - v.ci), cx = x + bw / 2; o += '<path d="M' + cx + ' ' + a + 'V' + b + 'M' + (cx - 5) + ' ' + a + 'h10M' + (cx - 5) + ' ' + b + 'h10" stroke="#e8e5de" stroke-width="1.1" opacity=".8"/>'; }
+      const ly = v.v >= 0 ? (cfg.ci !== false && isFinite(v.ci) ? Y(v.v + v.ci) : y1) - 5 : (cfg.ci !== false && isFinite(v.ci) ? Y(v.v - v.ci) : y1) + 13;
+      o += '<text x="' + (x + bw / 2) + '" y="' + ly + '" text-anchor="middle" fill="' + col + '" font-weight="700">' + (cfg.vFmt ? cfg.vFmt(v.v) : fmtN(v.v, 1)) + '</text>';
+    });
+    o += '<text x="' + (L + gw * ci + gw / 2) + '" y="' + (H - 12) + '" text-anchor="middle" fill="#d6d3cc" font-weight="600">' + esc(c) + '</text>';
+  });
+  return o + '</svg>';
+}
+function donut(pct, size, label, sub) {
+  const r = size / 2 - 6, c = 2 * Math.PI * r, f = isFinite(pct) ? pct / 100 : 0;
+  return '<div class="donut"><svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '"><circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="' + (isFinite(pct) ? '#ec5257' : '#2b2f35') + '" stroke-width="' + (size > 100 ? 14 : 8) + '"/><circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="#4a90ff" stroke-width="' + (size > 100 ? 14 : 8) + '" stroke-dasharray="' + (c * f) + ' ' + c + '" transform="rotate(-90 ' + size / 2 + ' ' + size / 2 + ')"/><text x="50%" y="' + (sub ? '47%' : '53%') + '" text-anchor="middle" fill="#ece8df" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="' + (size > 100 ? 26 : 15) + '">' + (isFinite(pct) ? Math.round(pct) + '%' : '—') + '</text>' + (sub ? '<text x="50%" y="63%" text-anchor="middle" fill="#8d9198" font-size="12">' + esc(sub) + '</text>' : '') + '</svg>' + esc(label) + '</div>';
+}
+
+// ---------- shared bits ----------
+function cardHtml(c) { if (!c) return '<span class="card back"></span>'; const r = c[0] === 'T' ? '10' : c[0]; const s = c[1]; const sym = { s: '♠', h: '♥', d: '♦', c: '♣' }[s]; return '<span class="card c-' + s + '">' + r + '<small>' + sym + '</small></span>'; }
+function cardsHtml(a) { return '<span class="cards">' + (a || []).map(cardHtml).join('') + '</span>'; }
+function tagHtml(name, short) {
+  const t = tagOf(name); const man = !!S.prefs.overrides[name];
+  const lab = t === 'reg' ? 'Reg' : t === 'fish' ? 'Fish' : 'Inconnu';
+  if (short) return '<span class="dot ' + t + '" title="' + esc(name + ' · ' + lab) + '"></span>';
+  return '<span class="tag ' + t + '">' + lab + (man ? ' <span class="man">· manuel</span>' : '') + '</span>';
+}
+function fmtDate(ts, withTime) { const d = new Date(ts); const z = (x) => String(x).padStart(2, '0'); return z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(2) + (withTime ? ' ' + z(d.getHours()) + ':' + z(d.getMinutes()) : ''); }
+function ago(ts) { const s = (Date.now() - ts) / 1000; if (s < 3600) return 'il y a ' + Math.max(1, Math.round(s / 60)) + ' min'; if (s < 86400) return 'il y a ' + Math.round(s / 3600) + ' h'; if (s < 86400 * 45) return 'il y a ' + Math.round(s / 86400) + ' j'; return 'il y a ' + Math.round(s / 86400 / 30) + ' mois'; }
+function toast(msg) { document.querySelectorAll('.toast').forEach(x => x.remove()); const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
+function hoursPlayed(T) {
+  const iv = T.map(t => [t.start, t.end]).sort((a, b) => a[0] - b[0]); let tot = 0, cs = null, ce = null;
+  for (const [a, b] of iv) { if (cs == null || a > ce) { if (cs != null) tot += ce - cs; cs = a; ce = b; } else ce = Math.max(ce, b); }
+  if (cs != null) tot += ce - cs; return tot / 3600e3;
+}
+function kpis() {
+  const C = F.C, n = C.length;
+  const cev = n ? C.reduce((x, t) => x + t.ev, 0) / n : NaN;
+  const rb = C.reduce((x, t) => x + t.rb, 0), pr = C.reduce((x, t) => x + t.profit, 0);
+  return '<div class="kpis"><div class="kpi"><div class="l">Tournois</div><div class="v">' + fmtN(n) + '</div></div><div class="kpi"><div class="l">cEV</div><div class="v ' + cls(cev) + '">' + fmtN(cev, 1) + '</div></div><div class="kpi"><div class="l">Rakeback</div><div class="v">' + fmtE(rb, 2) + '</div></div><div class="kpi"><div class="l">Profit</div><div class="v ' + cls(pr) + '">' + fmtE(pr, 2) + '</div></div></div>';
+}
+// ---------- views ----------
+function viewDashboard() {
+  const u = S.ui;
+  let h = kpis() + '<div class="bar"><div class="seg">' + [['chips', 'Chips gagnés'], ['br', 'Bankroll'], ['stats', 'Stats']].map(([k, l]) => '<button class="' + (u.dash === k ? 'on' : '') + '" data-dash="' + k + '">' + l + '</button>').join('') + '</div><div class="grow"></div>' + filterBar() + '</div>';
+  if (!F.H.length) return h + emptyState();
+  if (u.dash === 'chips') h += '<div class="panel"><div class="chart-wrap" id="chart"></div><div class="legend-row">' + rbCtl() + '<div class="legend" id="legend"></div><div></div></div></div>';
+  else if (u.dash === 'br') h += '<div class="panel"><div class="chart-wrap" id="chart"></div><div class="legend-row">' + rbCtl() + '<div class="legend" id="legend"></div><div></div></div><p class="note" style="margin:6px 0 0">EV profit = ta part de chips en EV × prize pool moyen (rake effectif ' + fmtN(S.prefs.rakeEff, 1) + ' %, modifiable dans Réglages). « Multiplicateur neutralisé » = tes vrais résultats mais chaque victoire payée au multiplicateur moyen.</p></div>';
+  else h += viewStats() + '<div class="bar">' + rbCtl() + '</div>';
+  return h;
+}
+function rbCtl() { const rb = F.C.reduce((x, t) => x + t.rb, 0); return '<label class="rb-ctl" for="rbIn">Rakeback (%)<input type="number" id="rbIn" min="0" max="100" step="1" value="' + S.prefs.rakeback + '"><span title="Pourcentage du rake payé (rake effectif ' + fmtN(S.prefs.rakeEff, 1) + ' % du buy-in)">' + (rb ? '+' + fmtE(rb, 2) : 'du rake payé') + '</span></label>'; }
+// normal tail probability, and the luck badge shown on the charts
+function normCdf(z) { const t = 1 / (1 + 0.2316419 * Math.abs(z)), d = 0.3989423 * Math.exp(-z * z / 2); const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return z > 0 ? 1 - p : p; }
+function luckBadge(diff, vr, unit) {
+  const z = vr > 0 ? diff / Math.sqrt(vr) : 0;
+  const lab = z > 2 ? 'Très chanceux' : z > 1 ? 'Chanceux' : z > 0 ? 'Légèrement chanceux' : z < -2 ? 'Très malchanceux' : z < -1 ? 'Malchanceux' : z < 0 ? 'Légèrement malchanceux' : 'Neutre';
+  const pr = (1 - normCdf(Math.abs(z))) * 100;
+  const ps = pr < 0.1 ? '< 0,1 %' : fmtP(pr, pr < 10 ? 1 : 0);
+  return { html: '<b>' + lab + '</b>' + fmtS(diff, unit === '€' ? 2 : 0) + (unit === '€' ? ' €' : ' chips') + ' vs EV · ' + ps + ' de chances d\'être aussi ' + (z >= 0 ? 'chanceux' : 'malchanceux'), cls: diff > 0 ? 'good' : diff < 0 ? 'bad' : '' };
+}
+function emptyState() { return '<div class="panel empty">Aucune main pour ces filtres. <a href="#imports" style="color:var(--accent)">Importer des historiques</a> ou élargir les filtres.</div>'; }
+function afterDashboard() {
+  const u = S.ui; if (!F.H.length) return;
+  if (u.dash === 'chips') {
+    const hero = S.hero; const c = [], sd = [], nsd = [], ev = []; let a = 0, b = 0, d = 0, e = 0, dv = 0, vr = 0;
+    const hs = F.H.filter(h => h.hero);
+    for (const h of hs) { const n = NET(h, h.hero); a += n; if (h.sd && !h.folded[h.hero]) b += n; else d += n; e += EVc(h, h.hero); vr += VRc(h, h.hero); c.push(a); sd.push(b); nsd.push(d); ev.push(e); }
+    dv = a - e; const z = vr > 0 ? dv / Math.sqrt(vr) : 0;
+    const LB = luckBadge(dv, vr, 'chips');
+    const ser = S.ui.series.chips;
+    const series = [{ k: 'c', name: 'Chips', color: '#33c27a', data: c }, { k: 'sd', name: 'Chips (SD)', color: '#4a90ff', data: sd }, { k: 'nsd', name: 'Chips (NSD)', color: '#ec5257', data: nsd }, { k: 'ev', name: 'EV (chips)', color: '#f2a93b', data: ev }].map(s => Object.assign(s, { on: !!ser[s.k] }));
+    lineChart($('#chart'), { series, xLabel: 'Mains jouées', yFmt: (v) => fmtN(v), tipHead: (i) => 'Main ' + fmtN(i + 1) + ' · ' + fmtDate(hs[i].ts, true) + ' · net ' + fmtS(NET(hs[i], hs[i].hero)) + ' · EV ' + fmtS(EVc(hs[i], hs[i].hero)), onPick: (i) => openReplayer(hs, i, 'Graphique des chips'), badge: LB.html, badgeCls: LB.cls });
+    legend(series, 'chips');
+  } else if (u.dash === 'br') {
+    const C = F.C; const p = [], ev = [], nm = []; let a = 0, b = 0, c = 0;
+    let vr = 0;
+    for (const t of C) {
+      a += t.profit; b += t.evProfit; c += t.nmProfit; p.push(a); ev.push(b); nm.push(c);
+      // variance of the payout around its EV: win prob = EV chip share, prize = random multiplier from the Betclic grid
+      const g = gridFor(t.bi), sh = Math.max(0, Math.min(1, (t.startStack + t.ev) / t.totalChips));
+      const m1 = g.reduce((x, q) => x + q[0] * q[1], 0) / 1e6, m2 = g.reduce((x, q) => x + q[0] * q[0] * q[1], 0) / 1e6;
+      vr += t.bi * t.bi * (sh * m2 - sh * sh * m1 * m1);
+    }
+    const BL = luckBadge(a - b, vr, '€');
+    const ser = S.ui.series.br;
+    const series = [{ k: 'p', name: 'Profit', color: '#4a90ff', data: p }, { k: 'ev', name: 'EV profit', color: '#e861ae', data: ev }, { k: 'nm', name: 'Multiplicateur neutralisé', color: '#f2a93b', data: nm }].map(s => Object.assign(s, { on: !!ser[s.k] }));
+    lineChart($('#chart'), { series, xLabel: 'Tournois joués', yFmt: (v) => fmtN(v, Math.abs(v) < 10 && v % 1 ? 1 : 0) + ' €', tipHead: (i) => 'Tournoi ' + fmtN(i + 1) + ' · ' + fmtDate(C[i].start, true) + ' · x' + C[i].mult, onPick: (i) => openSpin(C[i].gid), badge: BL.html, badgeCls: BL.cls });
+    legend(series, 'br');
+  }
+}
+function legend(series, key) {
+  $('#legend').innerHTML = series.map(s => '<button class="' + (s.on ? '' : 'off') + '" data-ser="' + key + ':' + s.k + '" aria-pressed="' + s.on + '"><i style="background:' + s.color + '"></i>' + esc(s.name) + '</button>').join('');
+}
+function viewStats() {
+  const C = F.C, H = F.H.filter(h => h.hero); const hrs = hoursPlayed(C);
+  const pr = C.reduce((x, t) => x + t.profit, 0), bi = C.reduce((x, t) => x + t.bi, 0);
+  const prEV = C.reduce((x, t) => x + t.evProfit, 0);
+  const cmp = (real, theo, f) => '<div class="v ' + cls(real) + '">' + f(real) + '</div><div class="theo" title="Théorique : tes chips en EV (all-in sans chance) et le multiplicateur moyen de la grille Betclic, rakeback inclus">Théorique <b class="' + cls(theo) + '">' + f(theo) + '</b><br>Écart <b class="' + cls(real - theo) + '">' + (real - theo > 0 ? '+' : '') + f(real - theo) + '</b></div>';
+  let h = '<div class="grid6">' + [['Buy-in moyen', '<div class="v">' + fmtE(C.length ? bi / C.length : NaN, 2) + '</div>'], ['Temps joué', '<div class="v">' + Math.floor(hrs) + 'h ' + String(Math.round((hrs % 1) * 60)).padStart(2, '0') + 'm</div>'], ['Spins / h', '<div class="v">' + fmtN(hrs ? C.length / hrs : NaN, 1) + '</div>'],
+    ['Gain réel', cmp(pr, prEV, (v) => fmtE(v, 2))], ['Gain / heure réel', cmp(hrs ? pr / hrs : NaN, hrs ? prEV / hrs : NaN, (v) => fmtE(v, 2))], ['ROI réel', cmp(bi ? pr / bi * 100 : NaN, bi ? prEV / bi * 100 : NaN, (v) => fmtP(v, 1))]].map(([l, v]) => '<div class="tile"><div class="l">' + l + '</div>' + v + '</div>').join('') + '</div>';
+  // cEV by position
+  const mode = S.ui.posMode; const nT = Math.max(1, F.T.length);
+  const acc = {}; for (const k of POSKEYS) acc[k] = { all: [], fish: [], reg: [] };
+  const perT = {}; // pos -> gid -> {all,fish,reg}
+  for (const x of H) {
+    if (!x.posKey || !acc[x.posKey]) continue; const ev = EVc(x, x.hero);
+    let prof;
+    if (x.mainOpp) prof = tagOf(x.mainOpp); else { const t = x.opps.map(tagOf); prof = t.every(y => y === 'fish') ? 'fish' : t.every(y => y === 'reg') ? 'reg' : 'mix'; }
+    if (mode === 'hand') { acc[x.posKey].all.push(ev); if (prof === 'fish' || prof === 'reg') acc[x.posKey][prof].push(ev); }
+    else { const m = (perT[x.posKey] = perT[x.posKey] || {}); const r = (m[x.gid] = m[x.gid] || { all: 0, fish: 0, reg: 0 }); r.all += ev; if (prof === 'fish' || prof === 'reg') r[prof] += ev; }
+  }
+  if (mode === 'tour') for (const k of POSKEYS) { const m = perT[k] || {}; const ids = F.T.map(t => t.gid); for (const g of ids) { const r = m[g] || { all: 0, fish: 0, reg: 0 }; acc[k].all.push(r.all); acc[k].fish.push(r.fish); acc[k].reg.push(r.reg); } }
+  const sv = (k, p) => ({ v: mean(acc[k][p]), ci: ci95(acc[k][p]), n: acc[k][p].length });
+  h += '<div class="grid2"><div class="panel"><h3>cEV par position <span class="help">chips ' + (mode === 'hand' ? 'par main' : 'par tournoi') + ', barres = intervalle de confiance à 95 %</span><span class="r"><span class="seg"><button class="' + (mode === 'hand' ? 'on' : '') + '" data-posmode="hand">Par main</button><button class="' + (mode === 'tour' ? 'on' : '') + '" data-posmode="tour">Par tournoi</button></span></span></h3>' +
+    barChart({ label: 'cEV par position', cats: POSKEYS, series: [{ name: 'vs Reg', color: '#ec5257', vals: POSKEYS.map(k => sv(k, 'reg')) }, { name: 'vs Fish', color: '#4a90ff', vals: POSKEYS.map(k => sv(k, 'fish')) }, { name: 'Tous', color: '#f2a93b', vals: POSKEYS.map(k => sv(k, 'all')) }] }) +
+    '<div class="legend"><span class="chip"><i class="dot reg"></i>vs Reg</span><span class="chip"><i class="dot fish"></i>vs Fish</span><span class="chip"><i class="dot" style="background:var(--accent)"></i>Tous</span></div><p class="note">vs Reg / vs Fish : l\'adversaire principal du coup (celui qui ouvre ou défend). Au BTN et en BB vs 2 (BTN et SB tous deux entrés dans le coup) : les deux adversaires ont le même statut.</p></div>';
+  // results by buy-in
+  const byBi = new Map(); for (const t of C) { const r = byBi.get(t.bi) || { n: 0, ev: 0, p: 0, T: [] }; r.n++; r.ev += t.ev; r.p += t.profit; r.T.push(t); byBi.set(t.bi, r); }
+  h += '<div class="panel"><h3>Résultats par buy-in</h3><div class="scroll"><table><thead><tr><th>Buy-in</th><th class="n">Spins</th><th class="n">cEV</th><th class="n">Profit</th><th class="n">ROI</th><th class="n">€/h</th></tr></thead><tbody>' +
+    [...byBi.entries()].sort((a, b) => a[0] - b[0]).map(([b, r]) => { const hh = hoursPlayed(r.T); return '<tr><td>' + fmtE(b, b % 1 ? 2 : 0) + '<div class="sub">Betclic · Spin & Rush</div></td><td class="n">' + fmtN(r.n) + '</td><td class="n">' + fmtN(r.ev / r.n, 0) + '</td><td class="n ' + cls(r.p) + '">' + fmtE(r.p, 2) + '</td><td class="n ' + cls(r.p) + '">' + fmtP(r.p / (b * r.n) * 100, 1) + '</td><td class="n ' + cls(r.p) + '">' + fmtE(hh ? r.p / hh : NaN, 2) + '</td></tr>'; }).join('') +
+    '<tr class="tot"><td>Total</td><td class="n">' + fmtN(C.length) + '</td><td class="n">' + fmtN(C.length ? C.reduce((x, t) => x + t.ev, 0) / C.length : NaN, 0) + '</td><td class="n ' + cls(pr) + '">' + fmtE(pr, 2) + '</td><td class="n ' + cls(pr) + '">' + fmtP(bi ? pr / bi * 100 : NaN, 1) + '</td><td class="n ' + cls(pr) + '">' + fmtE(hrs ? pr / hrs : NaN, 2) + '</td></tr></tbody></table></div></div></div>';
+  // cEV by table profile
+  const prof = { 'Spin R R': [], 'Spin R F': [], 'Spin F F': [], 'HU vs R': [], 'HU vs F': [] };
+  for (const t of F.T) { const p = tourProfile(t); if (p === 'RR') prof['Spin R R'].push(t.ev); else if (p === 'RF') prof['Spin R F'].push(t.ev); else if (p === 'FF') prof['Spin F F'].push(t.ev); if (t.huOpp && t.huEv != null) { const g = tagOf(t.huOpp); if (g === 'reg') prof['HU vs R'].push(t.huEv); else if (g === 'fish') prof['HU vs F'].push(t.huEv); } }
+  const pc = Object.keys(prof), colors = ['#ec5257', '#f2a93b', '#4a90ff', '#ec5257', '#4a90ff'];
+  h += '<div class="grid2b"><div class="panel"><h3>cEV par profil de table <span class="help">chips par tournoi (Spin) ou par heads-up (HU) · R = reg, F = fish</span></h3>' +
+    barChart({ label: 'cEV par profil', w: 560, cats: pc.map((k, i) => k + ' (' + prof[k].length + ')'), series: [{ name: 'cEV', colors, vals: pc.map(k => ({ v: mean(prof[k]), ci: ci95(prof[k]), n: prof[k].length })) }], vFmt: (v) => fmtN(v, 0) }) + '</div>';
+  // multi-tabling
+  const mt = {}; for (const t of C) { const r = mt[t.tables] = mt[t.tables] || { p: 0, hrs: 0, ev: [] }; r.p += t.profit; r.hrs += (t.end - t.start) / 3600e3 / t.conc; r.ev.push(t.ev); }
+  const mk = Object.keys(mt).map(Number).sort((a, b) => a - b); const mm = S.ui.mtMode;
+  h += '<div class="panel"><h3>Multi-tabling <span class="help">nombre moyen de spins ouverts en même temps</span><span class="r"><span class="seg"><button class="' + (mm === 'eh' ? 'on' : '') + '" data-mt="eh">€/h</button><button class="' + (mm === 'cev' ? 'on' : '') + '" data-mt="cev">cEV</button></span></span></h3>' +
+    barChart({ label: 'Multi-tabling', w: 640, ci: mm === 'cev', cats: mk.map(k => (k === 6 ? '6+' : k) + ' table' + (k > 1 ? 's' : '') + ' (' + mt[k].ev.length + ')'), series: [{ name: mm === 'eh' ? '€/h' : 'cEV', color: '#33c27a', vals: mk.map(k => mm === 'eh' ? { v: mt[k].hrs ? mt[k].p / mt[k].hrs : NaN, n: mt[k].ev.length } : { v: mean(mt[k].ev), ci: ci95(mt[k].ev), n: mt[k].ev.length }) }], yFmt: mm === 'eh' ? (v) => fmtN(v) + ' €' : null, vFmt: mm === 'eh' ? (v) => fmtN(v, 1) + ' €/h' : (v) => fmtN(v, 0) }) + '</div></div>';
+  // finishes & multipliers
+  const fin = [0, 0, 0]; for (const t of C) if (t.place >= 1 && t.place <= 3) fin[t.place - 1]++;
+  const mu = new Map(); for (const t of C) { const r = mu.get(t.mult) || { n: 0, w: 0, eur: 0 }; r.n++; if (t.place === 1) { r.w++; r.eur += t.eur; } mu.set(t.mult, r); }
+  const grid = gridFor(C.length ? C[0].bi : 10); for (const g of grid) if (!mu.has(g[0])) mu.set(g[0], { n: 0, w: 0, eur: 0 });
+  const ml = [...mu.keys()].sort((a, b) => a - b); const gp = (m) => { const g = grid.find(x => x[0] === m); return g ? g[1] / 1e6 : null; };
+  const avgM = C.length ? C.reduce((x, t) => x + t.mult, 0) / C.length : NaN, expM = C.length ? C.reduce((x, t) => x + expMult(t.bi), 0) / C.length : NaN;
+  h += '<div class="grid2b"><div class="panel"><h3>Finishes</h3>' + barChart({ label: 'Finishes', w: 520, h: 220, ci: false, cats: ['1er', '2e', '3e'], series: [{ name: 'Finishes', color: '#f2a93b', vals: fin.map(x => ({ v: C.length ? x / C.length * 100 : NaN, n: x })) }], yFmt: (v) => fmtN(v) + ' %', vFmt: (v) => fmtN(v, 1) + ' %' }) + '</div>' +
+    '<div class="panel"><h3>Multiplicateurs <span class="help">réels vs grille officielle Betclic</span></h3><div class="scroll"><table><thead><tr><th>Multiplicateur</th><th class="n">Spins</th><th class="n">Réel</th><th class="n">Attendu</th><th class="n">Écart</th><th class="n">Victoires</th><th class="n">Gains</th></tr></thead><tbody>' + ml.map(m => { const r = mu.get(m), e = gp(m), en = e != null ? e * C.length : null; return '<tr><td><span class="pill">x' + fmtN(m) + '</span>' + (grid.find(x => x[0] === m && x[2]) ? ' <span class="sub">75/15/10</span>' : '') + '</td><td class="n">' + fmtN(r.n) + '</td><td class="n">' + fmtP(C.length ? r.n / C.length * 100 : NaN, m >= 20 ? 2 : 1) + '</td><td class="n mut">' + (e != null ? fmtP(e * 100, m >= 20 ? 3 : 1) : '—') + '</td><td class="n ' + (en != null ? cls(r.n - en) : '') + '">' + (en != null ? fmtS(r.n - en, en < 10 ? 1 : 0) : '—') + '</td><td class="n">' + fmtN(r.w) + (r.n ? ' <span class="sub">(' + fmtP(r.w / r.n * 100, 0) + ')</span>' : '') + '</td><td class="n">' + fmtE(r.eur, 0) + '</td></tr>'; }).join('') + '</tbody></table></div><p class="note">Multiplicateur moyen : <b class="' + cls(avgM - expM) + '">x' + fmtN(avgM, 2) + '</b> obtenu, x' + fmtN(expM, 2) + ' attendu (rake effectif de la grille : ' + fmtN(GRID_RAKE, 1) + ' %). Écart en nombre de spins par rapport à l\'attendu.</p></div></div>';
+  return h;
+}
+
+function viewPlayers() {
+  const u = S.ui.pl; const hero = S.hero;
+  let list = [...S.players.values()].filter(s => !s.hero);
+  if (u.q) { const q = u.q.toLowerCase(); list = list.filter(s => s.name.toLowerCase().includes(q)); }
+  if (u.tag === 'man') list = list.filter(s => S.prefs.overrides[s.name]); else if (u.tag !== 'all') list = list.filter(s => tagOf(s.name) === u.tag);
+  const key = { name: (s) => s.name.toLowerCase(), hands: (s) => s.hands, tours: (s) => s.tours, vpip: (s) => s.vpip / s.hands, pfr: (s) => s.pfr / s.hands, limp: (s) => s.btnOpp ? s.btnLimp / s.btnOpp : -1, cevHu: (s) => isFinite(s.cevHu) ? s.cevHu : -1e9, cev: (s) => isFinite(s.cev) ? s.cev : -1e9, last: (s) => s.last }[u.sort];
+  list.sort((a, b) => { const x = key(a), y = key(b); return (x < y ? -1 : x > y ? 1 : 0) * u.dir; });
+  const per = 50, pages = Math.max(1, Math.ceil(list.length / per)); u.page = Math.min(u.page, pages - 1);
+  const all = [...S.players.values()].filter(s => !s.hero);
+  const cnt = { reg: all.filter(s => tagOf(s.name) === 'reg').length, fish: all.filter(s => tagOf(s.name) === 'fish').length, unknown: all.filter(s => tagOf(s.name) === 'unknown').length };
+  const th = (k, l, n) => '<th class="sort ' + (n ? 'n' : '') + '" data-plsort="' + k + '">' + l + (u.sort === k ? (u.dir < 0 ? ' ↓' : ' ↑') : '') + '</th>';
+  const heroS = S.players.get(hero);
+  const row = (s, isHero) => {
+    const t = tagOf(s.name), ov = S.prefs.overrides[s.name] || '';
+    return '<tr><td>' + (isHero ? '★ ' : '') + '<b>' + esc(s.name) + '</b></td><td>' + (isHero ? '<span class="tag unknown">Hero</span>' : tagHtml(s.name) + ' <select data-ov="' + esc(s.name) + '" aria-label="Statut de ' + esc(s.name) + '" style="padding:1px 4px;font-size:12px"><option value=""' + (!ov ? ' selected' : '') + '>Auto (' + (s.auto === 'reg' ? 'Reg' : s.auto === 'fish' ? 'Fish' : 'Inconnu') + ')</option><option value="reg"' + (ov === 'reg' ? ' selected' : '') + '>Reg</option><option value="fish"' + (ov === 'fish' ? ' selected' : '') + '>Fish</option></select>') + '</td>' +
+      '<td class="n">' + fmtN(s.hands) + '</td><td class="n">' + fmtN(s.tours) + '</td><td class="n">' + fmtP(s.vpip / s.hands * 100) + '</td><td class="n">' + fmtP(s.pfr / s.hands * 100) + '</td><td class="n">' + (s.btnOpp ? fmtN(s.btnLimp) + '/' + fmtN(s.btnOpp) : '—') + '</td>' +
+      '<td class="n ' + cls(s.cevHu) + '">' + fmtN(s.cevHu) + (isFinite(s.cevHuCi) ? '<span class="ci">±' + fmtN(s.cevHuCi) + '</span>' : '') + '</td><td class="n ' + cls(s.cev) + '">' + fmtN(s.cev) + (isFinite(s.cevCi) ? '<span class="ci">±' + fmtN(s.cevCi) + '</span>' : '') + '</td><td class="n mut">' + ago(s.last) + '</td>' +
+      '<td class="n">' + (isHero ? '' : '<button class="btn small" data-lfwho="' + esc(s.name) + '">Leaks</button>') + '</td></tr>';
+  };
+  let h = '<div class="bar"><input type="text" id="plq" placeholder="Rechercher un pseudo…" value="' + esc(u.q) + '" aria-label="Rechercher un pseudo" style="min-width:220px">' +
+    [['all', 'Tous', all.length], ['reg', 'Reg', cnt.reg], ['fish', 'Fish', cnt.fish], ['unknown', 'Inconnus', cnt.unknown], ['man', 'Corrigés à la main', Object.keys(S.prefs.overrides).length]].map(([k, l, n]) => '<button class="chip ' + (u.tag === k ? 'on' : '') + '" data-pltag="' + k + '">' + (k === 'reg' || k === 'fish' || k === 'unknown' ? '<i class="dot ' + k + '"></i>' : '') + l + ' · ' + n + '</button>').join('') +
+    '<div class="grow"></div><span class="note">Règle auto : ' + esc(ruleText()) + ' · <a href="#reglages" style="color:var(--accent)">modifier</a></span></div>';
+  h += '<div class="panel" style="padding:0"><div class="scroll"><table><thead><tr>' + th('name', 'Pseudo') + '<th>Statut</th>' + th('hands', 'Mains', 1) + th('tours', 'Spins', 1) + th('vpip', 'VPIP', 1) + th('pfr', 'PFR', 1) + th('limp', 'Limp BTN', 1) + th('cevHu', 'cEV HU', 1) + th('cev', 'cEV', 1) + th('last', 'Vu', 1) + '<th></th></tr></thead><tbody>' +
+    (heroS && !u.q && u.tag === 'all' ? row(heroS, true) : '') + list.slice(u.page * per, u.page * per + per).map(s => row(s, false)).join('') + '</tbody></table></div>' +
+    '<div class="pager" style="padding-bottom:10px"><button class="btn small" data-plpage="-1"' + (u.page ? '' : ' disabled') + '>Précédent</button>' + (u.page + 1) + ' / ' + pages + '<button class="btn small" data-plpage="1"' + (u.page < pages - 1 ? '' : ' disabled') + '>Suivant</button><span class="mut" style="margin-left:20px">Adversaires : <b>' + fmtN(all.length) + '</b></span></div></div>' +
+    '<p class="note" style="margin:0">cEV = chips gagnés en EV par spin (pour toi : sur tes spins ; pour un adversaire : sur les mains jouées avec toi). cEV HU = par heads-up. ± = intervalle de confiance 95 %.</p>';
+  // table quality
+  const q = { all: [0, 0], day: DAYS.map(() => [0, 0]), slot: SLOTS.map(() => [0, 0]) };
+  for (const t of F.T) { const d = new Date(t.start); for (const o of t.opps) { const g = tagOf(o); if (g === 'unknown') continue; const isF = g === 'fish' ? 1 : 0; q.all[0] += isF; q.all[1]++; q.day[d.getDay()][0] += isF; q.day[d.getDay()][1]++; const s = Math.floor(d.getHours() / 3); q.slot[s][0] += isF; q.slot[s][1]++; } }
+  const pct = (x) => x[1] ? x[0] / x[1] * 100 : NaN; const p = pct(q.all), moe = q.all[1] ? 1.96 * Math.sqrt(p / 100 * (1 - p / 100) / q.all[1]) * 100 : NaN;
+  h += '<div class="panel"><h3>Qualité des tables <span class="help">part de fish parmi tes adversaires (en bleu), sur les spins filtrés</span></h3><div class="donuts"><div class="grp"><div class="sub">GLOBALE</div>' + donut(p, 140, '', isFinite(moe) ? '±' + Math.round(moe) + '%' : '') + '</div>' +
+    '<div class="grp"><div class="sub">PAR JOUR</div><div>' + [1, 2, 3, 4, 5, 6, 0].map(i => donut(pct(q.day[i]), 62, DAYS[i] + (q.day[i][1] ? '' : ''))).join('') + '</div></div>' +
+    '<div class="grp"><div class="sub">PAR TRANCHE HORAIRE</div><div>' + SLOTS.map((s, i) => q.slot[i][1] ? donut(pct(q.slot[i]), 62, s) : '').join('') + '</div></div></div></div>';
+  return h;
+}
+function ruleText() { const c = S.prefs.cls; return 'Reg dès ' + c.minHands + ' mains et ' + (c.maxLimpPct > 0 ? '≤ ' + c.maxLimpPct + ' % de limp' : 'aucun limp') + ' au BTN' + (c.maxVpip ? ', VPIP ≤ ' + c.maxVpip + ' %' : '') + ' · sous le seuil : ' + ({ fish: 'Fish', reg: 'Reg', unknown: 'Inconnu' }[c.unknownAs]); }
+
+function viewReview() {
+  const u = S.ui.rv;
+  let h = '<div class="bar"><div class="seg"><button class="' + (S.ui.review === 'hands' ? 'on' : '') + '" data-rvtab="hands">Mains</button><button class="' + (S.ui.review === 'spins' ? 'on' : '') + '" data-rvtab="spins">Spins</button></div>';
+  if (S.ui.review === 'spins') return h + '<div class="grow"></div>' + filterBar() + '</div>' + viewSpins();
+  h += '<select id="rvPos" aria-label="Position"><option value="all">Toutes positions</option>' + POSKEYS.map(k => '<option ' + (u.pos === k ? 'selected' : '') + '>' + k + '</option>').join('') + '</select>' +
+    '<select id="rvProf" aria-label="Adversaire"><option value="all">Tous adversaires</option><option value="reg"' + (u.prof === 'reg' ? ' selected' : '') + '>vs Reg</option><option value="fish"' + (u.prof === 'fish' ? ' selected' : '') + '>vs Fish</option></select>' +
+    '<select id="rvKind" aria-label="Type de main">' + [['all', 'Toutes les mains'], ['allin', 'All-in avec cartes montrées'], ['sd', 'Showdown'], ['vpip', 'Mains jouées (VPIP)'], ['big', 'Gros pots (≥ 10 bb)'], ['fav', 'Favoris']].map(([k, l]) => '<option value="' + k + '"' + (u.kind === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
+    '<button class="btn small primary" data-act="replayList">▶ Rejouer la liste</button>' +
+    (u.gid ? '<button class="chip on" data-act="clearGid">Spin du ' + fmtDate((S.tours.find(t => t.gid === u.gid) || {}).start || 0, true) + ' ✕</button>' : '') + '<div class="grow"></div>' + filterBar() + '</div>';
+  let list = (u.gid ? (S.tours.find(t => t.gid === u.gid) || { hands: [] }).hands : F.H).filter(x => x.hero);
+  if (u.pos !== 'all') list = list.filter(x => x.posKey === u.pos);
+  if (u.prof !== 'all') list = list.filter(x => { const t = x.mainOpp ? [tagOf(x.mainOpp)] : x.opps.map(tagOf); return t.every(y => y === u.prof); });
+  if (u.kind === 'allin') list = list.filter(x => x.E.adj && x.E.ev[x.hero] != null && !x.folded[x.hero]);
+  else if (u.kind === 'sd') list = list.filter(x => x.sd && !x.folded[x.hero]);
+  else if (u.kind === 'vpip') list = list.filter(x => x.pf[x.hero] && x.pf[x.hero].vpip);
+  else if (u.kind === 'big') list = list.filter(x => x.pot >= 10 * x.bb);
+  else if (u.kind === 'fav') list = list.filter(x => S.prefs.favs[x.id]);
+  const sk = u.sort === 'ev' ? (x) => EVc(x, x.hero) : u.sort === 'net' ? (x) => NET(x, x.hero) : (x) => x.ts;
+  if (u.sort === 'luck') u.sort = 'date';
+  list = list.slice().sort((a, b) => (sk(a) - sk(b)) * u.dir || a.ts - b.ts);
+  S.rvList = list;
+  const per = 100, pages = Math.max(1, Math.ceil(list.length / per)); u.page = Math.min(u.page, pages - 1);
+  const evSum = list.reduce((x, y) => x + EVc(y, y.hero), 0);
+  const th = (k, l) => '<th class="sort n" data-rvsort="' + k + '">' + l + (u.sort === k ? (u.dir < 0 ? ' ↓' : ' ↑') : '') + '</th>';
+  h += '<div class="panel" style="padding:0"><div class="scroll"><table><thead><tr><th class="sort" data-rvsort="date">Date' + (u.sort === 'date' ? (u.dir < 0 ? ' ↓' : ' ↑') : '') + '</th><th>Opp.</th><th>Main</th><th>Board</th><th>Hero</th><th>Stack</th><th>Actions</th>' + th('net', 'Net') + th('ev', 'EV') + '<th>Fav</th></tr></thead><tbody>' +
+    (list.length ? list.slice(u.page * per, u.page * per + per).map(rvRow).join('') : '<tr><td colspan="10" class="empty">Aucune main</td></tr>') + '</tbody></table></div>' +
+    '<div class="pager" style="padding-bottom:10px"><button class="btn small" data-rvpage="-1"' + (u.page ? '' : ' disabled') + '>Précédent</button>' + (u.page + 1) + ' / ' + pages + '<button class="btn small" data-rvpage="1"' + (u.page < pages - 1 ? '' : ' disabled') + '>Suivant</button><span style="margin-left:20px">cEV / main <b class="' + cls(evSum) + '">' + fmtS(list.length ? evSum / list.length : NaN, 1) + '</b> · Mains <b>' + fmtN(list.length) + '</b></span></div></div>';
+  return h;
+}
+function rvRow(x) {
+  const hero = x.hero, al = E.actionLine(x, hero), st = ['Preflop', 'Flop', 'Turn', 'River'];
+  const acts = '<div class="acts">' + al.map((a, i) => a.length ? '<div><span class="st">' + st[i] + '</span>' + a.map(z => (z.me ? '<b>' : '<em>') + z.L + (z.ai ? '<sub>A</sub>' : '') + (z.me ? '</b>' : '</em>')).join(' ') + '</div>' : '').join('') + '</div>';
+  const ev = EVc(x, hero), net = NET(x, hero); const me = x.players.find(p => p.hero);
+  return '<tr class="click" data-hand="' + x.id + '"><td>' + fmtDate(x.ts, true) + '</td><td>' + x.opps.map(o => tagHtml(o, true)).join(' ') + '</td><td>' + cardsHtml(x.hole[hero]) + '</td><td>' + cardsHtml(x.board) + '</td><td><span class="pill">' + esc(x.posKey || '') + '</span></td><td class="mono">' + fmtN(me.stack / x.bb, 1) + ' bb</td><td>' + acts + '</td>' +
+    '<td class="n ' + cls(net) + '">' + fmtS(net) + '</td><td class="n ' + cls(ev) + '">' + fmtS(ev) + (x.E.adj && !x.folded[hero] ? ' <span class="sub">AI</span>' : '') + '</td><td><button class="star ' + (S.prefs.favs[x.id] ? 'on' : '') + '" data-fav="' + x.id + '" aria-label="Favori">★</button></td></tr>';
+}
+function viewSpins() {
+  const u = S.ui.sp || (S.ui.sp = { sort: 'date', dir: -1 });
+  const key = { date: (t) => t.start, ev: (t) => t.ev, profit: (t) => t.complete ? t.profit : -1e9, hands: (t) => t.hands.length }[u.sort];
+  const T = F.T.slice().sort((a, b) => (key(a) - key(b)) * u.dir || b.start - a.start);
+  const th = (k, l, n) => '<th class="sort' + (n ? ' n' : '') + '" data-spsort="' + k + '">' + l + (u.sort === k ? (u.dir < 0 ? ' ↓' : ' ↑') : '') + '</th>';
+  return '<div class="bar"><button class="chip' + (u.sort === 'ev' && u.dir === 1 ? ' on' : '') + '" data-spsort-preset="worst">Pires spins (cEV)</button><button class="chip' + (u.sort === 'ev' && u.dir === -1 ? ' on' : '') + '" data-spsort-preset="best">Meilleurs spins</button><span class="note">Clic sur un spin : le rejouer main par main.</span></div>' +
+    '<div class="panel" style="padding:0"><div class="scroll"><table><thead><tr>' + th('date', 'Début') + '<th class="n">Buy-in</th><th class="n">Multi.</th><th>Adversaires</th>' + th('hands', 'Mains', 1) + '<th class="n">Tables</th><th class="n">Place</th>' + th('ev', 'cEV', 1) + th('profit', 'Profit', 1) + '<th></th></tr></thead><tbody>' +
+    T.slice(0, 500).map(t => '<tr class="click" data-spinplay="' + t.gid + '"><td>' + fmtDate(t.start, true) + '</td><td class="n">' + fmtE(t.bi, 0) + '</td><td class="n"><span class="pill">x' + t.mult + '</span></td><td>' + t.opps.map(o => tagHtml(o, true) + ' ' + esc(o)).join(' &nbsp; ') + '</td><td class="n">' + t.hands.length + (t.gap ? ' <span class="sub" title="Mains manquantes dans l\'historique">⚠</span>' : '') + '</td><td class="n">' + t.tables + '</td><td class="n">' + (t.place ? (t.place === 1 ? '<b class="pos">1er</b>' : t.place + 'e') : '<span class="mut">incomplet</span>') + '</td><td class="n ' + cls(t.ev) + '">' + fmtS(t.ev) + '</td><td class="n ' + cls(t.profit) + '">' + (t.complete ? fmtE(t.profit, 2) : '—') + '</td><td class="n"><button class="btn small" data-gid="' + t.gid + '">Liste</button> <button class="btn small primary" data-spinplay="' + t.gid + '">▶ Rejouer</button></td></tr>').join('') +
+    '</tbody></table></div>' + (T.length > 500 ? '<p class="note" style="padding:0 12px">500 premiers spins affichés, utilise les filtres pour affiner.</p>' : '') + '</div>';
+}
+function openHand(id) {
+  const L = S.rvList || []; const i = L.findIndex(z => z.id === id); if (i >= 0) { openReplayer(L, i, 'Liste Review'); return; }
+  const one = S.byId.get(id) || (S.skipped.bad.find(z => z.h.id === id) || {}).h; if (one) { openReplayer([one], 0, 'Main'); return; }
+  const x = S.byId.get(id); if (!x) return;
+  const st = ['Preflop', 'Flop', 'Turn', 'River'], V = { sb: 'poste SB', bb: 'poste BB', f: 'fold', x: 'check', c: 'call', b: 'bet', r: 'raise à', ante: 'ante' };
+  const t = S.tours.find(z => z.gid === x.gid);
+  let h = '<div class="modal-bg" data-act="closeModal"><div class="modal" role="dialog" aria-modal="true" aria-label="Détail de la main"><div class="row"><h3 style="margin:0;font:700 22px var(--display)">Main du ' + fmtDate(x.ts, true) + '</h3><span class="pill">' + esc(x.posKey || '') + '</span><span class="pill">Blinds ' + x.sb + '/' + x.bb + '</span><span class="pill">' + fmtE(x.bi, 0) + ' · x' + x.mult + '</span><div class="grow" style="flex:1"></div><button class="btn small" data-act="closeModal">Fermer</button></div>';
+  h += '<div class="seats">' + x.players.map(p => '<div class="seat ' + (p.hero ? 'hero' : '') + '"><div class="row"><b>' + esc(p.name) + '</b>' + (p.hero ? '' : tagHtml(p.name)) + '<span class="pill" style="margin-left:auto">' + p.pos + '</span></div><div class="row">' + cardsHtml(x.hole[p.name] || [null, null]) + '<span class="mono">' + fmtN(p.stack) + ' (' + fmtN(p.stack / x.bb, 1) + ' bb)</span></div><div class="mono ' + cls(x.net[p.name]) + '">Net ' + fmtS(x.net[p.name]) + (x.E.adj && x.E.eq && x.E.eq[p.name] != null ? ' · EV ' + fmtS(x.E.ev[p.name]) + ' · équité ' + fmtP(x.E.eq[p.name] * 100, 1) : '') + '</div></div>').join('') + '</div>';
+  for (let s = 0; s < 4; s++) {
+    const a = x.acts.filter(z => z.st === s); if (!a.length && (s === 0 || x.board.length < s + 2)) continue;
+    h += '<div class="street"><div class="nm">' + st[s] + (s ? '<div style="margin-top:4px">' + cardsHtml(s === 1 ? x.board.slice(0, 3) : x.board.slice(s + 1, s + 2)) + '</div>' : '') + '</div><div>' + a.map(z => '<div' + (z.p === x.hero ? ' style="color:#7fb2ff"' : '') + '><b>' + esc(z.p) + '</b> ' + V[z.a] + (z.a === 'f' || z.a === 'x' ? '' : ' ' + fmtN(z.n)) + (z.ai ? ' <b style="color:var(--accent)">all-in</b>' : '') + '</div>').join('') + (!a.length ? '<span class="mut">pas d\'action</span>' : '') + '</div></div>';
+  }
+  if (x.E.adj) h += '<div class="note">All-in ' + st[x.E.st].toLowerCase() + ' : EV calculée sur toutes les runouts possibles (' + (x.E.st === 0 ? 'simulation 10 000 tirages' : 'énumération exacte') + '), pots et side pots compris.</div>';
+  const text = E.toText(x);
+  h += '<details><summary style="cursor:pointer;color:var(--muted)">Historique texte</summary><pre id="hhText">' + esc(text) + '</pre><button class="btn small" data-act="copyHH">Copier</button></details>' + (t ? '<div><button class="btn small" data-gotogid="' + x.gid + '">Voir toutes les mains de ce spin</button></div>' : '') + '</div></div>';
+  $('#modalRoot').innerHTML = h;
+}
+
+// ---------- Leak finder ----------
+function lfProfileHands() {
+  const p = S.ui.lf.prof, who = S.ui.lf.who;
+  if (p === 'hero') return { hs: F.H, pick: (h) => h.hero ? [h.hero] : [] , label: 'Hero' };
+  if (p === 'player' && who) return { hs: S.hands, pick: (h) => h.pf[who] ? [who] : [], label: who };
+  return { hs: S.hands, pick: (h) => h.opps.filter(o => tagOf(o) === p), label: p === 'reg' ? 'Regs' : 'Fish' };
+}
+function lfAggregate(hs, pick, posF) {
+  const M = new Map();
+  for (const h of hs) for (const name of pick(h)) {
+    const I = h.pf[name]; if (!I) continue;
+    for (const d of I.decisions) {
+      const pos = d.key.split(' | ')[0]; if (posF !== 'all' && pos !== posF) continue;
+      let r = M.get(d.key); if (!r) { r = { key: d.key, n: 0, a: {}, b: BUCKETS.map(() => ({ n: 0, a: {} })) }; M.set(d.key, r); }
+      r.n++; r.a[d.act] = (r.a[d.act] || 0) + 1; const bk = r.b[bucketOf(d.eff)]; bk.n++; bk.a[d.act] = (bk.a[d.act] || 0) + 1;
+    }
+  }
+  return M;
+}
+function viewLeaks() {
+  const u = S.ui.lf;
+  const opps = [...S.players.values()].filter(s => !s.hero).sort((a, b) => b.hands - a.hands);
+  let h = '<div class="bar"><div class="seg"><button class="' + (u.sub === 'sit' ? 'on' : '') + '" data-lfsub="sit">Préflop par stack</button><button class="' + (u.sub === 'stats' ? 'on' : '') + '" data-lfsub="stats">Stats générales</button></div>' +
+    '<label class="f" style="flex-direction:row;align-items:center" for="lfProf">Profil <select id="lfProf"><option value="hero"' + (u.prof === 'hero' ? ' selected' : '') + '>Hero (' + esc(S.hero || '') + ')</option><option value="reg"' + (u.prof === 'reg' ? ' selected' : '') + '>Tous les regs</option><option value="fish"' + (u.prof === 'fish' ? ' selected' : '') + '>Tous les fish</option><option value="player"' + (u.prof === 'player' ? ' selected' : '') + '>Un joueur…</option></select></label>' +
+    (u.prof === 'player' ? '<select id="lfWho" aria-label="Joueur">' + opps.slice(0, 400).map(s => '<option' + (s.name === u.who ? ' selected' : '') + ' value="' + esc(s.name) + '">' + esc(s.name) + ' (' + s.hands + ')</option>').join('') + '</select>' : '') +
+    (u.sub === 'sit' ? '<label class="f" style="flex-direction:row;align-items:center" for="lfPos">Position <select id="lfPos">' + ['all', 'BTN', 'SB', 'BB', 'HU SB', 'HU BB'].map(k => '<option value="' + k + '"' + (u.pos === k ? ' selected' : '') + '>' + (k === 'all' ? 'Toutes' : k) + '</option>').join('') + '</select></label>' +
+      '<label class="f" style="flex-direction:row;align-items:center" for="lfRef">Comparer à <select id="lfRef"><option value="reg"' + (u.ref === 'reg' ? ' selected' : '') + '>Regs de ta base</option><option value="fish"' + (u.ref === 'fish' ? ' selected' : '') + '>Fish de ta base</option><option value="none"' + (u.ref === 'none' ? ' selected' : '') + '>Rien</option></select></label>' : '') +
+    '<div class="grow"></div>' + filterBar() + '</div>';
+  if (u.prof === 'player' && !u.who && opps.length) u.who = opps[0].name;
+  const P = lfProfileHands();
+  if (u.sub === 'stats') return h + lfStats(P);
+  const M = lfAggregate(P.hs, P.pick, u.pos);
+  const R = u.ref !== 'none' ? lfAggregate(S.hands, (x) => x.opps.filter(o => tagOf(o) === u.ref), u.pos) : null;
+  const list = [...M.values()].filter(r => r.n >= 5).sort((a, b) => b.n - a.n).slice(0, 30);
+  if (!list.length) return h + '<div class="panel empty">Pas assez de mains pour ce profil.</div>';
+  h += '<p class="note" style="margin:0">Chaque carte = une situation préflop (ta position et les actions avant ta décision), découpée par stack effectif en big blinds. ' + (R ? 'Couleurs vs ' + (u.ref === 'reg' ? 'les regs' : 'les fish') + ' de ta base, dans la même case : <span class="c-ok">vert</span> écart ≤ 5 pts, <span class="c-agg">rouge</span> plus agressif, <span class="c-pas">bleu</span> plus passif, gris = référence trop petite (survole une case pour voir la référence).' : '') + '</p><div class="lf-grid">' + list.map(r => lfCard(r, R && R.get(r.key))).join('') + '</div>';
+  return h;
+}
+function lfCard(r, ref) {
+  const acts = ['fold', 'check', 'limp', 'call', 'raise', 'shove'].filter(a => r.a[a] || (ref && ref.a[a]));
+  const [pos, seq] = r.key.split(' | ');
+  const cell = (bk, rb, a) => {
+    if (!bk.n) return '<td class="n c-na">—</td>';
+    const v = (bk.a[a] || 0) / bk.n * 100;
+    if (!rb || rb.n < 8) return '<td class="n c-na" title="Référence insuffisante">' + Math.round(v) + '<span class="sub">%</span></td>';
+    const rv = (rb.a[a] || 0) / rb.n * 100, d = v - rv;
+    const c = Math.abs(d) <= 5 ? 'c-ok' : ((AGG[a] ? d > 0 : d < 0) ? 'c-agg' : 'c-pas');
+    return '<td class="n ' + c + '" title="Réf. ' + Math.round(rv) + ' % sur ' + rb.n + ' mains">' + Math.round(v) + '<span class="sub">%</span></td>';
+  };
+  let h = '<div class="panel lf"><h3><span class="pill">' + esc(pos) + '</span> ' + esc(seq === 'premier à parler' ? 'Premier à parler' : 'après ' + seq) + '</h3>';
+  h += '<div class="head"><div><b>' + fmtN(r.n) + '</b><span>Mains</span></div>' + acts.map(a => '<div><b>' + Math.round((r.a[a] || 0) / r.n * 100) + '%</b><span>' + ACT_LABEL[a] + '</span>' + (ref && ref.n ? '<span class="sub" style="display:block;text-transform:none;letter-spacing:0">réf. ' + Math.round((ref.a[a] || 0) / ref.n * 100) + ' %</span>' : '') + '</div>').join('') + '</div>';
+  h += '<table><thead><tr><th>Stack (bb)</th><th class="n">Mains</th>' + acts.map(a => '<th class="n">' + ACT_LABEL[a] + '</th>').join('') + '</tr></thead><tbody>';
+  for (let i = BUCKETS.length - 1; i >= 0; i--) { const bk = r.b[i]; if (!bk.n && !(ref && ref.b[i].n)) continue; h += '<tr><td>' + bucketName(i) + '</td><td class="n">' + bk.n + '</td>' + acts.map(a => cell(bk, ref && ref.b[i], a)).join('') + '</tr>'; }
+  return h + '</tbody></table></div>';
+}
+function lfStats(P) {
+  const rows = ['BTN', 'SB', 'BB', 'HU SB', 'HU BB', 'Total'];
+  const acc = {}; for (const r of rows) acc[r] = { n: 0, vpip: 0, pfr: 0, tbo: 0, tb: 0, cbo: 0, cb: 0, fco: 0, fc: 0, sf: 0, wtsd: 0, wsd: 0, ab: 0, ac: 0, ev: 0, limpo: 0, limp: 0 };
+  for (const h of P.hs) for (const name of P.pick(h)) {
+    const p = h.players.find(z => z.name === name); if (!p) continue; const I = h.pf[name]; const po = E.postflopInfo(h, name);
+    const k = h.n === 2 ? 'HU ' + p.pos : p.pos;
+    for (const r of [acc[k], acc.Total]) { if (!r) continue; r.n++; if (I.vpip) r.vpip++; if (I.pfr) r.pfr++; if (I.threeBetOpp) r.tbo++; if (I.threeBet) r.tb++; if (I.btnOpp) r.limpo++; if (I.btnLimp) r.limp++; if (po.cbOpp) r.cbo++; if (po.cb) r.cb++; if (po.fcbOpp) r.fco++; if (po.fcb) r.fc++; if (po.sawFlop) r.sf++; if (po.wtsd && po.sawFlop) r.wtsd++; if (po.wsd && po.sawFlop) r.wsd++; r.ab += po.af_b; r.ac += po.af_c; r.ev += EVc(h, name); }
+  }
+  const pc = (a, b) => b ? fmtP(a / b * 100) : '—';
+  return '<div class="panel" style="padding:0"><div class="scroll"><table><thead><tr><th>' + esc(P.label) + '</th><th class="n">Mains</th><th class="n">VPIP</th><th class="n">PFR</th><th class="n">Limp BTN</th><th class="n">3-bet</th><th class="n">C-bet flop</th><th class="n">Fold vs c-bet</th><th class="n">WTSD</th><th class="n">W$SD</th><th class="n">AF</th><th class="n">cEV / main</th></tr></thead><tbody>' +
+    rows.map(k => { const r = acc[k]; return '<tr' + (k === 'Total' ? ' class="tot"' : '') + '><td>' + k + '</td><td class="n">' + fmtN(r.n) + '</td><td class="n">' + pc(r.vpip, r.n) + '</td><td class="n">' + pc(r.pfr, r.n) + '</td><td class="n">' + pc(r.limp, r.limpo) + '</td><td class="n">' + pc(r.tb, r.tbo) + '</td><td class="n">' + pc(r.cb, r.cbo) + '</td><td class="n">' + pc(r.fc, r.fco) + '</td><td class="n">' + pc(r.wtsd, r.sf) + '</td><td class="n">' + pc(r.wsd, r.wtsd) + '</td><td class="n">' + (r.ac ? fmtN(r.ab / r.ac, 1) : '—') + '</td><td class="n ' + cls(r.ev) + '">' + fmtS(r.n ? r.ev / r.n : NaN, 1) + '</td></tr>'; }).join('') +
+    '</tbody></table></div></div><p class="note">WTSD et W$SD sont calculés sur les mains où le joueur a vu le flop. AF = (bets + raises) / calls après le flop.</p>';
+}
+
+// ---------- imports & settings ----------
+function viewImports() {
+  let h = folderPanel() + '<div class="drop" id="drop"><h2>Importer des historiques Betclic</h2><p class="mut">Glisse ici des fichiers .txt ou des dossiers entiers (sous-dossiers compris), ou</p><div class="row" style="justify-content:center"><label class="btn primary" for="dirIn" style="cursor:pointer">Choisir un dossier</label><label class="btn" for="fileIn" style="cursor:pointer">Choisir des fichiers</label></div><input type="file" id="fileIn" multiple accept=".txt,text/plain" style="display:none"><input type="file" id="dirIn" webkitdirectory directory multiple style="display:none"><p class="note">Réimporte le même dossier quand tu veux : les fichiers déjà lus et les mains déjà présentes sont sautés.</p><p class="note">Tout est calculé dans ton navigateur : rien n\'est envoyé ailleurs.</p><div id="impProg" style="display:none;margin-top:14px"><div class="progress"><div id="impBar"></div></div><div class="note" id="impMsg"></div></div></div>';
+  const n = S.hands.length, T = S.tours.length;
+  const first = n ? S.hands[0].ts : null, last = n ? S.hands[n - 1].ts : null;
+  h += '<div class="grid2b"><div class="panel"><h3>Base actuelle</h3><table><tbody><tr><td>Mains</td><td class="n"><b>' + fmtN(n) + '</b></td></tr><tr><td>Spins</td><td class="n"><b>' + fmtN(T) + '</b> <span class="sub">(' + fmtN(S.tours.filter(t => !t.complete).length) + ' incomplets)</span></td></tr><tr><td>All-in recalculés en EV</td><td class="n">' + fmtN(S.hands.filter(x => x.E.adj).length) + '</td></tr><tr><td>Période</td><td class="n">' + (n ? fmtDate(first, true) + ' → ' + fmtDate(last, true) : '—') + '</td></tr><tr><td>Hero détecté</td><td class="n">' + esc(S.hero || '—') + '</td></tr><tr><td>Stockage</td><td class="n">' + (S.storage === 'idb' ? 'Navigateur (IndexedDB)' : 'Mémoire seulement') + '</td></tr></tbody></table>' +
+    (S.storage !== 'idb' ? '<p class="note">Ce navigateur ne garde pas les mains entre deux visites : il faudra réimporter tes fichiers à chaque ouverture.</p>' : '<p class="note">Les mains restent dans ce navigateur. Sur un autre appareil, réimporte tes fichiers.</p>') +
+    (S.skipped.other ? '<p class="note">' + fmtN(S.skipped.other) + ' main(s) d\'autres formats (MTT, cash…) ignorée(s).</p>' : '') +
+    (S.skipped.bad.length ? '<p class="note" style="color:#ff9a9d">' + S.skipped.bad.length + ' main(s) incohérente(s) écartée(s) des stats :</p><table><tbody>' + S.skipped.bad.slice(0, 30).map(z => '<tr class="click" data-badhand="' + z.h.id + '"><td>' + fmtDate(z.h.ts, true) + '</td><td class="sub">' + esc(z.why) + '</td><td class="n"><span class="btn small">▶ Voir</span></td></tr>').join('') + '</tbody></table>' : '') +
+    (S.tours.some(t => t.gap) ? '<p class="note">' + S.tours.filter(t => t.gap).length + ' spin(s) avec des mains manquantes dans l\'historique (tapis qui ne se suivent pas).</p>' : '') +
+    '<div class="row" style="margin-top:8px"><button class="btn danger" data-act="askClear">Vider la base</button><span id="clearAsk"></span></div></div>' +
+    '<div class="panel"><h3>Imports de cette session</h3>' + (S.imports.length ? '<table><thead><tr><th>Fichier</th><th class="n">Mains lues</th><th class="n">Nouvelles</th><th class="n">Spins</th></tr></thead><tbody>' + S.imports.map(i => '<tr><td>' + esc(i.name) + '</td><td class="n">' + fmtN(i.read) + '</td><td class="n">' + fmtN(i.added) + '</td><td class="n">' + fmtN(i.games) + '</td></tr>').join('') + '</tbody></table>' : '<p class="note">Aucun import pour l\'instant.' + (S.seedLoaded ? ' La base contient ton export du 11/11/2026, chargé au démarrage.' : '') + '</p>') +
+    '<p class="note">Où trouver les fichiers : dans le client Betclic Poker, exporte l\'historique des mains (fichier « ExportHH_… .txt »). Importe-les régulièrement, les doublons sont ignorés.</p></div></div>';
+  return h;
+}
+function viewSettings() {
+  const c = S.prefs.cls;
+  return '<div class="settings"><div class="panel"><h3>Classification Reg / Fish</h3>' +
+    '<label class="f" for="sMin">Mains minimum pour être Reg<input type="number" id="sMin" min="1" value="' + c.minHands + '"></label>' +
+    '<label class="f" for="sLimp">Limp au BTN (3 joueurs) toléré, en % des occasions<input type="number" id="sLimp" min="0" max="100" step="1" value="' + c.maxLimpPct + '"><span class="note">0 = un seul limp au BTN suffit pour être Fish.</span></label>' +
+    '<label class="f" for="sVpip">VPIP maximum d\'un Reg (%) · 0 = ignoré<input type="number" id="sVpip" min="0" max="100" value="' + c.maxVpip + '"></label>' +
+    '<label class="f" for="sUnk">Joueurs sous le seuil de mains, sans limp<select id="sUnk"><option value="fish"' + (c.unknownAs === 'fish' ? ' selected' : '') + '>Fish</option><option value="unknown"' + (c.unknownAs === 'unknown' ? ' selected' : '') + '>Inconnu (exclus des stats vs Reg / vs Fish)</option><option value="reg"' + (c.unknownAs === 'reg' ? ' selected' : '') + '>Reg</option></select></label>' +
+    '<div class="row"><button class="btn primary" data-act="saveCls">Appliquer</button><span class="note">' + Object.keys(S.prefs.overrides).length + ' joueur(s) corrigé(s) à la main, ils gardent leur statut.</span></div>' +
+    '<div class="row"><button class="btn" data-act="resetOv">Effacer les corrections manuelles</button></div></div>' +
+    '<div class="panel"><h3>Argent</h3><label class="f" for="sRake">Rake effectif du format (%)<input type="number" id="sRake" step="0.1" min="0" max="30" value="' + S.prefs.rakeEff + '"><span class="note">Sert à l\'EV profit : prize pool moyen = 3 × buy-in × (1 − rake). La grille officielle Betclic donne ' + fmtN(GRID_RAKE, 1) + ' % (multiplicateur moyen x' + fmtN(expMult(10), 2) + ').</span></label>' +
+    '<label class="f" for="sRb">Rakeback (% du rake payé)<input type="number" id="sRb" step="1" min="0" max="100" value="' + S.prefs.rakeback + '"></label><div class="row"><button class="btn primary" data-act="saveMoney">Appliquer</button></div></div>' +
+    '<div class="panel"><h3>Sauvegarde des réglages</h3><p class="note" style="font-size:13px">Tes corrections Reg/Fish, favoris et réglages restent dans ce navigateur. Exporte-les de temps en temps, ou pour les passer sur un autre ordinateur.</p><div class="row"><button class="btn" data-exportprefs="1">Exporter mes réglages</button><label class="btn" for="prefsIn" style="cursor:pointer">Restaurer une sauvegarde</label><input type="file" id="prefsIn" accept=".json,application/json" style="display:none"></div></div>' +
+    '<div class="panel"><h3>Où sont gardées tes données</h3><p class="note" style="font-size:13px">Les mains sont stockées dans ce navigateur, sur ton ordinateur : rien n\'est envoyé sur internet. Si tu vides la base, un clic sur « Mettre à jour » relit tout ton dossier. Tes réglages, corrections de statut et favoris ' + (S.cloud ? 'sont aussi sauvegardés sur ton compte Claude et te suivent sur tes autres appareils.' : 'sont gardés dans ce navigateur.') + '</p><p class="note">Heures affichées dans le fuseau de ton appareil (' + esc(Intl.DateTimeFormat().resolvedOptions().timeZone || 'local') + ').</p></div></div>';
+}
+
+// ---------- render & events ----------
+const VIEWS = { tableau: viewDashboard, joueurs: viewPlayers, review: viewReview, leaks: viewLeaks, imports: viewImports, reglages: viewSettings };
+function currentView() { const v = (location.hash || '').slice(1); return VIEWS[v] ? v : 'tableau'; }
+function render() {
+  const v = currentView();
+  document.querySelectorAll('#nav a, .rail .nav a').forEach(a => a.classList.toggle('on', a.dataset.v === v));
+  const m = $('#main'); const sc = m.scrollTop;
+  m.innerHTML = (S.seedBanner && v !== 'imports' ? '<div class="banner">Ton export Betclic du 11/11/2026 est chargé (' + fmtN(S.hands.length) + ' mains). <a href="#imports" style="color:var(--accent)">Importer d\'autres fichiers</a><button class="btn small" data-act="hideBanner" style="margin-left:auto">OK</button></div>' : '') + VIEWS[v]();
+  if (v === 'tableau') afterDashboard();
+  m.scrollTop = sc;
+  if (v === 'imports') bindDrop();
+  renderStore();
+}
+function renderStore() { $('#storeState').innerHTML = '<i class="' + (S.storage === 'idb' ? '' : 'warn') + '"></i>' + fmtN(S.hands.length) + ' mains<br>' + (S.storage === 'idb' ? 'gardées dans ce navigateur' : 'en mémoire seulement') + (S.cloud ? '<br>réglages synchronisés' : ''); }
+function refresh() { recompute(); render(); }
+window.addEventListener('hashchange', () => { $('#main').scrollTop = 0; render(); });
+
+document.addEventListener('click', (e) => {
+  if (FM.draft && $('.fm')) { fmClick(e); return; }
+  const sy = e.target.closest('[data-sync],[data-pickdir],[data-exportprefs]'); if (sy) { if (sy.dataset.pickdir) pickDir(); else if (sy.dataset.exportprefs) exportPrefs(); else syncDir(true); return; }
+  const fo = e.target.closest('[data-fopen]'); if (fo) { openFilters(fo.dataset.fopen); return; }
+  const r = e.target.closest('[data-rp],[data-rpgo]');
+  if (r) { if (r.dataset.rpgo != null) { rpStop(); RP.step = +r.dataset.rpgo; rpUpdate(); return; } if (r.dataset.rp === 'bg' && e.target !== r) return; rpCmd(r.dataset.rp); return; }
+  const t = e.target.closest('[data-preset],[data-spinplay],[data-spsort],[data-spsort-preset],[data-badhand],[data-dash],[data-ser],[data-posmode],[data-mt],[data-act],[data-pltag],[data-plsort],[data-plpage],[data-rvtab],[data-rvsort],[data-rvpage],[data-hand],[data-fav],[data-gid],[data-gotogid],[data-lfsub],[data-lfwho]');
+  if (!t) return;
+  const d = t.dataset, u = S.ui;
+  if (d.spinplay) { e.stopPropagation(); openSpin(d.spinplay); return; }
+  if (d.badhand) { const z = S.skipped.bad.find(x => x.h.id === d.badhand); if (z) openReplayer([z.h], 0, 'Main écartée : ' + z.why); return; }
+  if (d.spsortPreset) { S.ui.sp = { sort: 'ev', dir: d.spsortPreset === 'worst' ? 1 : -1 }; render(); return; }
+  if (d.spsort) { const sp = S.ui.sp; if (sp.sort === d.spsort) sp.dir *= -1; else { sp.sort = d.spsort; sp.dir = -1; } render(); return; }
+  if (d.act === 'replayList') { openReplayer(S.rvList, 0, 'Liste Review'); return; }
+  if (d.fav) { e.stopPropagation(); if (S.prefs.favs[d.fav]) delete S.prefs.favs[d.fav]; else S.prefs.favs[d.fav] = 1; savePrefs(); t.classList.toggle('on'); return; }
+  if (d.act === 'closeModal') { if (e.target === t || t.tagName === 'BUTTON') $('#modalRoot').innerHTML = ''; return; }
+  if (d.dash) { u.dash = d.dash; render(); }
+  else if (d.ser) { const [g, k] = d.ser.split(':'); u.series[g][k] = u.series[g][k] ? 0 : 1; render(); }
+  else if (d.posmode) { u.posMode = d.posmode; render(); }
+  else if (d.mt) { u.mtMode = d.mt; render(); }
+  else if (d.act === 'hideBanner') { S.seedBanner = false; LS.set('st_banner_off', '1'); render(); }
+  else if (d.act === 'clearGid') { u.rv.gid = null; render(); }
+  else if (d.act === 'copyHH') { try { navigator.clipboard.writeText($('#hhText').textContent).then(() => toast('Historique copié'), () => toast('Copie refusée par le navigateur')); } catch (er) { toast('Copie refusée par le navigateur'); } }
+  else if (d.act === 'askClear') { $('#clearAsk').innerHTML = 'Sûr ? Toutes les mains seront supprimées. <button class="btn small danger" data-act="doClear">Oui, vider</button>'; }
+  else if (d.act === 'doClear') { clearAll(); }
+  else if (d.act === 'saveCls') { const c = S.prefs.cls; c.minHands = Math.max(1, +$('#sMin').value || 50); c.maxLimpPct = Math.max(0, +$('#sLimp').value || 0); c.maxVpip = Math.max(0, +$('#sVpip').value || 0); c.unknownAs = $('#sUnk').value; savePrefs(); refresh(); toast('Classification recalculée'); }
+  else if (d.act === 'resetOv') { S.prefs.overrides = {}; savePrefs(); refresh(); toast('Corrections effacées'); }
+  else if (d.act === 'saveMoney') { S.prefs.rakeEff = Math.max(0, +$('#sRake').value || 0); S.prefs.rakeback = Math.max(0, +$('#sRb').value || 0); savePrefs(); refresh(); toast('Réglages appliqués'); }
+  else if (d.pltag) { u.pl.tag = d.pltag; u.pl.page = 0; render(); }
+  else if (d.plsort) { if (u.pl.sort === d.plsort) u.pl.dir *= -1; else { u.pl.sort = d.plsort; u.pl.dir = d.plsort === 'name' ? 1 : -1; } render(); }
+  else if (d.plpage) { u.pl.page += +d.plpage; render(); $('#main').scrollTop = 0; }
+  else if (d.rvtab) { S.ui.review = d.rvtab; render(); }
+  else if (d.rvsort) { if (u.rv.sort === d.rvsort) u.rv.dir *= -1; else { u.rv.sort = d.rvsort; u.rv.dir = -1; } render(); }
+  else if (d.rvpage) { u.rv.page += +d.rvpage; render(); $('#main').scrollTop = 0; }
+  else if (d.hand) { openHand(d.hand); }
+  else if (d.gid || d.gotogid) { u.rv.gid = d.gid || d.gotogid; u.rv.page = 0; S.ui.review = 'hands'; $('#modalRoot').innerHTML = ''; if (location.hash !== '#review') location.hash = 'review'; else render(); }
+  else if (d.lfsub) { u.lf.sub = d.lfsub; render(); }
+  else if (d.lfwho) { u.lf.prof = 'player'; u.lf.who = d.lfwho; location.hash = 'leaks'; }
+});
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'prefsIn') { importPrefs(e.target.files[0]); e.target.value = ''; return; }
+  if (FM.draft && /^fm/.test(e.target.id || '')) { fmReadInputs(); const keep = S.filters; S.filters = FM.draft; const r = filtered(); S.filters = keep; const n = $('.fm-foot .note'); if (n) n.textContent = fmtN(r.T.length) + ' spins correspondent'; const c = $('.fm-chip'); if (c) c.textContent = 'Date : ' + dateLabel(FM.draft); return; }
+  const t = e.target, u = S.ui;
+  if (t.dataset.ov !== undefined) { const n = t.dataset.ov; if (t.value) S.prefs.overrides[n] = t.value; else delete S.prefs.overrides[n]; savePrefs(); F = filtered(); render(); return; }
+  if (t.id === 'rpSpeed') { RP.speed = +t.value; return; }
+  if (t.id === 'rpHide') { RP.hide = t.checked; rpUpdate(); return; }
+  if (t.id === 'rpChain') { RP.chain = t.checked; return; }
+  if (t.id === 'rbIn') { S.prefs.rakeback = Math.max(0, Math.min(100, +t.value || 0)); savePrefs(); refresh(); return; }
+  if (t.id === 'rvPos') { u.rv.pos = t.value; u.rv.page = 0; render(); }
+  else if (t.id === 'rvProf') { u.rv.prof = t.value; u.rv.page = 0; render(); }
+  else if (t.id === 'rvKind') { u.rv.kind = t.value; u.rv.page = 0; render(); }
+  else if (t.id === 'lfProf') { u.lf.prof = t.value; render(); }
+  else if (t.id === 'lfWho') { u.lf.who = t.value; render(); }
+  else if (t.id === 'lfPos') { u.lf.pos = t.value; render(); }
+  else if (t.id === 'lfRef') { u.lf.ref = t.value; render(); }
+  else if (t.id === 'fileIn' || t.id === 'dirIn') { importFiles([...t.files], t.id === 'dirIn'); t.value = ''; }
+});
+let qTimer = null;
+document.addEventListener('input', (e) => { if (e.target.id === 'rpSlider') { rpStop(); RP.step = +e.target.value; rpUpdate(); return; } if (e.target.id === 'plq') { clearTimeout(qTimer); const v = e.target.value; qTimer = setTimeout(() => { S.ui.pl.q = v; S.ui.pl.page = 0; render(); const i = $('#plq'); if (i) { i.focus(); i.setSelectionRange(v.length, v.length); } }, 250); } });
+document.addEventListener('keydown', (e) => {
+  if (FM.draft && (e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('fm-card')) { e.preventDefault(); e.target.click(); return; }
+  if (RP.h && $('#rpFelt')) {
+    if (e.target.tagName === 'INPUT' && e.target.type !== 'range' && e.target.type !== 'checkbox') return;
+    const k = e.key, m = { ArrowRight: 'fwd', ArrowLeft: 'back', ' ': 'play', ArrowDown: 'nextHand', PageDown: 'nextHand', ArrowUp: 'prevHand', PageUp: 'prevHand', Home: 'first', End: 'last', Escape: 'close' }[k];
+    if (m) { e.preventDefault(); rpCmd(m); return; }
+  }
+  if (e.key === 'Escape') { FM.draft = null; $('#modalRoot').innerHTML = ''; } });
+function bindDrop() {
+  const d = $('#drop'); if (!d) return;
+  d.ondragover = (e) => { e.preventDefault(); d.classList.add('over'); };
+  d.ondragleave = () => d.classList.remove('over');
+  d.ondrop = async (e) => {
+    e.preventDefault(); d.classList.remove('over');
+    const items = [...(e.dataTransfer.items || [])].map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+    if (!items.length) { importFiles([...e.dataTransfer.files]); return; }
+    const files = []; const folder = items.some(x => x.isDirectory);
+    const msg = $('#impMsg'), prog = $('#impProg'); if (prog) prog.style.display = 'block'; if (msg) msg.textContent = 'Lecture du dossier…';
+    await Promise.all(items.map(x => walkEntry(x, files)));
+    importFiles(files, folder);
+  };
+}
+function walkEntry(entry, out) {
+  return new Promise(res => {
+    if (entry.isFile) { entry.file(f => { out.push(f); res(); }, () => res()); return; }
+    if (!entry.isDirectory) return res();
+    const reader = entry.createReader(); const subs = [];
+    const next = () => reader.readEntries(async (batch) => {
+      if (!batch.length) { await Promise.all(subs.map(x => walkEntry(x, out))); res(); return; }
+      subs.push(...batch); next();
+    }, () => res());
+    next();
+  });
+}
+const fileKey = (f) => (f._path || f.webkitRelativePath || f.name) + '|' + f.size + '|' + f.lastModified;
+function seenFiles() { try { return JSON.parse(LS.get('st_files') || '{}'); } catch (e) { return {}; } }
+async function importFiles(files, folder, quiet) {
+  files = files.filter(f => /\.txt$/i.test(f.name) || f.type === 'text/plain'); if (!files.length) { toast(folder ? 'Aucun fichier .txt dans ce dossier' : 'Choisis des fichiers .txt'); return; }
+  const seen = seenFiles(); const total = files.length;
+  if (S.storage === 'idb') files = files.filter(f => !seen[fileKey(f)]);
+  const skippedSeen = total - files.length; let empty = 0, newHands = 0;
+  if (!files.length) { if (!quiet) toast('Rien de nouveau : les ' + total + ' fichiers sont déjà importés'); return; }
+  const prog = $('#impProg'), bar = $('#impBar'), msg = $('#impMsg');
+  if (prog) prog.style.display = 'block';
+  const setP = (p, m) => { if (bar) bar.style.width = (p * 100).toFixed(1) + '%'; if (msg) msg.textContent = m; };
+  for (let fi = 0; fi < files.length; fi++) {
+    const f = files[fi]; const tag = files.length > 1 ? 'Fichier ' + (fi + 1) + ' / ' + files.length + ' · ' : ''; setP(fi / files.length, tag + 'lecture de ' + f.name + '…'); await sleep(0);
+    let text = ''; try { text = await f.text(); } catch (er) { toast('Impossible de lire ' + f.name); continue; }
+    const parsed = E.parseFile(text);
+    const fresh = parsed.filter(h => !S.byId.has(h.id));
+    if (!parsed.length) { empty++; seen[fileKey(f)] = 1; LS.set('st_files', JSON.stringify(seen)); if (!folder) { S.imports.push({ name: f.name, read: 0, added: 0, games: 0 }); toast(f.name + ' : aucune main Betclic reconnue'); } continue; }
+    for (let i = 0; i < fresh.length; i++) {
+      fresh[i].E = E.computeEV(fresh[i], 10000);
+      if (i % 40 === 0) { setP((fi + i / fresh.length) / files.length, tag + f.name + ' : calcul des EV ' + i + ' / ' + fresh.length); await sleep(0); }
+    }
+    if (S.storage === 'idb' && fresh.length) await IDB.put(fresh.map(E.pack));
+    const added = addHands(fresh); newHands += added;
+    seen[fileKey(f)] = 1; LS.set('st_files', JSON.stringify(seen));
+    S.imports.push({ name: f._path || f.webkitRelativePath || f.name, read: parsed.length, added, games: new Set(parsed.map(h => h.gid)).size });
+  }
+  setP(1, 'Terminé');
+  S.seedBanner = false; refresh();
+  if (!quiet || newHands) toast('Import terminé : ' + fmtN(newHands) + ' nouvelles mains' + (skippedSeen ? ' · ' + skippedSeen + ' fichier(s) déjà lus' : '') + (empty ? ' · ' + empty + ' fichier(s) sans main Betclic' : ''));
+}
+async function clearAll() {
+  if (S.storage === 'idb') await IDB.clear();
+  LS.set('st_seed_off', '1'); LS.set('st_files', '{}');
+  S.hands = []; S.byId = new Map(); S.seedLoaded = false; S.seedBanner = false; refresh(); toast('Base vidée');
+}
+
+// ---------- Hand replayer ----------
+const RP = { list: [], idx: 0, title: '', step: 0, snaps: [], actStep: [], playing: false, timer: null, unit: 'bb', hide: false, chain: true, speed: 1 };
+function rpLabel(a) {
+  const n = a.n, ai = a.ai ? ' all-in' : '';
+  return { sb: 'SB ' + rpAmt(n), bb: 'BB ' + rpAmt(n), ante: 'Ante ' + rpAmt(n), f: 'Fold', x: 'Check', c: 'Call ' + rpAmt(n), b: 'Bet ' + rpAmt(n), r: 'Raise ' + rpAmt(n) }[a.a] + ai;
+}
+function rpAmt(v) { const h = RP.h; if (!h) return fmtN(v); return RP.unit === 'bb' ? fmtN(v / h.bb, Math.abs(v / h.bb) < 100 ? 1 : 0) + ' bb' : fmtN(v); }
+function buildSnaps(h) {
+  const st = { p: {}, pot: 0, board: 0, reveal: false, active: null, note: 'Début de la main', eq: null, log: -1, end: false };
+  for (const p of h.players) st.p[p.name] = { stack: p.stack, bet: 0, folded: false, act: null, allin: false, won: 0 };
+  const snaps = [], actStep = [];
+  const push = () => snaps.push(JSON.parse(JSON.stringify(st)));
+  push();
+  let street = 0;
+  const collect = () => { for (const n in st.p) { st.pot += st.p[n].bet; st.p[n].bet = 0; if (!st.p[n].folded && !st.p[n].allin) st.p[n].act = null; } };
+  const deal = (s) => { collect(); street = s; st.board = s === 1 ? 3 : s === 2 ? 4 : 5; st.note = ['', 'Flop', 'Turn', 'River'][s]; st.active = null; st.log = -1; push(); };
+  h.acts.forEach((a, k) => {
+    if (a.st > street) for (let s = street + 1; s <= a.st; s++) deal(s);
+    const P = st.p[a.p]; if (!P) return;
+    P.stack -= a.add || 0; P.bet += a.add || 0;
+    if (P.stack <= 0 && a.a !== 'f') { P.stack = 0; P.allin = true; }
+    if (a.a === 'f') P.folded = true;
+    P.act = { a: a.a, n: a.n, ai: a.ai };
+    st.active = a.p; st.log = k; st.note = ''; actStep[k] = snaps.length; push();
+  });
+  st.active = null; st.log = -1;
+  if (h.uncalled && st.p[h.uncalledTo]) {
+    const P = st.p[h.uncalledTo]; const fromBet = Math.min(P.bet, h.uncalled);
+    P.bet -= fromBet; st.pot -= (h.uncalled - fromBet); P.stack += h.uncalled; if (P.stack > 0) P.allin = false;
+    st.note = 'Mise non suivie rendue à ' + h.uncalledTo; push();
+  }
+  const live = h.players.map(p => p.name).filter(n => !h.folded[n]);
+  if (live.length >= 2 && h.board.length > st.board) {
+    collect(); st.reveal = true; if (h.E && h.E.adj && h.E.eq) st.eq = h.E.eq; st.note = 'All-in : cartes retournées'; push();
+    for (let s = street + 1; s <= 3; s++) if (h.board.length >= (s === 1 ? 3 : s === 2 ? 4 : 5)) deal(s);
+  }
+  if (live.length >= 2) { collect(); st.reveal = true; st.note = 'Showdown'; push(); }
+  collect();
+  for (const n in h.won) if (st.p[n]) { st.p[n].stack += h.won[n]; st.p[n].won = h.won[n]; }
+  st.pot = 0; st.end = true; st.active = null;
+  const winners = Object.keys(h.won);
+  st.note = winners.length ? winners.map(n => n + ' gagne ' + fmtN(h.won[n])).join(' · ') : 'Fin de la main';
+  push();
+  return { snaps, actStep };
+}
+function openReplayer(list, idx, title) {
+  if (!list || !list.length) return;
+  rpStop(); RP.list = list; RP.idx = Math.max(0, Math.min(idx || 0, list.length - 1)); RP.title = title || '';
+  rpLoad(0); rpRender();
+}
+function rpLoad(step) {
+  const h = RP.list[RP.idx]; RP.h = h; const b = buildSnaps(h); RP.snaps = b.snaps; RP.actStep = b.actStep;
+  RP.step = step === 'end' ? RP.snaps.length - 1 : 0;
+}
+function rpStop() { RP.playing = false; clearTimeout(RP.timer); }
+function rpClose() { rpStop(); RP.h = null; $('#modalRoot').innerHTML = ''; }
+function rpTick() {
+  if (!RP.playing || !RP.h) return;
+  if (RP.step < RP.snaps.length - 1) { RP.step++; rpUpdate(); RP.timer = setTimeout(rpTick, 950 / RP.speed); }
+  else if (RP.chain && RP.idx < RP.list.length - 1) { RP.timer = setTimeout(() => { if (!RP.playing) return; RP.idx++; rpLoad(0); rpRender(); RP.timer = setTimeout(rpTick, 700 / RP.speed); }, 1500 / RP.speed); }
+  else { RP.playing = false; rpUpdate(); }
+}
+function rpLayout(h) {
+  const sorted = h.players.slice().sort((a, b) => a.seat - b.seat);
+  const hero = h.players.find(p => p.hero) || sorted[0]; const hi = sorted.indexOf(hero);
+  const order = sorted.map((_, k) => sorted[(hi + k) % sorted.length]);
+  const P = sorted.length === 2 ? [[50, 83, 50, 63, 61, 76], [50, 17, 50, 37, 39, 25]] : [[50, 83, 50, 63, 61, 76], [17, 30, 31, 44, 27, 47], [83, 30, 69, 44, 73, 47]];
+  return order.map((p, i) => ({ p, x: P[i][0], y: P[i][1], bx: P[i][2], by: P[i][3], dx: P[i][4], dy: P[i][5] }));
+}
+function rpCard(c, hidden) { if (!c || hidden) return '<span class="card big back"></span>'; const r = c[0] === 'T' ? '10' : c[0]; const sym = { s: '♠', h: '♥', d: '♦', c: '♣' }[c[1]]; return '<span class="card big c-' + c[1] + '">' + r + '<small>' + sym + '</small></span>'; }
+function rpFelt() {
+  const h = RP.h, s = RP.snaps[RP.step];
+  let o = '<div class="felt-in"></div>';
+  if (s.note) o += '<div class="rp-note">' + esc(s.note) + '</div>';
+  if (s.pot) o += '<div class="rp-pot">Pot ' + rpAmt(s.pot) + '</div>';
+  o += '<div class="rp-board">' + [0, 1, 2, 3, 4].map(i => i < s.board ? rpCard(h.board[i]) : '<span class="card big slot"></span>').join('') + '</div>';
+  for (const L of rpLayout(h)) {
+    const p = L.p, ps = s.p[p.name]; const known = h.hole[p.name];
+    const hidden = !p.hero && (RP.hide ? !(s.reveal && h.shown[p.name]) : false);
+    const act = ps.act ? rpLabel(Object.assign({ a: ps.act.a, n: ps.act.n, ai: ps.act.ai })) : '';
+    const eq = s.eq && s.eq[p.name] != null && !ps.folded ? '<span class="rp-eq">' + fmtP(s.eq[p.name] * 100, 1) + '</span>' : '';
+    o += '<div class="rp-seat' + (ps.folded ? ' folded' : '') + (s.active === p.name ? ' active' : '') + (p.hero ? ' hero' : '') + (s.end && ps.won ? ' winner' : '') + '" style="left:' + L.x + '%;top:' + L.y + '%">' +
+      '<div class="rp-cards">' + (known ? rpCard(known[0], hidden) + rpCard(known[1], hidden) : rpCard(null) + rpCard(null)) + '</div>' +
+      '<div class="rp-box"><div class="rp-name">' + (p.hero ? '' : tagHtml(p.name, true) + ' ') + esc(p.name) + ' <span class="pill">' + p.pos + '</span></div><div class="rp-stack">' + (ps.allin && !s.end ? '<b style="color:var(--accent)">ALL-IN</b>' : rpAmt(ps.stack)) + eq + '</div></div>' +
+      (act ? '<div class="rp-act a-' + ps.act.a + (ps.act.ai ? ' ai' : '') + '">' + esc(act) + '</div>' : (s.end && ps.won ? '<div class="rp-act win">+' + rpAmt(ps.won) + '</div>' : '')) + '</div>';
+    if (ps.bet) o += '<div class="rp-bet" style="left:' + L.bx + '%;top:' + L.by + '%"><i></i>' + rpAmt(ps.bet) + '</div>';
+    if (p.btn) o += '<div class="rp-dealer" style="left:' + L.dx + '%;top:' + L.dy + '%">D</div>';
+  }
+  return o;
+}
+function rpLog() {
+  const h = RP.h, s = RP.snaps[RP.step]; const st = ['Preflop', 'Flop', 'Turn', 'River']; let o = '', cur = -1;
+  h.acts.forEach((a, k) => {
+    if (a.st !== cur) { cur = a.st; o += '<div class="rp-st">' + st[a.st] + (a.st ? ' ' + cardsHtml(a.st === 1 ? h.board.slice(0, 3) : h.board.slice(a.st + 1, a.st + 2)) : '') + '</div>'; }
+    const done = RP.actStep[k] != null && RP.actStep[k] <= RP.step;
+    o += '<button class="rp-line' + (s.log === k ? ' on' : '') + (done ? '' : ' todo') + (a.p === h.hero ? ' me' : '') + '" data-rpgo="' + (RP.actStep[k] != null ? RP.actStep[k] : 0) + '">' + esc(a.p) + ' · ' + esc(rpLabel(a)) + '</button>';
+  });
+  for (let s2 = cur + 1; s2 <= 3; s2++) if (h.board.length >= (s2 === 1 ? 3 : s2 + 2)) o += '<div class="rp-st">' + st[s2] + ' ' + cardsHtml(s2 === 1 ? h.board.slice(0, 3) : h.board.slice(s2 + 1, s2 + 2)) + '</div>';
+  return o;
+}
+function rpRender() {
+  const h = RP.h; const hero = h.hero; const t = S.tours.find(z => z.gid === h.gid);
+  const net = h.net[hero] || 0, ev = h.E.ev[hero] || 0;
+  const posInSpin = t ? t.hands.indexOf(h) + 1 : 0;
+  const me = h.players.find(p => p.hero);
+  let o = '<div class="rp-bg" data-rp="bg"><div class="rp" role="dialog" aria-modal="true" aria-label="Replayer de mains">' +
+    '<div class="rp-top"><div><div class="rp-title">Main du ' + fmtDate(h.ts, true) + ' <span class="pill">' + esc(h.posKey || '') + '</span> <span class="pill">Blinds ' + h.sb + '/' + h.bb + '</span> <span class="pill">' + fmtE(h.bi, 0) + ' · x' + h.mult + '</span></div>' +
+    '<div class="sub">' + esc(RP.title) + (t ? ' · main ' + posInSpin + ' / ' + t.hands.length + ' du spin' : '') + '</div></div>' +
+    '<div class="rp-nav"><button class="btn small" data-rp="prevHand"' + (RP.idx ? '' : ' disabled') + ' aria-label="Main précédente">◀ Main préc.</button><span class="mono">' + (RP.idx + 1) + ' / ' + RP.list.length + '</span><button class="btn small" data-rp="nextHand"' + (RP.idx < RP.list.length - 1 ? '' : ' disabled') + ' aria-label="Main suivante">Main suiv. ▶</button><button class="btn small" data-rp="close">Fermer</button></div></div>' +
+    '<div class="rp-body"><div class="rp-main"><div class="felt" id="rpFelt"></div>' +
+    '<div class="rp-ctrl"><button class="btn" data-rp="first" aria-label="Début">⏮</button><button class="btn" data-rp="back" aria-label="Action précédente">◀</button><button class="btn primary rp-play" data-rp="play" id="rpPlay" aria-label="Lecture">▶</button><button class="btn" data-rp="fwd" aria-label="Action suivante">▶▶</button><button class="btn" data-rp="last" aria-label="Fin">⏭</button>' +
+    '<input type="range" id="rpSlider" min="0" max="' + (RP.snaps.length - 1) + '" value="' + RP.step + '" aria-label="Position dans la main">' +
+    '<select id="rpSpeed" aria-label="Vitesse">' + [0.5, 1, 2, 4].map(v => '<option value="' + v + '"' + (RP.speed === v ? ' selected' : '') + '>x' + String(v).replace('.', ',') + '</option>').join('') + '</select>' +
+    '<span class="seg"><button class="' + (RP.unit === 'bb' ? 'on' : '') + '" data-rp="unit:bb">bb</button><button class="' + (RP.unit === 'chips' ? 'on' : '') + '" data-rp="unit:chips">chips</button></span>' +
+    '<label class="rp-chk" for="rpHide"><input type="checkbox" id="rpHide"' + (RP.hide ? ' checked' : '') + '> Cacher les cartes adverses</label>' +
+    '<label class="rp-chk" for="rpChain"><input type="checkbox" id="rpChain"' + (RP.chain ? ' checked' : '') + '> Enchaîner les mains</label></div>' +
+    '<div class="note" style="text-align:center">Clavier : ← → action, espace lecture, ↑ ↓ main précédente / suivante, Échap fermer</div></div>' +
+    '<aside class="rp-side"><div class="rp-res"><div><span class="sub">Net</span><b class="' + cls(net) + '">' + fmtS(net) + '</b><span class="sub">' + fmtS(net / h.bb, 1) + ' bb</span></div><div><span class="sub">EV</span><b class="' + cls(ev) + '">' + fmtS(ev) + '</b><span class="sub">' + fmtS(ev / h.bb, 1) + ' bb</span></div></div>' +
+    (h.E.adj && h.E.eq ? '<div class="note">All-in ' + ['préflop', 'flop', 'turn', 'river'][h.E.st] + ' · équités : ' + Object.keys(h.E.eq).map(n => esc(n) + ' ' + fmtP(h.E.eq[n] * 100, 1)).join(' · ') + '</div>' : '') +
+    '<div class="note">Tapis de départ de ' + esc(hero) + ' : ' + fmtN(me ? me.stack : 0) + ' (' + fmtN(me ? me.stack / h.bb : 0, 1) + ' bb)</div>' +
+    '<div class="rp-log" id="rpLog"></div>' +
+    '<div class="row"><button class="btn small star-btn" data-rp="fav">' + (S.prefs.favs[h.id] ? '★ Favori' : '☆ Ajouter aux favoris') + '</button><button class="btn small" data-rp="copy">Copier l\'historique</button>' + (t ? '<button class="btn small" data-rp="spin">Rejouer tout le spin</button>' : '') + '</div><pre id="hhText" style="display:none">' + esc(E.toText(h)) + '</pre></aside></div></div></div>';
+  $('#modalRoot').innerHTML = o;
+  rpUpdate();
+}
+function rpUpdate() {
+  const f = $('#rpFelt'); if (!f) return;
+  f.innerHTML = rpFelt();
+  $('#rpLog').innerHTML = rpLog();
+  const on = $('#rpLog .rp-line.on'); if (on) on.scrollIntoView({ block: 'nearest' });
+  const sl = $('#rpSlider'); if (sl) sl.value = RP.step;
+  const pb = $('#rpPlay'); if (pb) { pb.textContent = RP.playing ? '❚❚' : '▶'; pb.setAttribute('aria-label', RP.playing ? 'Pause' : 'Lecture'); }
+}
+function rpCmd(c) {
+  if (c === 'bg' || c === 'close') { rpClose(); return; }
+  if (c === 'first') { rpStop(); RP.step = 0; }
+  else if (c === 'back') { rpStop(); RP.step = Math.max(0, RP.step - 1); }
+  else if (c === 'fwd') { rpStop(); RP.step = Math.min(RP.snaps.length - 1, RP.step + 1); }
+  else if (c === 'last') { rpStop(); RP.step = RP.snaps.length - 1; }
+  else if (c === 'play') { if (RP.playing) rpStop(); else { RP.playing = true; if (RP.step >= RP.snaps.length - 1 && !(RP.chain && RP.idx < RP.list.length - 1)) RP.step = 0; RP.timer = setTimeout(rpTick, 250); } }
+  else if (c === 'prevHand' || c === 'nextHand') { const pl = RP.playing; rpStop(); RP.idx = Math.max(0, Math.min(RP.list.length - 1, RP.idx + (c === 'nextHand' ? 1 : -1))); rpLoad(0); rpRender(); if (pl) { RP.playing = true; RP.timer = setTimeout(rpTick, 600); } return; }
+  else if (c.startsWith('unit:')) { RP.unit = c.slice(5); rpRender(); return; }
+  else if (c === 'fav') { const id = RP.h.id; if (S.prefs.favs[id]) delete S.prefs.favs[id]; else S.prefs.favs[id] = 1; savePrefs(); rpRender(); return; }
+  else if (c === 'copy') { try { navigator.clipboard.writeText($('#hhText').textContent).then(() => toast('Historique copié'), () => toast('Copie refusée par le navigateur')); } catch (e) { toast('Copie refusée par le navigateur'); } return; }
+  else if (c === 'spin') { const t = S.tours.find(z => z.gid === RP.h.gid); if (t) openReplayer(t.hands, t.hands.indexOf(RP.h), 'Spin du ' + fmtDate(t.start, true)); return; }
+  rpUpdate();
+}
+function openSpin(gid) { const t = S.tours.find(z => z.gid === gid); if (t) openReplayer(t.hands, 0, 'Spin du ' + fmtDate(t.start, true) + ' · x' + t.mult + ' · ' + (t.place ? (t.place === 1 ? '1er' : t.place + 'e') : 'incomplet') + ' · cEV ' + fmtS(t.ev)); }
+
+// ---------- installable app: linked hand-history folder, offline, backups ----------
+const FSA = { handle: null, name: '', last: 0, busy: false, perm: 'none' };
+const KV = {
+  get(k) { return new Promise(res => { try { const q = IDB.db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(undefined); } catch (e) { res(undefined); } }); },
+  set(k, v) { return new Promise(res => { try { const tx = IDB.db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = () => res(true); tx.onerror = () => res(false); } catch (e) { res(false); } }); }
+};
+const fsaOk = () => 'showDirectoryPicker' in window;
+async function walkDir(dir, prefix, out) {
+  for await (const [name, h] of dir.entries()) {
+    if (h.kind === 'file') { if (/\.txt$/i.test(name)) { try { const f = await h.getFile(); f._path = prefix + name; out.push(f); } catch (e) { } } }
+    else if (h.kind === 'directory') await walkDir(h, prefix + name + '/', out);
+  }
+}
+async function pickDir() {
+  if (!fsaOk()) { location.hash = 'imports'; toast('Ce navigateur ne sait pas relier un dossier : utilise Chrome ou Edge, ou importe tes fichiers à la main.'); return; }
+  let h; try { h = await window.showDirectoryPicker({ id: 'betclic-hh', mode: 'read' }); } catch (e) { return; }
+  FSA.handle = h; FSA.name = h.name; FSA.perm = 'granted'; FSA.last = 0;
+  if (S.storage === 'idb') await KV.set('dir', h);
+  renderSync(); if (currentView() === 'imports') render();
+  await syncDir(true);
+}
+async function syncDir(gesture, quiet) {
+  if (!FSA.handle) { if (gesture) return pickDir(); return; }
+  if (FSA.busy) return;
+  let p = 'denied';
+  try { p = await FSA.handle.queryPermission({ mode: 'read' }); if (p !== 'granted' && gesture) p = await FSA.handle.requestPermission({ mode: 'read' }); } catch (e) { }
+  FSA.perm = p; renderSync();
+  if (p !== 'granted') { if (gesture) toast('Accès au dossier refusé'); return; }
+  FSA.busy = true; renderSync();
+  try {
+    const files = []; await walkDir(FSA.handle, FSA.handle.name + '/', files);
+    await importFiles(files, true, quiet);
+    FSA.last = Date.now(); LS.set('st_last_sync', String(FSA.last));
+  } catch (e) { if (!quiet) toast('Lecture du dossier impossible : ' + (e.message || e)); }
+  FSA.busy = false; renderSync(); if (currentView() === 'imports') render();
+}
+function renderSync() {
+  const b = $('#syncBtn'), s = $('#syncState'); if (!b) return;
+  if (!fsaOk()) { b.textContent = 'Importer des mains'; s.textContent = ''; return; }
+  b.disabled = FSA.busy;
+  b.textContent = FSA.busy ? 'Mise à jour…' : FSA.handle ? '⟳ Mettre à jour' : 'Relier mon dossier';
+  s.textContent = FSA.handle ? FSA.name + (FSA.perm !== 'granted' ? ' · clique pour autoriser' : FSA.last ? ' · ' + ago(FSA.last) : '') : 'Aucun dossier relié';
+}
+function folderPanel() {
+  if (!fsaOk()) return '<div class="banner">Ce navigateur ne permet pas de relier un dossier. Avec Chrome ou Edge, l\'appli relit ton dossier d\'historiques toute seule. En attendant, importe tes fichiers ci-dessous.</div>';
+  if (!FSA.handle) return '<div class="panel"><h3>Dossier d\'historiques</h3><p class="note" style="font-size:13px">Range tous tes exports Betclic (fichiers ExportHH_….txt) dans un même dossier, puis relie-le une seule fois. Ensuite, « Mettre à jour » importe les nouveaux fichiers.</p><div class="row"><button class="btn primary" data-pickdir="1">Relier mon dossier d\'historiques</button></div></div>';
+  return '<div class="panel"><h3>Dossier d\'historiques relié</h3><p style="margin:0 0 8px"><b>' + esc(FSA.name) + '</b>' + (FSA.last ? ' · dernière mise à jour ' + ago(FSA.last) : '') + (FSA.perm !== 'granted' ? ' · <span style="color:var(--accent)">autorisation à redonner</span>' : '') + '</p><div class="row"><button class="btn primary" data-sync="1"' + (FSA.busy ? ' disabled' : '') + '>⟳ Mettre à jour maintenant</button><button class="btn" data-pickdir="1">Changer de dossier</button></div><p class="note">Pendant que l\'appli est ouverte, le dossier est relu toutes les 3 minutes. À la réouverture, Chrome peut redemander l\'autorisation : clique alors sur « Mettre à jour ».</p></div>';
+}
+function exportPrefs() {
+  try {
+    const blob = new Blob([JSON.stringify(S.prefs, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'spin-tracker-reglages.json'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  } catch (e) { toast('Export impossible'); }
+}
+async function importPrefs(file) {
+  if (!file) return;
+  try { const p = JSON.parse(await file.text()); S.prefs = migrate(Object.assign(defaultPrefs(), p)); S.prefs.cls = Object.assign(defaultPrefs().cls, p.cls || {}); savePrefs(); refresh(); toast('Réglages restaurés'); }
+  catch (e) { toast('Ce fichier n\'est pas une sauvegarde de réglages'); }
+}
+async function pwaInit() {
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => { });
+  try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) { }
+  FSA.last = +(LS.get('st_last_sync') || 0);
+  if (S.storage === 'idb' && fsaOk()) {
+    const h = await KV.get('dir');
+    if (h) { FSA.handle = h; FSA.name = h.name; try { FSA.perm = await h.queryPermission({ mode: 'read' }); } catch (e) { } }
+  }
+  renderSync(); if (currentView() === 'imports') render();
+  if (FSA.perm === 'granted') syncDir(false, true);
+  setInterval(() => { if (FSA.handle && FSA.perm === 'granted' && !document.hidden) syncDir(false, true); }, 180000);
+  setInterval(renderSync, 60000);
+}
+
+// ---------- boot ----------
+(async function boot() {
+  loadPrefs();
+  $('#main').innerHTML = '<div class="panel empty">Chargement de tes mains…</div>';
+  const ok = await IDB.open(); S.storage = ok ? 'idb' : 'memory';
+  let stored = ok ? await IDB.all() : [];
+  if (stored.length) addHands(stored.map(o => { try { return E.unpack(o); } catch (e) { return null; } }).filter(Boolean));
+  recompute();
+  if (!S.hands.length && !location.hash) location.hash = 'imports';
+  render();
+  pwaInit();
+})();
+</script>
+</body>
+</html>
