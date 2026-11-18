@@ -1,25 +1,27 @@
 // ---------- "?" help windows ----------
 const HELP = {
   chips: { t: 'Graphique des chips', i: [
-    ['#33c27a', 'Chips', 'Tes chips gagnés ou perdus, cumulés main après main (stacks ramenés à 500 chips par joueur au départ).'],
-    ['#4a90ff', 'Chips (SD)', 'La part gagnée ou perdue dans les mains allées à l\'abattage (showdown).'],
-    ['#ec5257', 'Chips (NSD)', 'La part gagnée ou perdue sans abattage : pots ramassés parce que l\'adversaire a foldé, blindes perdues en foldant. Si elle monte, tu voles bien.'],
-    ['#f2a93b', 'EV (chips)', 'Tes chips si chaque all-in avait été payé à ton équité au moment du tapis. C\'est ta vraie performance, sans la chance des all-in.']],
+    ['#22c55e', 'Chips', 'Tes chips gagnés ou perdus, cumulés main après main (stacks ramenés à 500 chips par joueur au départ).'],
+    ['#3b82f6', 'Chips (SD)', 'La part gagnée ou perdue dans les mains allées à l\'abattage (showdown).'],
+    ['#ef4444', 'Chips (NSD)', 'La part gagnée ou perdue sans abattage : pots ramassés parce que l\'adversaire a foldé, blindes perdues en foldant. Si elle monte, tu voles bien.'],
+    ['#fb923c', 'EV (chips)', 'Tes chips si chaque all-in avait été payé à ton équité au moment du tapis. C\'est ta vraie performance, sans la chance des all-in.']],
     f: 'Le badge en haut à gauche compare Chips et EV : l\'écart est ta chance aux all-in, et le pourcentage indique la probabilité d\'être au moins aussi chanceux (ou malchanceux) sur ce nombre d\'all-in. Clique sur un point de la courbe pour ouvrir la main dans le replayer.' },
   br: { t: 'Graphique de bankroll', i: [
-    ['#4a90ff', 'Profit', 'L\'argent réellement gagné : gains − buy-ins + rakeback.'],
-    ['#e861ae', 'EV profit', 'Ce que tu aurais gagné sans aucune chance : ta part de chips en EV × le prize pool moyen (multiplicateur moyen de la grille Betclic). Le meilleur indicateur de ton niveau.'],
-    ['#f2a93b', 'Multiplicateur neutralisé', 'Tes vraies victoires et défaites, mais chaque victoire payée au multiplicateur moyen. L\'écart avec Profit = ta chance sur les multiplicateurs ; l\'écart avec EV profit = ta chance sur les all-in et l\'issue des spins.']],
-    f: 'Le badge compare Profit et EV profit, avec la probabilité d\'avoir au moins autant d\'écart par pure variance. Le rakeback (en bas à gauche) s\'ajoute aux trois courbes. Clique sur un point pour rejouer le spin.' },
+    ['#3b82f6', 'Profit', 'L\'argent réellement gagné : gains − buy-ins + rakeback.'],
+    ['#f472b6', 'EV Profit effectif', 'Ce que tu aurais gagné sans aucune chance : ta part de chips en EV × le prize pool moyen, calculé avec le rake effectif du format (réglable dans Réglages). Pas de chance aux all-in ni sur les multiplicateurs : le meilleur indicateur de ton niveau.'],
+    ['#fb923c', 'EV Multi Profit', 'Ta part de chips en EV × le prize pool réellement tiré à chaque spin. Enlève la chance aux all-in mais garde celle des multiplicateurs : l\'écart avec Profit = ta chance sur les all-in et l\'issue des spins, l\'écart avec EV Profit effectif = ta chance sur les multiplicateurs.'],
+    ['#a855f7', 'Multiplicateur neutralisé', 'Tes vraies victoires et défaites, mais chaque victoire payée au multiplicateur moyen. L\'écart avec Profit = la chance sur les multiplicateurs de tes victoires.'],
+    ['#ffffff', 'Évènements marquants', 'Points blancs sur la courbe Profit aux spins à gros multiplicateur (x10 et plus). ✓ = spin gagné.']],
+    f: 'Le badge compare Profit et EV Profit effectif, avec la probabilité d\'avoir au moins autant d\'écart par pure variance. Le rakeback (en bas à gauche) s\'ajoute à toutes les courbes. Clique sur un point pour rejouer le spin.' },
   multi: { t: 'D\'où vient ta chance (en €)', i: [
-    ['#e861ae', 'Chance totale', 'Profit − EV profit : tout ce que la variance t\'a donné ou pris.'],
-    ['#f2a93b', 'Chance multiplicateurs', 'Profit − Multiplicateur neutralisé : l\'argent gagné ou perdu parce que tes victoires sont tombées sur des multiplicateurs au-dessus ou en dessous de la moyenne. Gagner un x2 coûte de l\'EV, gagner un x10 en rapporte.'],
-    ['#4a90ff', 'Chance jeu', 'Multiplicateur neutralisé − EV profit : l\'argent gagné ou perdu parce que tu as gagné plus ou moins de spins que ce que tes chips en EV prévoyaient (all-in, flips, issue des heads-up).']],
+    ['#f472b6', 'Chance totale', 'Profit − EV profit : tout ce que la variance t\'a donné ou pris.'],
+    ['#fb923c', 'Chance multiplicateurs', 'Profit − Multiplicateur neutralisé : l\'argent gagné ou perdu parce que tes victoires sont tombées sur des multiplicateurs au-dessus ou en dessous de la moyenne. Gagner un x2 coûte de l\'EV, gagner un x10 en rapporte.'],
+    ['#3b82f6', 'Chance jeu', 'Multiplicateur neutralisé − EV profit : l\'argent gagné ou perdu parce que tu as gagné plus ou moins de spins que ce que tes chips en EV prévoyaient (all-in, flips, issue des heads-up).']],
     f: 'La chance totale est la somme des deux autres. Au-dessus de 0 = chanceux, en dessous = malchanceux. Le badge porte sur la chance multiplicateurs.' },
   mavg: { t: 'Multiplicateur moyen', i: [
-    ['#f2a93b', 'Tous tes spins', 'Moyenne des multiplicateurs tirés sur tous tes spins, depuis le début de la période.'],
-    ['#33c27a', 'Tes victoires', 'Moyenne des multiplicateurs des spins que tu as gagnés : c\'est elle qui compte pour ton argent.'],
-    ['#8d9198', 'Attendu', 'Le multiplicateur moyen de la grille officielle Betclic (rake compris). Les deux courbes devraient s\'en rapprocher avec le volume.']],
+    ['#fb923c', 'Tous tes spins', 'Moyenne des multiplicateurs tirés sur tous tes spins, depuis le début de la période.'],
+    ['#22c55e', 'Tes victoires', 'Moyenne des multiplicateurs des spins que tu as gagnés : c\'est elle qui compte pour ton argent.'],
+    ['#a3a3a3', 'Attendu', 'Le multiplicateur moyen de la grille officielle Betclic (rake compris). Les deux courbes devraient s\'en rapprocher avec le volume.']],
     f: 'Au-dessus de la ligne grise = tu as tiré (ou gagné) de meilleurs multiplicateurs que la moyenne.' },
   mtab: { t: 'Tableau des multiplicateurs', i: [
     [null, 'Réel / Attendu', 'Part de tes spins tombés sur chaque multiplicateur, et la fréquence officielle de la grille Betclic.'],
@@ -27,9 +29,9 @@ const HELP = {
     [null, 'Victoires', 'Spins gagnés sur ce multiplicateur, et ton taux de victoire entre parenthèses.'],
     [null, '75/15/10', 'Grands multiplicateurs où le prize pool est partagé : 75 % au 1er, 15 % au 2e, 10 % au 3e.']] },
   pos: { t: 'cEV par position', i: [
-    ['#ec5257', 'vs Reg', 'Chips gagnés en EV quand ton adversaire principal du coup est un reg.'],
-    ['#4a90ff', 'vs Fish', 'Pareil contre un fish.'],
-    ['#f2a93b', 'Tous', 'Toutes les mains de la position.'],
+    ['#ef4444', 'vs Reg', 'Chips gagnés en EV quand ton adversaire principal du coup est un reg.'],
+    ['#3b82f6', 'vs Fish', 'Pareil contre un fish.'],
+    ['#fb923c', 'Tous', 'Toutes les mains de la position.'],
     [null, 'Barres fines', 'Intervalle de confiance à 95 % : tant qu\'il est large, la valeur peut encore beaucoup bouger.']],
     f: 'SB vs BTN = tu es SB et le bouton est entré dans le coup ; SB vs BB = le bouton a foldé. BB vs 2 = bouton et SB tous deux entrés. « Par main » = moyenne par main jouée à ce poste, « Par tournoi » = cumul par spin.' },
   prof: { t: 'cEV par profil de table', i: [
@@ -60,7 +62,8 @@ const HELP = {
 };
 function qm(topic) { return '<button class="qm" data-help="' + topic + '" aria-label="Explications">?</button>'; }
 function openHelp(k) {
-  const H = HELP[k]; if (!H) return;
+  const [topic, idx] = k.split(':'); let H = HELP[topic]; if (!H) return;
+  if (idx != null && H.i[+idx]) H = { t: H.i[+idx][1], i: [H.i[+idx]] };
   $('#modalRoot').innerHTML = '<div class="modal-bg" data-act="closeModal"><div class="modal help-modal" role="dialog" aria-modal="true" aria-label="' + esc(H.t) + '"><div class="row"><h3 style="margin:0;font:700 22px var(--display)">' + esc(H.t) + '</h3><div class="grow" style="flex:1"></div><button class="btn small" data-act="closeModal">Fermer</button></div>' +
     '<dl class="help-list">' + H.i.map(([c, n, d]) => '<dt>' + (c ? '<i style="background:' + c + '"></i>' : '') + esc(n) + '</dt><dd>' + esc(d) + '</dd>').join('') + '</dl>' + (H.f ? '<p class="note" style="margin:0;font-size:13px">' + esc(H.f) + '</p>' : '') + '</div></div>';
 }
@@ -143,11 +146,18 @@ function afterMulti() {
   const LB = luckBadge(b, vr, '€');
   LB.html = LB.html.replace('<b>', '<b>Multiplicateurs : ').replace('vs EV', 'vs multiplicateur moyen');
   const ser = S.ui.series.mu;
-  const series = [{ k: 't', name: 'Chance totale', color: '#e861ae', data: tot }, { k: 'm', name: 'Chance multiplicateurs', color: '#f2a93b', data: ml }, { k: 'g', name: 'Chance jeu', color: '#4a90ff', data: gl }].map(s => Object.assign(s, { on: !!ser[s.k] }));
+  const series = [{ k: 't', name: 'Chance totale', color: '#f472b6', data: tot, help: 'multi:0' }, { k: 'm', name: 'Chance multiplicateurs', color: '#fb923c', data: ml, help: 'multi:1' }, { k: 'g', name: 'Chance jeu', color: '#3b82f6', data: gl, help: 'multi:2' }].map(s => Object.assign(s, { on: !!ser[s.k] }));
   const tip = (i) => 'Tournoi ' + fmtN(i + 1) + ' · ' + fmtDate(C[i].start, true) + ' · x' + C[i].mult + (C[i].place ? ' · ' + C[i].place + (C[i].place === 1 ? 'er' : 'e') : '');
   lineChart($('#chart'), { series, xLabel: 'Tournois joués', yFmt: (v) => fmtN(v, Math.abs(v) < 10 && v % 1 ? 1 : 0) + ' €', tipHead: tip, onPick: (i) => openSpin(C[i].gid), badge: LB.html, badgeCls: LB.cls });
   legend(series, 'mu');
-  const s2 = [{ name: 'Tous tes spins', color: '#f2a93b', data: am, on: 1 }, { name: 'Tes victoires', color: '#33c27a', data: aw, on: 1 }, { name: 'Attendu', color: '#8d9198', data: ex, on: 1, dash: 1 }];
+  const s2 = [{ name: 'Tous tes spins', color: '#fb923c', data: am, on: 1 }, { name: 'Tes victoires', color: '#22c55e', data: aw, on: 1 }, { name: 'Attendu', color: '#a3a3a3', data: ex, on: 1, dash: 1 }];
   lineChart($('#chart2'), { series: s2, xLabel: 'Tournois joués', noZero: 1, yFmt: (v) => v == null ? '—' : 'x' + fmtN(v, 2), tipHead: tip, onPick: (i) => openSpin(C[i].gid) });
   $('#legend2').innerHTML = s2.map(s => '<span class="chip"><i class="dot" style="background:' + s.color + '"></i>' + esc(s.name) + '</span>').join('');
 }
+
+// close the "Autres" curve menu on an outside click
+document.addEventListener('click', (e) => {
+  if (!S.ui.moreOpen || e.target.closest('.lg-more')) return;
+  S.ui.moreOpen = null; document.querySelectorAll('.lg-menu').forEach(x => x.remove());
+  document.querySelectorAll('.lg-mbtn').forEach(b => { b.setAttribute('aria-expanded', 'false'); const p = b.querySelector('path'); if (p) p.setAttribute('d', 'M1 1l4 4 4-4'); });
+});

@@ -5,7 +5,7 @@ s = open('site/index.html').read()
 def rep(a, b, n=1):
     global s
     assert s.count(a) == n, (s.count(a), a[:90]); s = s.replace(a, b)
-rep('<title>Spin Tracker Betclic</title>', '<title>Spin Tracker</title>\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="theme-color" content="#0d0e10">\n<link rel="icon" type="image/png" href="icons/icon-192.png">\n<link rel="apple-touch-icon" href="icons/icon-192.png">')
+rep('<title>Spin Tracker Betclic</title>', '<title>Spin Tracker</title>\n<link rel="manifest" href="manifest.webmanifest">\n<meta name="theme-color" content="#0a0a0a">\n<link rel="icon" type="image/png" href="icons/icon-192.png">\n<link rel="apple-touch-icon" href="icons/icon-192.png">')
 rep("indexedDB.open('spintracker', 1); r.onupgradeneeded = () => r.result.createObjectStore('hands', { keyPath: 'i' });",
     "indexedDB.open('spintracker', 2); r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains('hands')) d.createObjectStore('hands', { keyPath: 'i' }); if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv'); };")
 rep('<span>Spin <b>Tracker</b></span></div>', '<span>Spin <b>Tracker</b></span></div>\n    <button class="btn primary sync-btn" id="syncBtn" data-sync="1">⟳ Mettre à jour</button><div class="sync-state" id="syncState"></div>')
@@ -31,7 +31,7 @@ open(out + '/index.html', 'w').write(s)
 open(out + '/manifest.webmanifest', 'w').write(json.dumps({
   "name": "Spin Tracker", "short_name": "Spin Tracker", "description": "Tracker de Spin & Rush Betclic : cEV, positions, regs/fish, replayer.",
   "start_url": "./#tableau", "scope": "./", "display": "standalone", "orientation": "any",
-  "background_color": "#0d0e10", "theme_color": "#0d0e10", "lang": "fr",
+  "background_color": "#0a0a0a", "theme_color": "#0a0a0a", "lang": "fr",
   "icons": [{"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
             {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
             {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}]}, ensure_ascii=False, indent=1))

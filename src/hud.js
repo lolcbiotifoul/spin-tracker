@@ -218,9 +218,25 @@ function hudKeys(g) {
   for (const r of HUD_POST) for (const c of HUD_COLS) if (!(/PROBE/.test(r[0]) && c[0][0] === 'F')) k.push(g + '.P.' + r[0] + '.' + c[0]);
   return k;
 }
+// results are cached: switching tab or HUD reuses them, and they are prepared in the background after loading
+let HUD_C = { key: '', F: null, D: null };
+const hudKey = () => S.ui.lf.prof + '|' + S.ui.lf.who + '|' + S.hands.length + '|' + JSON.stringify(S.prefs.cls) + '|' + JSON.stringify(S.prefs.overrides);
+function hudData() {
+  const k = hudKey(), byF = S.ui.lf.prof === 'hero';
+  if (HUD_C.key === k && (!byF || HUD_C.F === F)) return HUD_C.D;
+  const P = lfProfileHands(); HUD_C = { key: k, F, D: hudCompute(P.hs, P.pick) }; return HUD_C.D;
+}
+let hudWarmT = null;
+function hudWarm() {
+  clearTimeout(hudWarmT);
+  hudWarmT = setTimeout(() => {
+    const idle = window.requestIdleCallback || ((f) => setTimeout(f, 1));
+    idle(() => { if (S.hands.length && S.ui.lf.prof === 'hero') hudData(); idle(() => { if (S.hands.length) hudPop(S.ui.lf.hudSrc); }); });
+  }, 400);
+}
 function viewHud(g) {
   const u = S.ui.lf, P = lfProfileHands();
-  const D = hudCompute(P.hs, P.pick), R = hudPop(u.hudSrc), label = u.prof === 'hero' ? (S.hero || 'Hero') : P.label;
+  const D = hudData(), R = hudPop(u.hudSrc), label = u.prof === 'hero' ? (S.hero || 'Hero') : P.label;
   S.hudCur = { D, R };
   const nMine = Object.keys(S.prefs.hudRefs).filter(k => k.startsWith(g + '.')).length;
   let h = '<div class="bar hud-bar"><label class="f" for="hudSrc">Sans référence perso, comparer aux<select id="hudSrc"><option value="reg"' + (u.hudSrc === 'reg' ? ' selected' : '') + '>Regs de ta base</option><option value="fish"' + (u.hudSrc === 'fish' ? ' selected' : '') + '>Fish de ta base</option><option value="none"' + (u.hudSrc === 'none' ? ' selected' : '') + '>Rien (seulement tes références)</option></select></label>' +
