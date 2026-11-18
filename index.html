@@ -83,7 +83,8 @@ button { cursor: pointer; }
 .grid2b { display: grid; grid-template-columns: 1fr 1.25fr; gap: 12px; }
 .grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
 .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
-.tile .l { font-size: 12px; color: var(--muted); }
+.tile .l { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.tile .l .qm { width: 18px; height: 18px; font-size: 11px; }
 .tile .v { font: 700 22px/1.2 var(--display); font-variant-numeric: tabular-nums; }
 .pos { color: var(--good); } .neg { color: var(--bad); } .mut { color: var(--muted); }
 .chart-wrap { position: relative; height: max(420px, calc(100vh - 290px)); }
@@ -259,6 +260,82 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12px; colo
 @media (max-width: 1100px) { .grid6 { grid-template-columns: repeat(3, 1fr); } .fm-row6 { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 760px) { .grid6 { grid-template-columns: repeat(2, 1fr); } .fm-row6, .fm-grid2 { grid-template-columns: 1fr 1fr; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* "?" buttons and help windows */
+.qm { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel2); color: var(--muted); font: 700 12px/1 var(--body); display: inline-flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; flex: none; }
+.qm:hover { color: var(--accent); border-color: var(--accent); }
+.has-qm { position: relative; }
+.has-qm > .qm { position: absolute; top: 10px; right: 10px; z-index: 3; }
+.grid6.has-qm > .qm { top: -9px; right: -9px; }
+.help-modal { width: min(640px, 100%); }
+.help-list { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 10px 16px; }
+.help-list dt { align-self: start; padding-top: 1px; font-weight: 600; display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+.help-list dt i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.help-list dd { margin: 0; color: #cfccc5; font-size: 13px; line-height: 1.45; }
+.chart-wrap.short { height: max(340px, calc(100vh - 470px)); }
+.chart-wrap.mini { height: 280px; }
+.stack { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.stack > .panel { flex: 1; }
+.grid6.g4 { grid-template-columns: repeat(4, 1fr); }
+.grid6.g4 .theo { font-size: 11.5px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+/* styled dropdowns */
+.dd { display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--panel2); border: 1px solid var(--line); border-radius: 7px; padding: 5px 9px; min-height: 31px; font-size: 13px; color: var(--text); cursor: pointer; text-align: left; }
+.dd:hover, .dd[aria-expanded="true"] { border-color: #4a4f57; }
+.dd svg { color: var(--muted); flex: none; }
+.dd-tag { min-height: 0; padding: 2px 7px 2px 8px; font-size: 12px; font-weight: 600; border-radius: 5px; border-color: transparent; gap: 6px; }
+.dd-tag.reg { color: #ff8f93; background: rgba(236, 82, 87, .13); }
+.dd-tag.fish { color: #8dbaff; background: rgba(74, 144, 255, .14); }
+.dd-tag.unknown { color: var(--muted); background: #23262b; }
+.dd-tag svg { color: currentColor; opacity: .7; }
+.dd-tag .man { font-weight: 400; font-size: 10.5px; opacity: .75; }
+.dd-menu { position: fixed; z-index: 80; background: #1b1d21; border: 1px solid #3a3f46; border-radius: 9px; padding: 4px; box-shadow: 0 12px 30px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 4px; max-width: 360px; }
+.dd-list { max-height: 320px; overflow: auto; display: flex; flex-direction: column; }
+.dd-list button { border: 0; background: transparent; text-align: left; padding: 6px 10px; border-radius: 6px; font-size: 13px; color: #d9d6cf; white-space: nowrap; }
+.dd-list button:hover, .dd-list button:focus { background: #2a2d33; outline: none; color: var(--text); }
+.dd-list button.on { color: var(--accent); font-weight: 600; }
+.dd-q { margin: 2px; }
+label.f .dd, label.f input, label.f select { color: var(--text); }
+/* PT4-style HUD */
+.hud-bar label.f { flex-direction: row; align-items: center; gap: 8px; }
+.hud-bar input[type=number] { width: 64px; }
+.hud-wrap { display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
+.hud { background: #000; border: 1px solid #222; border-radius: 10px; padding: 16px; display: flex; gap: 18px; align-items: flex-start; flex: none; overflow-x: auto; max-width: 100%; }
+.hcol { display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
+.hrow { display: flex; gap: 18px; align-items: flex-start; }
+.hud-box { border-collapse: collapse; font: 600 21px/1 var(--display); font-variant-numeric: tabular-nums; width: auto; }
+.hud-box th, .hud-box td { padding: 4px 9px; text-align: center; border: 0; white-space: nowrap; }
+.hud-box th { font: 600 17px/1 var(--display); color: #fff; background: #555; cursor: help; }
+.hud-box td.hl { font-size: 19px; }
+.hud-box .hw { background: #fff; color: #1d38ff; } .hud-box .hc { background: #3df0ff; color: #000; } .hud-box .ho { background: #ff8a1c; color: #fff; }
+.hud-box .hp { background: #7a2ea6; color: #fff; } .hud-box .hb { background: #1f37ff; color: #fff; } .hud-box .hr { background: #ff2a2a; color: #fff; }
+.hud-box .hy { background: #ffe600; color: #000; } .hud-box .hg { background: #5c5c5c; color: #fff; }
+.hud-box .hl { background: #fff; color: #000; text-align: center; font-weight: 600; }
+.hud-box td.blank { background: transparent; }
+.hud-box td.hv { background: #111; min-width: 46px; cursor: pointer; }
+.hud-box tr:nth-child(even) td.hv { background: #1a1a1a; }
+.hud-box td.hv:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
+.hv.ok { color: #3ee68a; } .hv.hi { color: #ff6b6b; } .hv.hi2 { color: #ff2e2e; font-weight: 700; } .hv.lo { color: #5cc8ff; } .hv.lo2 { color: #36a3ff; font-weight: 700; }
+.hv.nr { color: #f2f2f2; } .hv.few { color: #6c6c6c; } .hv.na { color: #555; cursor: default; }
+.hv.mine { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.hud-main { background: #5a5a5a; border-radius: 4px; }
+.hud-main th { background: #6a6a6a; color: #e6e6e6; text-align: left; font-size: 18px; }
+.hud-main td.nm { color: #fff; text-align: left; font-size: 19px; background: #5a5a5a; }
+.hud-main td.cnt { background: #000; color: #fff; }
+.hud-main td.cev { background: #222; text-align: left; } .hud-main td.cev.pos { color: #3ee68a; } .hud-main td.cev.neg { color: #ff6b6b; }
+.hud-post .hl { text-align: center; }
+.hud-post tr.sep td { border-top: 2px solid #c9b25a; }
+.hud-side { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 300px; }
+.hud-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.hud-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.hud-legend i.ok { background: #3ee68a; } .hud-legend i.hi { background: #ff6b6b; } .hud-legend i.lo { background: #5cc8ff; } .hud-legend i.nr { background: #f2f2f2; } .hud-legend i.few { background: #6c6c6c; }
+.hud-gaps table { width: 100%; }
+.hud-gaps tr { cursor: pointer; }
+.hud-gaps tr:hover td { background: var(--panel2); }
+.hud-gaps td.n b { font-size: 15px; }
+.hud-modal { width: min(700px, 100%); }
+.hud-edit { align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.hud-edit input { width: 110px; }
+@media (max-width: 760px) { .hud { flex-direction: column; } .hud-box { font-size: 17px; } .grid3, .grid6.g4 { grid-template-columns: 1fr 1fr; } .help-list { grid-template-columns: 1fr; } .help-list dd { margin-bottom: 6px; } }
 </style>
 </head>
 <body>
@@ -710,7 +787,7 @@ const AGG = { raise: 1, shove: 1 };
 const S = {
   hands: [], byId: new Map(), players: new Map(), tours: [], hero: null,
   prefs: null, filters: defaultFilters(),
-  ui: { dash: 'chips', posMode: 'hand', mtMode: 'eh', review: 'hands', rv: { pos: 'all', prof: 'all', kind: 'all', page: 0, sort: 'date', dir: -1, gid: null }, pl: { q: '', tag: 'all', sort: 'hands', dir: -1, page: 0 }, lf: { prof: 'hero', pos: 'all', ref: 'reg', sub: 'sit', who: '' }, series: { chips: { c: 1, sd: 0, nsd: 0, ev: 1 }, br: { p: 1, ev: 1, nm: 0 } } },
+  ui: { dash: 'chips', posMode: 'hand', mtMode: 'eh', review: 'hands', rv: { pos: 'all', prof: 'all', kind: 'all', page: 0, sort: 'date', dir: -1, gid: null }, pl: { q: '', tag: 'all', sort: 'hands', dir: -1, page: 0 }, lf: { prof: 'hero', pos: 'all', ref: 'reg', sub: 'hud3', who: '', hudSrc: 'reg' }, series: { chips: { c: 1, sd: 0, nsd: 0, ev: 1 }, br: { p: 1, ev: 1, nm: 0 }, mu: { t: 1, m: 1, g: 1 } } },
   storage: 'memory', seedLoaded: false, imports: [], skipIds: new Set(), skipped: { other: 0, bad: [] }, rvList: []
 };
 // Official Betclic Spin & Rush multiplier grids (chances per 1 000 000), payouts 1st/2nd/3rd
@@ -721,8 +798,8 @@ const GRIDS = {
 const gridFor = (bi) => bi >= 200 ? GRIDS.hi : GRIDS.std;
 const expMult = (bi) => gridFor(bi).reduce((x, g) => x + g[0] * g[1], 0) / 1e6;
 const GRID_RAKE = +((1 - expMult(10) / 3) * 100).toFixed(1);
-function defaultPrefs() { return { v: 2, cls: { minHands: 50, maxLimpPct: 0, maxVpip: 0, unknownAs: 'fish' }, overrides: {}, favs: {}, rakeEff: GRID_RAKE, rakeback: 0 }; }
-function migrate(p) { if (!p.v) { if (p.rakeEff === 7.8) p.rakeEff = GRID_RAKE; p.v = 2; } return p; }
+function defaultPrefs() { return { v: 2, cls: { minHands: 50, maxLimpPct: 0, maxVpip: 0, unknownAs: 'fish' }, overrides: {}, favs: {}, rakeEff: GRID_RAKE, rakeback: 0, hudRefs: {}, hudTol: 8, hudMin: 15 }; }
+function migrate(p) { if (!p.v) { if (p.rakeEff === 7.8) p.rakeEff = GRID_RAKE; p.v = 2; } if (!p.hudRefs) p.hudRefs = {}; if (!p.hudTol) p.hudTol = 8; if (!p.hudMin) p.hudMin = 15; return p; }
 
 // ---------- persistence: IndexedDB for hands, localStorage + Claude db for prefs ----------
 const IDB = {
@@ -1033,7 +1110,7 @@ function lineChart(wrap, cfg) {
     const W = r.width, H = r.height, L = 16, R = 70, T = cfg.badge ? 54 : 16, B = 46;
     g.clearRect(0, 0, W, H);
     if (!n) { g.fillStyle = '#8d9198'; g.font = '14px Barlow, Arial, sans-serif'; g.fillText('Aucune donnée pour ces filtres', W / 2 - 90, H / 2); return; }
-    let lo = 0, hi = 0; for (const s of ser) for (const v of s.data) { if (v < lo) lo = v; if (v > hi) hi = v; }
+    let lo = cfg.noZero ? Infinity : 0, hi = cfg.noZero ? -Infinity : 0; for (const s of ser) for (const v of s.data) { if (v == null) continue; if (v < lo) lo = v; if (v > hi) hi = v; } if (!isFinite(lo)) { lo = 0; hi = 1; }
     const pad = (hi - lo) * 0.03 || 1; lo -= pad; hi += pad;
     if (hi === lo) hi = lo + 1;
     const step = niceStep((hi - lo) / 8);
@@ -1045,11 +1122,10 @@ function lineChart(wrap, cfg) {
     for (let k = 0; k <= 8; k++) { const i = Math.round((n - 1) * k / 8); g.fillText(fmtN(i + (cfg.x0 || 0)), X(i), H - B + 10); }
     g.fillStyle = '#8d9198'; g.font = '12px Barlow, Arial, sans-serif'; g.fillText(cfg.xLabel, L + (W - L - R) / 2, H - 18);
     for (const s of ser) {
-      g.strokeStyle = s.color; g.lineWidth = 1.4; g.beginPath();
-      const d = s.data; const stride = Math.max(1, Math.floor(d.length / ((W - L - R) * 2)));
-      for (let i = 0; i < d.length; i += stride) { const x = X(i), y = Y(d[i]); if (i === 0) g.moveTo(x, y); else g.lineTo(x, y); }
-      g.lineTo(X(d.length - 1), Y(d[d.length - 1])); g.stroke();
-      g.fillStyle = s.color; g.beginPath(); g.arc(X(d.length - 1), Y(d[d.length - 1]), 3.5, 0, 7); g.fill();
+      g.strokeStyle = s.color; g.lineWidth = 1.4; g.setLineDash(s.dash ? [6, 5] : []); g.beginPath();
+      const d = s.data; const stride = Math.max(1, Math.floor(d.length / ((W - L - R) * 2))); let pen = false;
+      for (let i = 0; i < d.length; i += stride) { if (d[i] == null) { pen = false; continue; } const x = X(i), y = Y(d[i]); if (!pen) g.moveTo(x, y); else g.lineTo(x, y); pen = true; }
+      if (d[d.length - 1] != null) { g.lineTo(X(d.length - 1), Y(d[d.length - 1])); g.stroke(); g.setLineDash([]); g.fillStyle = s.color; g.beginPath(); g.arc(X(d.length - 1), Y(d[d.length - 1]), 3.5, 0, 7); g.fill(); } else { g.stroke(); g.setLineDash([]); }
     }
     if (hover != null) {
       const x = X(hover); g.strokeStyle = '#555b63'; g.lineWidth = 1; g.beginPath(); g.moveTo(x, T); g.lineTo(x, H - B); g.stroke();
@@ -1128,10 +1204,11 @@ function kpis() {
 // ---------- views ----------
 function viewDashboard() {
   const u = S.ui;
-  let h = kpis() + '<div class="bar"><div class="seg">' + [['chips', 'Chips gagnés'], ['br', 'Bankroll'], ['stats', 'Stats']].map(([k, l]) => '<button class="' + (u.dash === k ? 'on' : '') + '" data-dash="' + k + '">' + l + '</button>').join('') + '</div><div class="grow"></div>' + filterBar() + '</div>';
+  let h = kpis() + '<div class="bar"><div class="seg">' + [['chips', 'Chips gagnés'], ['br', 'Bankroll'], ['multi', 'Multiplicateurs'], ['stats', 'Stats']].map(([k, l]) => '<button class="' + (u.dash === k ? 'on' : '') + '" data-dash="' + k + '">' + l + '</button>').join('') + '</div><div class="grow"></div>' + filterBar() + '</div>';
   if (!F.H.length) return h + emptyState();
-  if (u.dash === 'chips') h += '<div class="panel"><div class="chart-wrap" id="chart"></div><div class="legend-row">' + rbCtl() + '<div class="legend" id="legend"></div><div></div></div></div>';
-  else if (u.dash === 'br') h += '<div class="panel"><div class="chart-wrap" id="chart"></div><div class="legend-row">' + rbCtl() + '<div class="legend" id="legend"></div><div></div></div><p class="note" style="margin:6px 0 0">EV profit = ta part de chips en EV × prize pool moyen (rake effectif ' + fmtN(S.prefs.rakeEff, 1) + ' %, modifiable dans Réglages). « Multiplicateur neutralisé » = tes vrais résultats mais chaque victoire payée au multiplicateur moyen.</p></div>';
+  if (u.dash === 'chips') h += '<div class="panel has-qm">' + qm('chips') + '<div class="chart-wrap" id="chart"></div><div class="legend-row">' + rbCtl() + '<div class="legend" id="legend"></div><div></div></div></div>';
+  else if (u.dash === 'br') h += '<div class="panel has-qm">' + qm('br') + '<div class="chart-wrap" id="chart"></div><div class="legend-row">' + rbCtl() + '<div class="legend" id="legend"></div><div></div></div></div>';
+  else if (u.dash === 'multi') h += viewMulti() + '<div class="bar">' + rbCtl() + '</div>';
   else h += viewStats() + '<div class="bar">' + rbCtl() + '</div>';
   return h;
 }
@@ -1173,7 +1250,7 @@ function afterDashboard() {
     const series = [{ k: 'p', name: 'Profit', color: '#4a90ff', data: p }, { k: 'ev', name: 'EV profit', color: '#e861ae', data: ev }, { k: 'nm', name: 'Multiplicateur neutralisé', color: '#f2a93b', data: nm }].map(s => Object.assign(s, { on: !!ser[s.k] }));
     lineChart($('#chart'), { series, xLabel: 'Tournois joués', yFmt: (v) => fmtN(v, Math.abs(v) < 10 && v % 1 ? 1 : 0) + ' €', tipHead: (i) => 'Tournoi ' + fmtN(i + 1) + ' · ' + fmtDate(C[i].start, true) + ' · x' + C[i].mult, onPick: (i) => openSpin(C[i].gid), badge: BL.html, badgeCls: BL.cls });
     legend(series, 'br');
-  }
+  } else if (u.dash === 'multi') afterMulti();
 }
 function legend(series, key) {
   $('#legend').innerHTML = series.map(s => '<button class="' + (s.on ? '' : 'off') + '" data-ser="' + key + ':' + s.k + '" aria-pressed="' + s.on + '"><i style="background:' + s.color + '"></i>' + esc(s.name) + '</button>').join('');
@@ -1184,7 +1261,7 @@ function viewStats() {
   const prEV = C.reduce((x, t) => x + t.evProfit, 0);
   const cmp = (real, theo, f) => '<div class="v ' + cls(real) + '">' + f(real) + '</div><div class="theo" title="Théorique : tes chips en EV (all-in sans chance) et le multiplicateur moyen de la grille Betclic, rakeback inclus">Théorique <b class="' + cls(theo) + '">' + f(theo) + '</b><br>Écart <b class="' + cls(real - theo) + '">' + (real - theo > 0 ? '+' : '') + f(real - theo) + '</b></div>';
   let h = '<div class="grid6">' + [['Buy-in moyen', '<div class="v">' + fmtE(C.length ? bi / C.length : NaN, 2) + '</div>'], ['Temps joué', '<div class="v">' + Math.floor(hrs) + 'h ' + String(Math.round((hrs % 1) * 60)).padStart(2, '0') + 'm</div>'], ['Spins / h', '<div class="v">' + fmtN(hrs ? C.length / hrs : NaN, 1) + '</div>'],
-    ['Gain réel', cmp(pr, prEV, (v) => fmtE(v, 2))], ['Gain / heure réel', cmp(hrs ? pr / hrs : NaN, hrs ? prEV / hrs : NaN, (v) => fmtE(v, 2))], ['ROI réel', cmp(bi ? pr / bi * 100 : NaN, bi ? prEV / bi * 100 : NaN, (v) => fmtP(v, 1))]].map(([l, v]) => '<div class="tile"><div class="l">' + l + '</div>' + v + '</div>').join('') + '</div>';
+    ['Gain réel ' + qm('theo'), cmp(pr, prEV, (v) => fmtE(v, 2))], ['Gain / heure réel', cmp(hrs ? pr / hrs : NaN, hrs ? prEV / hrs : NaN, (v) => fmtE(v, 2))], ['ROI réel', cmp(bi ? pr / bi * 100 : NaN, bi ? prEV / bi * 100 : NaN, (v) => fmtP(v, 1))]].map(([l, v]) => '<div class="tile"><div class="l">' + l + '</div>' + v + '</div>').join('') + '</div>';
   // cEV by position
   const mode = S.ui.posMode; const nT = Math.max(1, F.T.length);
   const acc = {}; for (const k of POSKEYS) acc[k] = { all: [], fish: [], reg: [] };
@@ -1198,33 +1275,27 @@ function viewStats() {
   }
   if (mode === 'tour') for (const k of POSKEYS) { const m = perT[k] || {}; const ids = F.T.map(t => t.gid); for (const g of ids) { const r = m[g] || { all: 0, fish: 0, reg: 0 }; acc[k].all.push(r.all); acc[k].fish.push(r.fish); acc[k].reg.push(r.reg); } }
   const sv = (k, p) => ({ v: mean(acc[k][p]), ci: ci95(acc[k][p]), n: acc[k][p].length });
-  h += '<div class="grid2"><div class="panel"><h3>cEV par position <span class="help">chips ' + (mode === 'hand' ? 'par main' : 'par tournoi') + ', barres = intervalle de confiance à 95 %</span><span class="r"><span class="seg"><button class="' + (mode === 'hand' ? 'on' : '') + '" data-posmode="hand">Par main</button><button class="' + (mode === 'tour' ? 'on' : '') + '" data-posmode="tour">Par tournoi</button></span></span></h3>' +
+  h += '<div class="grid2"><div class="panel"><h3>cEV par position <span class="help">chips ' + (mode === 'hand' ? 'par main' : 'par tournoi') + ', barres = intervalle de confiance à 95 %</span><span class="r">' + qm('pos') + '<span class="seg"><button class="' + (mode === 'hand' ? 'on' : '') + '" data-posmode="hand">Par main</button><button class="' + (mode === 'tour' ? 'on' : '') + '" data-posmode="tour">Par tournoi</button></span></span></h3>' +
     barChart({ label: 'cEV par position', cats: POSKEYS, series: [{ name: 'vs Reg', color: '#ec5257', vals: POSKEYS.map(k => sv(k, 'reg')) }, { name: 'vs Fish', color: '#4a90ff', vals: POSKEYS.map(k => sv(k, 'fish')) }, { name: 'Tous', color: '#f2a93b', vals: POSKEYS.map(k => sv(k, 'all')) }] }) +
-    '<div class="legend"><span class="chip"><i class="dot reg"></i>vs Reg</span><span class="chip"><i class="dot fish"></i>vs Fish</span><span class="chip"><i class="dot" style="background:var(--accent)"></i>Tous</span></div><p class="note">vs Reg / vs Fish : l\'adversaire principal du coup (celui qui ouvre ou défend). Au BTN et en BB vs 2 (BTN et SB tous deux entrés dans le coup) : les deux adversaires ont le même statut.</p></div>';
+    '<div class="legend"><span class="chip"><i class="dot reg"></i>vs Reg</span><span class="chip"><i class="dot fish"></i>vs Fish</span><span class="chip"><i class="dot" style="background:var(--accent)"></i>Tous</span></div></div><div class="stack">';
   // results by buy-in
   const byBi = new Map(); for (const t of C) { const r = byBi.get(t.bi) || { n: 0, ev: 0, p: 0, T: [] }; r.n++; r.ev += t.ev; r.p += t.profit; r.T.push(t); byBi.set(t.bi, r); }
   h += '<div class="panel"><h3>Résultats par buy-in</h3><div class="scroll"><table><thead><tr><th>Buy-in</th><th class="n">Spins</th><th class="n">cEV</th><th class="n">Profit</th><th class="n">ROI</th><th class="n">€/h</th></tr></thead><tbody>' +
     [...byBi.entries()].sort((a, b) => a[0] - b[0]).map(([b, r]) => { const hh = hoursPlayed(r.T); return '<tr><td>' + fmtE(b, b % 1 ? 2 : 0) + '<div class="sub">Betclic · Spin & Rush</div></td><td class="n">' + fmtN(r.n) + '</td><td class="n">' + fmtN(r.ev / r.n, 0) + '</td><td class="n ' + cls(r.p) + '">' + fmtE(r.p, 2) + '</td><td class="n ' + cls(r.p) + '">' + fmtP(r.p / (b * r.n) * 100, 1) + '</td><td class="n ' + cls(r.p) + '">' + fmtE(hh ? r.p / hh : NaN, 2) + '</td></tr>'; }).join('') +
-    '<tr class="tot"><td>Total</td><td class="n">' + fmtN(C.length) + '</td><td class="n">' + fmtN(C.length ? C.reduce((x, t) => x + t.ev, 0) / C.length : NaN, 0) + '</td><td class="n ' + cls(pr) + '">' + fmtE(pr, 2) + '</td><td class="n ' + cls(pr) + '">' + fmtP(bi ? pr / bi * 100 : NaN, 1) + '</td><td class="n ' + cls(pr) + '">' + fmtE(hrs ? pr / hrs : NaN, 2) + '</td></tr></tbody></table></div></div></div>';
+    '<tr class="tot"><td>Total</td><td class="n">' + fmtN(C.length) + '</td><td class="n">' + fmtN(C.length ? C.reduce((x, t) => x + t.ev, 0) / C.length : NaN, 0) + '</td><td class="n ' + cls(pr) + '">' + fmtE(pr, 2) + '</td><td class="n ' + cls(pr) + '">' + fmtP(bi ? pr / bi * 100 : NaN, 1) + '</td><td class="n ' + cls(pr) + '">' + fmtE(hrs ? pr / hrs : NaN, 2) + '</td></tr></tbody></table></div></div>';
+  const fin = [0, 0, 0]; for (const t of C) if (t.place >= 1 && t.place <= 3) fin[t.place - 1]++;
+  h += '<div class="panel"><h3>Finishes<span class="r">' + qm('fin') + '</span></h3>' + barChart({ label: 'Finishes', w: 520, h: 190, ci: false, cats: ['1er', '2e', '3e'], series: [{ name: 'Finishes', color: '#f2a93b', vals: fin.map(x => ({ v: C.length ? x / C.length * 100 : NaN, n: x })) }], yFmt: (v) => fmtN(v) + ' %', vFmt: (v) => fmtN(v, 1) + ' %' }) + '</div></div></div>';
   // cEV by table profile
   const prof = { 'Spin R R': [], 'Spin R F': [], 'Spin F F': [], 'HU vs R': [], 'HU vs F': [] };
   for (const t of F.T) { const p = tourProfile(t); if (p === 'RR') prof['Spin R R'].push(t.ev); else if (p === 'RF') prof['Spin R F'].push(t.ev); else if (p === 'FF') prof['Spin F F'].push(t.ev); if (t.huOpp && t.huEv != null) { const g = tagOf(t.huOpp); if (g === 'reg') prof['HU vs R'].push(t.huEv); else if (g === 'fish') prof['HU vs F'].push(t.huEv); } }
   const pc = Object.keys(prof), colors = ['#ec5257', '#f2a93b', '#4a90ff', '#ec5257', '#4a90ff'];
-  h += '<div class="grid2b"><div class="panel"><h3>cEV par profil de table <span class="help">chips par tournoi (Spin) ou par heads-up (HU) · R = reg, F = fish</span></h3>' +
+  h += '<div class="grid2b"><div class="panel"><h3>cEV par profil de table <span class="help">chips par tournoi (Spin) ou par heads-up (HU) · R = reg, F = fish</span><span class="r">' + qm('prof') + '</span></h3>' +
     barChart({ label: 'cEV par profil', w: 560, cats: pc.map((k, i) => k + ' (' + prof[k].length + ')'), series: [{ name: 'cEV', colors, vals: pc.map(k => ({ v: mean(prof[k]), ci: ci95(prof[k]), n: prof[k].length })) }], vFmt: (v) => fmtN(v, 0) }) + '</div>';
   // multi-tabling
   const mt = {}; for (const t of C) { const r = mt[t.tables] = mt[t.tables] || { p: 0, hrs: 0, ev: [] }; r.p += t.profit; r.hrs += (t.end - t.start) / 3600e3 / t.conc; r.ev.push(t.ev); }
   const mk = Object.keys(mt).map(Number).sort((a, b) => a - b); const mm = S.ui.mtMode;
-  h += '<div class="panel"><h3>Multi-tabling <span class="help">nombre moyen de spins ouverts en même temps</span><span class="r"><span class="seg"><button class="' + (mm === 'eh' ? 'on' : '') + '" data-mt="eh">€/h</button><button class="' + (mm === 'cev' ? 'on' : '') + '" data-mt="cev">cEV</button></span></span></h3>' +
+  h += '<div class="panel"><h3>Multi-tabling <span class="help">nombre moyen de spins ouverts en même temps</span><span class="r">' + qm('mt') + '<span class="seg"><button class="' + (mm === 'eh' ? 'on' : '') + '" data-mt="eh">€/h</button><button class="' + (mm === 'cev' ? 'on' : '') + '" data-mt="cev">cEV</button></span></span></h3>' +
     barChart({ label: 'Multi-tabling', w: 640, ci: mm === 'cev', cats: mk.map(k => (k === 6 ? '6+' : k) + ' table' + (k > 1 ? 's' : '') + ' (' + mt[k].ev.length + ')'), series: [{ name: mm === 'eh' ? '€/h' : 'cEV', color: '#33c27a', vals: mk.map(k => mm === 'eh' ? { v: mt[k].hrs ? mt[k].p / mt[k].hrs : NaN, n: mt[k].ev.length } : { v: mean(mt[k].ev), ci: ci95(mt[k].ev), n: mt[k].ev.length }) }], yFmt: mm === 'eh' ? (v) => fmtN(v) + ' €' : null, vFmt: mm === 'eh' ? (v) => fmtN(v, 1) + ' €/h' : (v) => fmtN(v, 0) }) + '</div></div>';
-  // finishes & multipliers
-  const fin = [0, 0, 0]; for (const t of C) if (t.place >= 1 && t.place <= 3) fin[t.place - 1]++;
-  const mu = new Map(); for (const t of C) { const r = mu.get(t.mult) || { n: 0, w: 0, eur: 0 }; r.n++; if (t.place === 1) { r.w++; r.eur += t.eur; } mu.set(t.mult, r); }
-  const grid = gridFor(C.length ? C[0].bi : 10); for (const g of grid) if (!mu.has(g[0])) mu.set(g[0], { n: 0, w: 0, eur: 0 });
-  const ml = [...mu.keys()].sort((a, b) => a - b); const gp = (m) => { const g = grid.find(x => x[0] === m); return g ? g[1] / 1e6 : null; };
-  const avgM = C.length ? C.reduce((x, t) => x + t.mult, 0) / C.length : NaN, expM = C.length ? C.reduce((x, t) => x + expMult(t.bi), 0) / C.length : NaN;
-  h += '<div class="grid2b"><div class="panel"><h3>Finishes</h3>' + barChart({ label: 'Finishes', w: 520, h: 220, ci: false, cats: ['1er', '2e', '3e'], series: [{ name: 'Finishes', color: '#f2a93b', vals: fin.map(x => ({ v: C.length ? x / C.length * 100 : NaN, n: x })) }], yFmt: (v) => fmtN(v) + ' %', vFmt: (v) => fmtN(v, 1) + ' %' }) + '</div>' +
-    '<div class="panel"><h3>Multiplicateurs <span class="help">réels vs grille officielle Betclic</span></h3><div class="scroll"><table><thead><tr><th>Multiplicateur</th><th class="n">Spins</th><th class="n">Réel</th><th class="n">Attendu</th><th class="n">Écart</th><th class="n">Victoires</th><th class="n">Gains</th></tr></thead><tbody>' + ml.map(m => { const r = mu.get(m), e = gp(m), en = e != null ? e * C.length : null; return '<tr><td><span class="pill">x' + fmtN(m) + '</span>' + (grid.find(x => x[0] === m && x[2]) ? ' <span class="sub">75/15/10</span>' : '') + '</td><td class="n">' + fmtN(r.n) + '</td><td class="n">' + fmtP(C.length ? r.n / C.length * 100 : NaN, m >= 20 ? 2 : 1) + '</td><td class="n mut">' + (e != null ? fmtP(e * 100, m >= 20 ? 3 : 1) : '—') + '</td><td class="n ' + (en != null ? cls(r.n - en) : '') + '">' + (en != null ? fmtS(r.n - en, en < 10 ? 1 : 0) : '—') + '</td><td class="n">' + fmtN(r.w) + (r.n ? ' <span class="sub">(' + fmtP(r.w / r.n * 100, 0) + ')</span>' : '') + '</td><td class="n">' + fmtE(r.eur, 0) + '</td></tr>'; }).join('') + '</tbody></table></div><p class="note">Multiplicateur moyen : <b class="' + cls(avgM - expM) + '">x' + fmtN(avgM, 2) + '</b> obtenu, x' + fmtN(expM, 2) + ' attendu (rake effectif de la grille : ' + fmtN(GRID_RAKE, 1) + ' %). Écart en nombre de spins par rapport à l\'attendu.</p></div></div>';
   return h;
 }
 
@@ -1242,7 +1313,7 @@ function viewPlayers() {
   const heroS = S.players.get(hero);
   const row = (s, isHero) => {
     const t = tagOf(s.name), ov = S.prefs.overrides[s.name] || '';
-    return '<tr><td>' + (isHero ? '★ ' : '') + '<b>' + esc(s.name) + '</b></td><td>' + (isHero ? '<span class="tag unknown">Hero</span>' : tagHtml(s.name) + ' <select data-ov="' + esc(s.name) + '" aria-label="Statut de ' + esc(s.name) + '" style="padding:1px 4px;font-size:12px"><option value=""' + (!ov ? ' selected' : '') + '>Auto (' + (s.auto === 'reg' ? 'Reg' : s.auto === 'fish' ? 'Fish' : 'Inconnu') + ')</option><option value="reg"' + (ov === 'reg' ? ' selected' : '') + '>Reg</option><option value="fish"' + (ov === 'fish' ? ' selected' : '') + '>Fish</option></select>') + '</td>' +
+    return '<tr><td>' + (isHero ? '★ ' : '') + '<b>' + esc(s.name) + '</b></td><td>' + (isHero ? '<span class="tag unknown">Hero</span>' : '<select data-ov="' + esc(s.name) + '" data-tag="' + t + '" data-tagl="' + (t === 'reg' ? 'Reg' : t === 'fish' ? 'Fish' : 'Inconnu') + '" aria-label="Statut de ' + esc(s.name) + '"><option value=""' + (!ov ? ' selected' : '') + '>Auto (' + (s.auto === 'reg' ? 'Reg' : s.auto === 'fish' ? 'Fish' : 'Inconnu') + ')</option><option value="reg"' + (ov === 'reg' ? ' selected' : '') + '>Toujours Reg</option><option value="fish"' + (ov === 'fish' ? ' selected' : '') + '>Toujours Fish</option></select>') + '</td>' +
       '<td class="n">' + fmtN(s.hands) + '</td><td class="n">' + fmtN(s.tours) + '</td><td class="n">' + fmtP(s.vpip / s.hands * 100) + '</td><td class="n">' + fmtP(s.pfr / s.hands * 100) + '</td><td class="n">' + (s.btnOpp ? fmtN(s.btnLimp) + '/' + fmtN(s.btnOpp) : '—') + '</td>' +
       '<td class="n ' + cls(s.cevHu) + '">' + fmtN(s.cevHu) + (isFinite(s.cevHuCi) ? '<span class="ci">±' + fmtN(s.cevHuCi) + '</span>' : '') + '</td><td class="n ' + cls(s.cev) + '">' + fmtN(s.cev) + (isFinite(s.cevCi) ? '<span class="ci">±' + fmtN(s.cevCi) + '</span>' : '') + '</td><td class="n mut">' + ago(s.last) + '</td>' +
       '<td class="n">' + (isHero ? '' : '<button class="btn small" data-lfwho="' + esc(s.name) + '">Leaks</button>') + '</td></tr>';
@@ -1351,7 +1422,7 @@ function lfAggregate(hs, pick, posF) {
 function viewLeaks() {
   const u = S.ui.lf;
   const opps = [...S.players.values()].filter(s => !s.hero).sort((a, b) => b.hands - a.hands);
-  let h = '<div class="bar"><div class="seg"><button class="' + (u.sub === 'sit' ? 'on' : '') + '" data-lfsub="sit">Préflop par stack</button><button class="' + (u.sub === 'stats' ? 'on' : '') + '" data-lfsub="stats">Stats générales</button></div>' +
+  let h = '<div class="bar"><div class="seg"><button class="' + (u.sub === 'hud3' ? 'on' : '') + '" data-lfsub="hud3">HUD 3 joueurs</button><button class="' + (u.sub === 'hudhu' ? 'on' : '') + '" data-lfsub="hudhu">HUD heads-up</button><button class="' + (u.sub === 'sit' ? 'on' : '') + '" data-lfsub="sit">Préflop par stack</button><button class="' + (u.sub === 'stats' ? 'on' : '') + '" data-lfsub="stats">Stats générales</button></div>' +
     '<label class="f" style="flex-direction:row;align-items:center" for="lfProf">Profil <select id="lfProf"><option value="hero"' + (u.prof === 'hero' ? ' selected' : '') + '>Hero (' + esc(S.hero || '') + ')</option><option value="reg"' + (u.prof === 'reg' ? ' selected' : '') + '>Tous les regs</option><option value="fish"' + (u.prof === 'fish' ? ' selected' : '') + '>Tous les fish</option><option value="player"' + (u.prof === 'player' ? ' selected' : '') + '>Un joueur…</option></select></label>' +
     (u.prof === 'player' ? '<select id="lfWho" aria-label="Joueur">' + opps.slice(0, 400).map(s => '<option' + (s.name === u.who ? ' selected' : '') + ' value="' + esc(s.name) + '">' + esc(s.name) + ' (' + s.hands + ')</option>').join('') + '</select>' : '') +
     (u.sub === 'sit' ? '<label class="f" style="flex-direction:row;align-items:center" for="lfPos">Position <select id="lfPos">' + ['all', 'BTN', 'SB', 'BB', 'HU SB', 'HU BB'].map(k => '<option value="' + k + '"' + (u.pos === k ? ' selected' : '') + '>' + (k === 'all' ? 'Toutes' : k) + '</option>').join('') + '</select></label>' +
@@ -1360,6 +1431,7 @@ function viewLeaks() {
   if (u.prof === 'player' && !u.who && opps.length) u.who = opps[0].name;
   const P = lfProfileHands();
   if (u.sub === 'stats') return h + lfStats(P);
+  if (u.sub === 'hud3' || u.sub === 'hudhu') return h + viewHud(u.sub === 'hudhu' ? 'hu' : '3');
   const M = lfAggregate(P.hs, P.pick, u.pos);
   const R = u.ref !== 'none' ? lfAggregate(S.hands, (x) => x.opps.filter(o => tagOf(o) === u.ref), u.pos) : null;
   const list = [...M.values()].filter(r => r.n >= 5).sort((a, b) => b.n - a.n).slice(0, 30);
@@ -1426,6 +1498,451 @@ function viewSettings() {
     '<label class="f" for="sRb">Rakeback (% du rake payé)<input type="number" id="sRb" step="1" min="0" max="100" value="' + S.prefs.rakeback + '"></label><div class="row"><button class="btn primary" data-act="saveMoney">Appliquer</button></div></div>' +
     '<div class="panel"><h3>Sauvegarde des réglages</h3><p class="note" style="font-size:13px">Tes corrections Reg/Fish, favoris et réglages restent dans ce navigateur. Exporte-les de temps en temps, ou pour les passer sur un autre ordinateur.</p><div class="row"><button class="btn" data-exportprefs="1">Exporter mes réglages</button><label class="btn" for="prefsIn" style="cursor:pointer">Restaurer une sauvegarde</label><input type="file" id="prefsIn" accept=".json,application/json" style="display:none"></div></div>' +
     '<div class="panel"><h3>Où sont gardées tes données</h3><p class="note" style="font-size:13px">Les mains sont stockées dans ce navigateur, sur ton ordinateur : rien n\'est envoyé sur internet. Si tu vides la base, un clic sur « Mettre à jour » relit tout ton dossier. Tes réglages, corrections de statut et favoris ' + (S.cloud ? 'sont aussi sauvegardés sur ton compte Claude et te suivent sur tes autres appareils.' : 'sont gardés dans ce navigateur.') + '</p><p class="note">Heures affichées dans le fuseau de ton appareil (' + esc(Intl.DateTimeFormat().resolvedOptions().timeZone || 'local') + ').</p></div></div>';
+}
+
+// ---------- PT4-style HUDs (Leak Finder): heads-up and 3-way, with your own reference values ----------
+const HUD_BK = ['14+', '8-14', '0-8'];
+const hudBk = (bb) => bb >= 14 ? 0 : bb >= 8 ? 1 : 2;
+// stat -> [header label, header colour class, long name, explanation]
+const HUD_ST = {
+  VPIP: ['VPiP', 'hw', 'VPIP', 'Tu mets de l\'argent volontairement (limp, call ou relance) quand c\'est à toi d\'ouvrir.'],
+  LIMP: ['LiMP', 'hc', 'Limp', 'Tu complètes la blinde (limp) en premier à parler.'],
+  LF: ['L/F', 'hc', 'Limp / fold', 'Tu as limpé, l\'adversaire relance (ou fait tapis) et tu foldes.'],
+  O: ['O', 'ho', 'Open raise', 'Tu relances (hors tapis) en premier à parler.'],
+  OS: ['OS', 'ho', 'Open shove', 'Tu fais tapis en premier à parler (ou une relance qui couvre tout le monde).'],
+  OFAI: ['O/FvAi', 'ho', 'Open puis fold face au tapis', 'Tu as fait open raise, un adversaire fait tapis derrière et tu foldes.'],
+  ISO: ['ISO', 'hp', 'Iso raise', 'Face au limp, tu relances (hors tapis).'],
+  ISOAI: ['ISOAI', 'hp', 'Iso tapis', 'Face au limp, tu fais tapis.'],
+  FVO: ['FvO', 'ho', 'Fold face à l\'open', 'Face à une open raise (hors tapis), tu foldes.'],
+  '3B': ['3B', 'ho', '3-bet', 'Face à une open raise (hors tapis), tu relances (tapis compris).'],
+  FVOS: ['FvOS', 'ho', 'Fold face à l\'open shove', 'Face à un tapis d\'ouverture, tu foldes.']
+};
+const HUD_BOX = {
+  hu: [
+    { id: 'hu.SB', t: 'SB', c: 'hr', d: 'SB (bouton) en heads-up, premier à parler', s: ['VPIP', 'LIMP', 'LF', 'O', 'OS'] },
+    { id: 'hu.BB', t: 'BB', c: 'hb', d: 'BB en heads-up, face à la SB', s: ['ISO', 'ISOAI', 'FVO', '3B', 'FVOS'] }
+  ],
+  '3': [
+    { id: '3.BvS', t: 'BvS', c: 'hb', d: 'BB face à la SB, le bouton a foldé', s: ['ISO', 'ISOAI', 'FVO', '3B', 'FVOS'] },
+    { id: '3.SvB', t: 'SvB', c: 'hr', d: 'SB face à la BB, le bouton a foldé', s: ['VPIP', 'LIMP', 'LF', 'O', 'OS'] },
+    { id: '3.BU', t: 'BU', c: 'hy', d: 'Bouton à 3 joueurs, premier à parler', s: ['O', 'OS', 'OFAI'], top: 'LIMP' },
+    { id: '3.BvBU', t: 'BvBU', c: 'hb', d: 'BB face à l\'open raise du bouton, la SB a foldé', s: ['3B'] },
+    { id: '3.SvBU', t: 'SvBU', c: 'hr', d: 'SB face à l\'open raise du bouton', s: ['3B'] }
+  ]
+};
+const HUD_COLS = [['FL', 'F', 'hc', 'flop, pot limpé'], ['FR', 'F', 'ho', 'flop, pot relancé'], ['T', 'T', 'hg', 'turn'], ['R', 'R', 'hg', 'river']];
+const HUD_POST = [
+  ['CB', 'CB', 'C-bet', 'Tu étais l\'agresseur de la street d\'avant et tu mises quand personne n\'a misé avant toi. En pot limpé, l\'« agresseur » est le joueur qui parle en dernier.'],
+  ['FVR', 'FvR', 'Fold face à une relance', 'Tu as misé, on te relance et tu foldes.'],
+  ['XF', 'X/F', 'Check / fold', 'Tu checkes, quelqu\'un mise et tu foldes.'],
+  ['FVPROBE', 'FvPROBE', 'Fold face à une probe', 'Tu étais l\'agresseur, la street d\'avant a été checkée, on mise devant toi et tu foldes (turn, river).'],
+  ['FVCB', 'FvCB', 'Fold face au c-bet', 'L\'agresseur fait son c-bet et tu foldes.', 1],
+  ['RVCB', 'RvCB', 'Relance face au c-bet', 'L\'agresseur fait son c-bet et tu relances.'],
+  ['BVX', 'BvX', 'Mise après le check de l\'agresseur', 'L\'agresseur checke devant toi et tu mises.'],
+  ['DK', 'Dk', 'Donk bet', 'Tu mises avant l\'agresseur, qui parle après toi.'],
+  ['PROBE', 'PROBE', 'Probe', 'La street d\'avant a été checkée par tout le monde et tu mises avant l\'agresseur (turn, river).']
+];
+
+function hudPre(h, me, add) {
+  if (h.acts.some(a => a.st === 0 && (a.a === 'sb' || a.a === 'bb') && a.ai)) return;
+  const pos = {}, stack = {}; for (const p of h.players) { pos[p.name] = p.pos; stack[p.name] = p.stack; }
+  if (!(me in pos)) return;
+  const put = {}, out = {}, seq = [];
+  for (const a of h.acts) {
+    if (a.st !== 0) continue;
+    if (a.a === 'ante' || a.a === 'sb' || a.a === 'bb') { put[a.p] = (put[a.p] || 0) + (a.add || 0); continue; }
+    const after = (put[a.p] || 0) + (a.add || 0); let k;
+    if (a.a === 'f') { k = 'fold'; out[a.p] = 1; }
+    else if (a.a === 'x') k = 'check';
+    else if (a.a === 'c') k = seq.some(x => x.k === 'raise' || x.k === 'shove') ? 'call' : 'limp';
+    else if (a.a === 'r' || a.a === 'b') {
+      let cover = true; for (const q in stack) if (q !== a.p && !out[q] && stack[q] > after) cover = false;
+      k = (a.ai || after >= stack[a.p] || cover) ? 'shove' : 'raise';
+    } else continue;
+    put[a.p] = after; seq.push({ p: a.p, k });
+  }
+  const mine = seq.filter(x => x.p === me); if (!mine.length) return;
+  const f = mine[0], P = pos[me], ix = (x) => seq.indexOf(x);
+  const vol = (k) => k !== 'fold' && k !== 'check', ag = (k) => k === 'raise' || k === 'shove';
+  const first = (role) => { const p = h.players.find(z => z.pos === role); return p ? seq.find(x => x.p === p.name) : null; };
+  const sbSide = (box) => {
+    add(box + 'VPIP', vol(f.k)); add(box + 'LIMP', f.k === 'limp'); add(box + 'O', f.k === 'raise'); add(box + 'OS', f.k === 'shove');
+    if (f.k === 'limp') { const r = seq.slice(ix(f) + 1).find(x => x.p !== me); if (r && ag(r.k) && mine[1]) add(box + 'LF', mine[1].k === 'fold'); }
+  };
+  const bbSide = (box, o) => {
+    if (!o || ix(o) > ix(f)) return;
+    if (o.k === 'limp') { add(box + 'ISO', f.k === 'raise'); add(box + 'ISOAI', f.k === 'shove'); }
+    else if (o.k === 'raise') { add(box + 'FVO', f.k === 'fold'); add(box + '3B', ag(f.k)); }
+    else if (o.k === 'shove') add(box + 'FVOS', f.k === 'fold');
+  };
+  if (h.n === 2) { if (P === 'SB') sbSide('hu.SB.'); else bbSide('hu.BB.', first('SB')); return; }
+  const bA = first('BTN'), sA = first('SB');
+  if (P === 'BTN') {
+    add('3.BU.LIMP', f.k === 'limp'); add('3.BU.O', f.k === 'raise'); add('3.BU.OS', f.k === 'shove');
+    if (f.k === 'raise') { const ai = seq.slice(ix(f) + 1).find(x => x.p !== me && x.k === 'shove'); if (ai && mine[1] && ix(mine[1]) > ix(ai)) add('3.BU.OFAI', mine[1].k === 'fold'); }
+  } else if (P === 'SB') { if (bA && bA.k === 'fold') sbSide('3.SvB.'); else if (bA && bA.k === 'raise') add('3.SvBU.3B', ag(f.k)); }
+  else if (P === 'BB') {
+    if (bA && bA.k === 'fold' && sA && sA.k !== 'fold') bbSide('3.BvS.', sA);
+    else if (bA && bA.k === 'raise' && sA && sA.k === 'fold') add('3.BvBU.3B', ag(f.k));
+  }
+}
+
+function hudPost(h, me, g, add) {
+  if (h.board.length < 3) return;
+  const pre = h.acts.filter(a => a.st === 0);
+  const folded = new Set(pre.filter(a => a.a === 'f').map(a => a.p)); if (folded.has(me)) return;
+  const posOf = {}; for (const p of h.players) posOf[p.name] = p.pos;
+  if (!(me in posOf)) return;
+  let pfa = null; for (const a of pre) if (a.a === 'r' || a.a === 'b') pfa = a.p;
+  const order = h.n === 2 ? ['BB', 'SB'] : ['SB', 'BB', 'BTN'];
+  const alive = h.players.map(p => p.name).filter(n => !folded.has(n)).sort((a, b) => order.indexOf(posOf[a]) - order.indexOf(posOf[b]));
+  const limped = !pfa; let A = limped ? alive[alive.length - 1] : pfa, L = A;
+  for (let s = 1; s <= 3; s++) {
+    const acts = h.acts.filter(a => a.st === s); if (!acts.length) break;
+    const col = s === 1 ? (limped ? 'FL' : 'FR') : s === 2 ? 'T' : 'R', P = g + '.P.';
+    let nB = 0, firstB = null, cbet = false, Achk = false, last = null;
+    let myFirst = true, faced = false, iChk = false, myAggN = 0, facedR = false;
+    const acted = new Set();
+    for (const a of acts) {
+      const agg = a.a === 'b' || a.a === 'r';
+      if (a.p === me) {
+        if (agg || a.a === 'c' || a.a === 'f') add(g + '.M.AF' + s, agg);
+        if (myFirst && nB === 0) {
+          const bet = a.a === 'b';
+          if (A === me) add(P + 'CB.' + col, bet);
+          else if (A && !folded.has(A) && !acted.has(A)) add(P + 'DK.' + col, bet);
+          else if (A && Achk) add(P + 'BVX.' + col, bet);
+          if (s >= 2 && !A && L && L !== me && !folded.has(L) && !acted.has(L)) add(P + 'PROBE.' + col, bet);
+          if (a.a === 'x') iChk = true;
+        }
+        if (nB > 0 && !faced) {
+          faced = true;
+          if (nB === 1 && cbet && A !== me) { add(P + 'FVCB.' + col, a.a === 'f'); add(P + 'RVCB.' + col, a.a === 'r'); }
+          if (nB === 1 && s >= 2 && !A && me === L && firstB !== me) add(P + 'FVPROBE.' + col, a.a === 'f');
+          if (iChk) add(P + 'XF.' + col, a.a === 'f');
+        }
+        if (myAggN && nB > myAggN && !facedR) { facedR = true; add(P + 'FVR.' + col, a.a === 'f'); }
+        myFirst = false;
+      }
+      if (agg) { nB++; if (nB === 1) { firstB = a.p; cbet = a.p === A; } last = a.p; if (a.p === me) myAggN = nB; }
+      if (a.p === A && nB === 0 && a.a === 'x' && !acted.has(A)) Achk = true;
+      if (a.a === 'f') folded.add(a.p);
+      acted.add(a.p);
+    }
+    if (folded.has(me)) break;
+    A = last; if (last) L = last;
+  }
+}
+
+function hudCompute(hs, pick) {
+  const M = new Map(), X = { hu: { n: 0, ev: 0, t: new Set() }, '3': { n: 0, ev: 0, t: new Set() } };
+  const put = (k, hit, h) => { let r = M.get(k); if (!r) M.set(k, r = { o: 0, x: 0, hs: [] }); r.o++; if (hit) r.x++; r.hs.push(h); };
+  for (const h of hs) {
+    if (h.n !== 2 && h.n !== 3) continue;
+    const g = h.n === 2 ? 'hu' : '3';
+    for (const me of pick(h)) {
+      const I = h.pf[me]; if (!I) continue;
+      X[g].n++; X[g].ev += EVc(h, me); X[g].t.add(h.gid);
+      if (I.decisions.length) { put(g + '.M.VPIP', I.vpip, h); put(g + '.M.PFR', I.pfr, h); }
+      const b = hudBk(E.effStackBB(h, me));
+      hudPre(h, me, (k, hit) => { put(k + '.' + b, hit, h); put(k + '.a', hit, h); });
+      hudPost(h, me, g, (k, hit) => put(k, hit, h));
+    }
+  }
+  return { M, X };
+}
+// population reference (regs or fish of the whole base), cached
+let HUD_POP = { key: '', M: null };
+function hudPop(src) {
+  if (src !== 'reg' && src !== 'fish') return null;
+  const key = src + '|' + S.hands.length + '|' + JSON.stringify(S.prefs.cls) + '|' + JSON.stringify(S.prefs.overrides);
+  if (HUD_POP.key !== key) HUD_POP = { key, M: hudCompute(S.hands, (h) => h.opps.filter(o => tagOf(o) === src)).M };
+  return HUD_POP.M;
+}
+function hudRef(key, R) {
+  const c = S.prefs.hudRefs[key], t = c && c.t != null ? c.t : S.prefs.hudTol;
+  if (c && c.v != null) return { v: c.v, t, src: 'Ta référence' };
+  if (R) { const r = R.get(key); if (r && r.o >= 30) return { v: r.x / r.o * 100, t, src: (S.ui.lf.hudSrc === 'fish' ? 'Fish' : 'Regs') + ' de ta base (' + fmtN(r.o) + ' occasions)', n: r.o }; }
+  return null;
+}
+function hudEval(key, D, R) {
+  const r = D.M.get(key); if (!r || !r.o) return null;
+  const v = r.x / r.o * 100, ref = hudRef(key, R);
+  let c = 'nr', d = null;
+  if (r.o < S.prefs.hudMin) c = 'few';
+  else if (ref) { d = v - ref.v; c = Math.abs(d) <= ref.t ? 'ok' : d > 0 ? (d > 2 * ref.t ? 'hi2' : 'hi') : (d < -2 * ref.t ? 'lo2' : 'lo'); }
+  return { r, v, ref, c, d };
+}
+function hudLabel(key) {
+  const p = key.split('.');
+  if (p[1] === 'M') return (p[0] === 'hu' ? 'Heads-up' : '3 joueurs') + ' · ' + (p[2] === 'VPIP' ? 'VPIP' : p[2] === 'PFR' ? 'PFR' : 'Fréquence d\'agression ' + ['', 'flop', 'turn', 'river'][+p[2].slice(2)]);
+  if (p[1] === 'P') { const s = HUD_POST.find(x => x[0] === p[2]); return (p[0] === 'hu' ? 'Heads-up' : '3 joueurs') + ' · ' + s[2] + ' · ' + HUD_COLS.find(c => c[0] === p[3])[3]; }
+  const box = HUD_BOX[p[0]].find(b => b.id === p[0] + '.' + p[1]);
+  return box.t + ' · ' + HUD_ST[p[2]][2] + ' · ' + (p[3] === 'a' ? 'tous stacks' : HUD_BK[+p[3]] + ' bb');
+}
+function hudDesc(key) {
+  const p = key.split('.');
+  if (p[1] === 'M') return p[2] === 'VPIP' ? 'Part des mains où tu mets de l\'argent volontairement préflop.' : p[2] === 'PFR' ? 'Part des mains où tu relances préflop (tapis compris).' : '(mises + relances) / (mises + relances + calls + folds) sur cette street.';
+  if (p[1] === 'P') return HUD_POST.find(x => x[0] === p[2])[3];
+  const box = HUD_BOX[p[0]].find(b => b.id === p[0] + '.' + p[1]);
+  return box.d + '. ' + HUD_ST[p[2]][3] + (p[3] !== 'a' ? ' Stack effectif ' + HUD_BK[+p[3]] + ' bb au début de la main.' : '');
+}
+function hudTd(key, D, R, extra) {
+  const e = hudEval(key, D, R);
+  if (!e) return '<td class="hv na"' + (extra || '') + '>-</td>';
+  const tip = hudLabel(key) + '\n' + fmtN(e.r.x) + ' / ' + fmtN(e.r.o) + ' = ' + fmtP(e.v, 1) + (e.ref ? '\nRéférence ' + fmtP(e.ref.v, 0) + ' ± ' + e.ref.t + ' (' + e.ref.src + ')' : '\nPas de référence') + '\nClic : détail, référence, replayer';
+  return '<td class="hv ' + e.c + (S.prefs.hudRefs[key] ? ' mine' : '') + '" data-hud="' + key + '" title="' + esc(tip) + '"' + (extra || '') + '>' + Math.round(e.v) + '</td>';
+}
+function hudBoxHtml(b, D, R) {
+  let h = '<table class="hud-box">';
+  if (b.top) h += '<tr><td class="hl blank"></td><th class="' + HUD_ST[b.top][1] + '">' + HUD_ST[b.top][0] + '</th>' + hudTd(b.id + '.' + b.top + '.a', D, R) + '<td colspan="' + (b.s.length - 2) + '" class="blank"></td></tr>';
+  h += '<tr><th class="' + b.c + '" title="' + esc(b.d) + '">' + b.t + '</th>' + b.s.map(s => '<th class="' + HUD_ST[s][1] + '" title="' + esc(HUD_ST[s][2] + ' : ' + HUD_ST[s][3]) + '">' + HUD_ST[s][0] + '</th>').join('') + '</tr>';
+  for (let i = 0; i < 3; i++) h += '<tr><td class="hl">' + HUD_BK[i] + '</td>' + b.s.map(s => hudTd(b.id + '.' + s + '.' + i, D, R)).join('') + '</tr>';
+  return h + '</table>';
+}
+function hudMainHtml(g, D, R, label) {
+  const X = D.X[g];
+  return '<table class="hud-box hud-main"><tr><td class="nm" colspan="3">' + esc(label) + '</td><td class="cnt" title="Mains ' + (g === 'hu' ? 'en heads-up' : 'à 3 joueurs') + '">' + fmtN(X.n) + '</td></tr>' +
+    '<tr><th>VPiP</th>' + hudTd(g + '.M.VPIP', D, R) + '<th>PFR</th>' + hudTd(g + '.M.PFR', D, R) + '</tr>' +
+    '<tr><th title="Fréquence d\'agression flop / turn / river">AF' + (g === 'hu' ? '.hu' : '') + '</th>' + [1, 2, 3].map(s => hudTd(g + '.M.AF' + s, D, R)).join('') + '</tr>' +
+    '<tr><th>cEV' + (g === 'hu' ? '.hu' : '') + '</th><td colspan="3" class="cev ' + cls(X.ev) + '" title="Chips EV cumulés sur ces mains (' + fmtS(X.n ? X.ev / X.n : NaN, 1) + ' par main)">' + fmtS(X.ev) + '</td></tr></table>';
+}
+function hudPostHtml(g, D, R) {
+  let h = '<table class="hud-box hud-post"><tr><th class="hg">POST-F</th>' + HUD_COLS.map(c => '<th class="' + c[2] + '" title="' + esc(c[3]) + '">' + c[1] + '</th>').join('') + '</tr>';
+  for (const r of HUD_POST) {
+    h += '<tr' + (r[4] ? ' class="sep"' : '') + '><td class="hl" title="' + esc(r[2] + ' : ' + r[3]) + '">' + r[1] + '</td>' + HUD_COLS.map(c => (c[0] === 'FL' || c[0] === 'FR') && /PROBE/.test(r[0]) ? '<td class="hv na">-</td>' : hudTd(g + '.P.' + r[0] + '.' + c[0], D, R)).join('') + '</tr>';
+  }
+  return h + '</table>';
+}
+function hudKeys(g) {
+  const k = [g + '.M.VPIP', g + '.M.PFR', g + '.M.AF1', g + '.M.AF2', g + '.M.AF3'];
+  for (const b of HUD_BOX[g]) { if (b.top) k.push(b.id + '.' + b.top + '.a'); for (const s of b.s) for (let i = 0; i < 3; i++) k.push(b.id + '.' + s + '.' + i); }
+  for (const r of HUD_POST) for (const c of HUD_COLS) if (!(/PROBE/.test(r[0]) && c[0][0] === 'F')) k.push(g + '.P.' + r[0] + '.' + c[0]);
+  return k;
+}
+function viewHud(g) {
+  const u = S.ui.lf, P = lfProfileHands();
+  const D = hudCompute(P.hs, P.pick), R = hudPop(u.hudSrc), label = u.prof === 'hero' ? (S.hero || 'Hero') : P.label;
+  S.hudCur = { D, R };
+  const nMine = Object.keys(S.prefs.hudRefs).filter(k => k.startsWith(g + '.')).length;
+  let h = '<div class="bar hud-bar"><label class="f" for="hudSrc">Sans référence perso, comparer aux<select id="hudSrc"><option value="reg"' + (u.hudSrc === 'reg' ? ' selected' : '') + '>Regs de ta base</option><option value="fish"' + (u.hudSrc === 'fish' ? ' selected' : '') + '>Fish de ta base</option><option value="none"' + (u.hudSrc === 'none' ? ' selected' : '') + '>Rien (seulement tes références)</option></select></label>' +
+    '<label class="f" for="hudTol">Écart toléré (± pts)<input type="number" id="hudTol" min="1" max="50" step="1" value="' + S.prefs.hudTol + '"></label>' +
+    '<label class="f" for="hudMin">Échantillon mini<input type="number" id="hudMin" min="1" max="500" step="1" value="' + S.prefs.hudMin + '"></label>' +
+    '<div class="grow"></div><button class="btn small" data-hudact="copy" title="Fixe tes références sur les valeurs actuelles des ' + (u.hudSrc === 'fish' ? 'fish' : 'regs') + ' de ta base, pour les ajuster ensuite">Copier les ' + (u.hudSrc === 'fish' ? 'fish' : 'regs') + ' dans mes références</button>' + (nMine ? '<button class="btn small" data-hudact="clear">Effacer mes ' + nMine + ' références</button>' : '') + '<button class="qm" data-help="hud" aria-label="Aide sur le HUD">?</button></div>';
+  if (!D.X[g].n) return h + '<div class="panel empty">Aucune main ' + (g === 'hu' ? 'en heads-up' : 'à 3 joueurs') + ' pour ce profil et ces filtres.</div>';
+  const B = (id) => hudBoxHtml(HUD_BOX[g].find(b => b.id === id), D, R);
+  h += '<div class="hud-wrap"><div class="hud ' + (g === 'hu' ? 'hud-hu' : 'hud-3') + '">';
+  if (g === 'hu') h += '<div class="hcol">' + hudMainHtml(g, D, R, label) + B('hu.BB') + '</div><div class="hcol">' + hudPostHtml(g, D, R) + B('hu.SB') + '</div>';
+  else h += '<div class="hcol">' + B('3.BvS') + B('3.BU') + '<div class="hrow">' + B('3.BvBU') + B('3.SvBU') + '</div></div><div class="hcol">' + B('3.SvB') + hudMainHtml(g, D, R, label) + hudPostHtml(g, D, R) + '</div>';
+  h += '</div><div class="hud-side"><div class="hud-legend"><span><i class="ok"></i>dans ta zone</span><span><i class="hi"></i>trop haut</span><span><i class="lo"></i>trop bas</span><span><i class="nr"></i>pas de référence</span><span><i class="few"></i>moins de ' + S.prefs.hudMin + ' occasions</span><span><u>souligné</u> = ta référence perso</span></div>';
+  // biggest gaps
+  const gaps = [];
+  for (const k of hudKeys(g)) { const e = hudEval(k, D, R); if (e && e.ref && e.r.o >= S.prefs.hudMin && Math.abs(e.d) > e.ref.t) gaps.push({ k, e, sc: (Math.abs(e.d) - e.ref.t) * Math.sqrt(e.r.o) }); }
+  gaps.sort((a, b) => b.sc - a.sc);
+  h += '<div class="panel hud-gaps"><h3>À travailler <span class="help">les écarts les plus nets avec ta référence</span></h3>' + (gaps.length ? '<table><tbody>' + gaps.slice(0, 12).map(x => '<tr data-hud="' + x.k + '"><td>' + esc(hudLabel(x.k)) + '<div class="sub">' + fmtN(x.e.r.o) + ' occasions · réf. ' + fmtP(x.e.ref.v, 0) + ' ± ' + x.e.ref.t + '</div></td><td class="n"><b class="' + (x.e.d > 0 ? 'c-agg' : 'c-pas') + '">' + fmtP(x.e.v, 0) + '</b><div class="sub">' + (x.e.d > 0 ? 'trop haut' : 'trop bas') + ' de ' + fmtN(Math.abs(x.e.d), 0) + ' pts</div></td></tr>').join('') + '</tbody></table>' : '<p class="note">Rien hors de ta zone pour l\'instant (cases avec au moins ' + S.prefs.hudMin + ' occasions et une référence).</p>') + '</div></div></div>';
+  return h;
+}
+function hudOpen(key) {
+  const C = S.hudCur; if (!C) return;
+  const e = hudEval(key, C.D, C.R), mine = S.prefs.hudRefs[key] || {};
+  const n = e ? e.r.o : 0;
+  let h = '<div class="modal-bg" data-act="closeModal"><div class="modal hud-modal" role="dialog" aria-modal="true" aria-label="Statistique"><div class="row"><h3 style="margin:0;font:700 22px var(--display)">' + esc(hudLabel(key)) + '</h3><div class="grow" style="flex:1"></div><button class="btn small" data-act="closeModal">Fermer</button></div>' +
+    '<p class="note" style="margin:0;font-size:13px">' + esc(hudDesc(key)) + '</p><div class="grid3">' +
+    '<div class="tile"><div class="l">Ta valeur</div><div class="v">' + (e ? fmtP(e.v, 1) : '—') + '</div><div class="theo">' + (e ? fmtN(e.r.x) + ' sur ' + fmtN(e.r.o) + ' occasions' : 'aucune occasion') + '</div></div>' +
+    '<div class="tile"><div class="l">Référence utilisée</div><div class="v">' + (e && e.ref ? fmtP(e.ref.v, 0) + ' <span style="font-size:15px">± ' + e.ref.t + '</span>' : '—') + '</div><div class="theo">' + (e && e.ref ? esc(e.ref.src) : 'aucune') + '</div></div>' +
+    '<div class="tile"><div class="l">Écart</div><div class="v ' + (e && e.d != null ? (Math.abs(e.d) <= e.ref.t ? 'pos' : 'neg') : '') + '">' + (e && e.d != null ? fmtS(e.d, 0) + ' pts' : '—') + '</div><div class="theo">' + (!e ? '' : e.c === 'few' ? 'échantillon trop petit (< ' + S.prefs.hudMin + ')' : e.d == null ? '' : Math.abs(e.d) <= e.ref.t ? 'dans ta zone' : e.d > 0 ? 'trop haut' : 'trop bas') + '</div></div></div>' +
+    '<div class="row hud-edit"><label class="f" for="hrV">Ma référence (%)<input type="number" id="hrV" min="0" max="100" step="1" value="' + (mine.v != null ? mine.v : '') + '" placeholder="' + (e && e.ref && e.ref.src !== 'Ta référence' ? Math.round(e.ref.v) : '') + '"></label>' +
+    '<label class="f" for="hrT">Écart toléré (± pts)<input type="number" id="hrT" min="1" max="50" step="1" value="' + (mine.t != null ? mine.t : '') + '" placeholder="' + S.prefs.hudTol + '"></label>' +
+    '<button class="btn primary" data-hudact="save" data-key="' + key + '">Enregistrer</button>' + (mine.v != null ? '<button class="btn" data-hudact="del" data-key="' + key + '">Retirer ma référence</button>' : '') +
+    '<div class="grow" style="flex:1"></div>' + (n ? '<button class="btn" data-hudact="replay" data-key="' + key + '">▶ Revoir ces ' + fmtN(n) + ' mains</button>' : '') + '</div>' +
+    '<p class="note" style="margin:0">Laisse « Ma référence » vide pour comparer aux ' + (S.ui.lf.hudSrc === 'fish' ? 'fish' : 'regs') + ' de ta base. Écart toléré vide = réglage général (± ' + S.prefs.hudTol + ').</p></div></div>';
+  $('#modalRoot').innerHTML = h;
+  const i = $('#hrV'); if (i) i.focus();
+}
+function hudAct(t) {
+  const a = t.dataset.hudact, key = t.dataset.key, R = S.prefs.hudRefs;
+  if (a === 'save') {
+    const v = $('#hrV').value.trim(), tl = $('#hrT').value.trim();
+    if (v === '' && tl === '') delete R[key];
+    else { const o = R[key] || {}; if (v !== '') o.v = Math.max(0, Math.min(100, +v)); else delete o.v; if (tl !== '') o.t = Math.max(1, Math.min(50, +tl)); else delete o.t; if (o.v == null && o.t == null) delete R[key]; else R[key] = o; }
+    savePrefs(); $('#modalRoot').innerHTML = ''; render(); toast('Référence enregistrée');
+  } else if (a === 'del') { delete R[key]; savePrefs(); $('#modalRoot').innerHTML = ''; render(); toast('Référence retirée'); }
+  else if (a === 'replay') { const r = S.hudCur && S.hudCur.D.M.get(key); if (r) { $('#modalRoot').innerHTML = ''; const hs = [...new Set(r.hs)].sort((x, y) => x.ts - y.ts); openReplayer(hs, 0, hudLabel(key)); } }
+  else if (a === 'copy') {
+    const g = S.ui.lf.sub === 'hudhu' ? 'hu' : '3', P = hudPop(S.ui.lf.hudSrc === 'fish' ? 'fish' : 'reg'); let n = 0;
+    for (const k of hudKeys(g)) { const r = P.get(k); if (r && r.o >= 30) { R[k] = Object.assign(R[k] || {}, { v: Math.round(r.x / r.o * 100) }); n++; } }
+    savePrefs(); render(); toast(n + ' références copiées : clique une case pour l\'ajuster');
+  } else if (a === 'clear') {
+    const g = S.ui.lf.sub === 'hudhu' ? 'hu' : '3';
+    if (!t.dataset.sure) { t.dataset.sure = '1'; t.textContent = 'Sûr ? Clique encore'; t.classList.add('danger'); return; }
+    for (const k of Object.keys(R)) if (k.startsWith(g + '.')) delete R[k];
+    savePrefs(); render(); toast('Références effacées');
+  }
+}
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-hud],[data-hudact]'); if (!t) return;
+  if (t.dataset.hudact) hudAct(t); else hudOpen(t.dataset.hud);
+});
+document.addEventListener('change', function (e) {
+  const t = e.target;
+  if (t.id === 'hudSrc') { S.ui.lf.hudSrc = t.value; render(); }
+  else if (t.id === 'hudTol') { S.prefs.hudTol = Math.max(1, Math.min(50, +t.value || 8)); savePrefs(); render(); }
+  else if (t.id === 'hudMin') { S.prefs.hudMin = Math.max(1, Math.min(500, +t.value || 15)); savePrefs(); render(); }
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.target.id === 'hrV' || e.target.id === 'hrT')) { const b = $('[data-hudact="save"]'); if (b) b.click(); } });
+
+// ---------- "?" help windows ----------
+const HELP = {
+  chips: { t: 'Graphique des chips', i: [
+    ['#33c27a', 'Chips', 'Tes chips gagnés ou perdus, cumulés main après main (stacks ramenés à 500 chips par joueur au départ).'],
+    ['#4a90ff', 'Chips (SD)', 'La part gagnée ou perdue dans les mains allées à l\'abattage (showdown).'],
+    ['#ec5257', 'Chips (NSD)', 'La part gagnée ou perdue sans abattage : pots ramassés parce que l\'adversaire a foldé, blindes perdues en foldant. Si elle monte, tu voles bien.'],
+    ['#f2a93b', 'EV (chips)', 'Tes chips si chaque all-in avait été payé à ton équité au moment du tapis. C\'est ta vraie performance, sans la chance des all-in.']],
+    f: 'Le badge en haut à gauche compare Chips et EV : l\'écart est ta chance aux all-in, et le pourcentage indique la probabilité d\'être au moins aussi chanceux (ou malchanceux) sur ce nombre d\'all-in. Clique sur un point de la courbe pour ouvrir la main dans le replayer.' },
+  br: { t: 'Graphique de bankroll', i: [
+    ['#4a90ff', 'Profit', 'L\'argent réellement gagné : gains − buy-ins + rakeback.'],
+    ['#e861ae', 'EV profit', 'Ce que tu aurais gagné sans aucune chance : ta part de chips en EV × le prize pool moyen (multiplicateur moyen de la grille Betclic). Le meilleur indicateur de ton niveau.'],
+    ['#f2a93b', 'Multiplicateur neutralisé', 'Tes vraies victoires et défaites, mais chaque victoire payée au multiplicateur moyen. L\'écart avec Profit = ta chance sur les multiplicateurs ; l\'écart avec EV profit = ta chance sur les all-in et l\'issue des spins.']],
+    f: 'Le badge compare Profit et EV profit, avec la probabilité d\'avoir au moins autant d\'écart par pure variance. Le rakeback (en bas à gauche) s\'ajoute aux trois courbes. Clique sur un point pour rejouer le spin.' },
+  multi: { t: 'D\'où vient ta chance (en €)', i: [
+    ['#e861ae', 'Chance totale', 'Profit − EV profit : tout ce que la variance t\'a donné ou pris.'],
+    ['#f2a93b', 'Chance multiplicateurs', 'Profit − Multiplicateur neutralisé : l\'argent gagné ou perdu parce que tes victoires sont tombées sur des multiplicateurs au-dessus ou en dessous de la moyenne. Gagner un x2 coûte de l\'EV, gagner un x10 en rapporte.'],
+    ['#4a90ff', 'Chance jeu', 'Multiplicateur neutralisé − EV profit : l\'argent gagné ou perdu parce que tu as gagné plus ou moins de spins que ce que tes chips en EV prévoyaient (all-in, flips, issue des heads-up).']],
+    f: 'La chance totale est la somme des deux autres. Au-dessus de 0 = chanceux, en dessous = malchanceux. Le badge porte sur la chance multiplicateurs.' },
+  mavg: { t: 'Multiplicateur moyen', i: [
+    ['#f2a93b', 'Tous tes spins', 'Moyenne des multiplicateurs tirés sur tous tes spins, depuis le début de la période.'],
+    ['#33c27a', 'Tes victoires', 'Moyenne des multiplicateurs des spins que tu as gagnés : c\'est elle qui compte pour ton argent.'],
+    ['#8d9198', 'Attendu', 'Le multiplicateur moyen de la grille officielle Betclic (rake compris). Les deux courbes devraient s\'en rapprocher avec le volume.']],
+    f: 'Au-dessus de la ligne grise = tu as tiré (ou gagné) de meilleurs multiplicateurs que la moyenne.' },
+  mtab: { t: 'Tableau des multiplicateurs', i: [
+    [null, 'Réel / Attendu', 'Part de tes spins tombés sur chaque multiplicateur, et la fréquence officielle de la grille Betclic.'],
+    [null, 'Écart', 'Nombre de spins en plus (+) ou en moins (−) par rapport à ce qu\'annonce la grille pour ton volume.'],
+    [null, 'Victoires', 'Spins gagnés sur ce multiplicateur, et ton taux de victoire entre parenthèses.'],
+    [null, '75/15/10', 'Grands multiplicateurs où le prize pool est partagé : 75 % au 1er, 15 % au 2e, 10 % au 3e.']] },
+  pos: { t: 'cEV par position', i: [
+    ['#ec5257', 'vs Reg', 'Chips gagnés en EV quand ton adversaire principal du coup est un reg.'],
+    ['#4a90ff', 'vs Fish', 'Pareil contre un fish.'],
+    ['#f2a93b', 'Tous', 'Toutes les mains de la position.'],
+    [null, 'Barres fines', 'Intervalle de confiance à 95 % : tant qu\'il est large, la valeur peut encore beaucoup bouger.']],
+    f: 'SB vs BTN = tu es SB et le bouton est entré dans le coup ; SB vs BB = le bouton a foldé. BB vs 2 = bouton et SB tous deux entrés. « Par main » = moyenne par main jouée à ce poste, « Par tournoi » = cumul par spin.' },
+  prof: { t: 'cEV par profil de table', i: [
+    [null, 'Spin R R / R F / F F', 'cEV par spin selon tes deux adversaires : deux regs, un reg et un fish, deux fish.'],
+    [null, 'HU vs R / HU vs F', 'cEV sur la phase de heads-up seulement, selon l\'adversaire restant.'],
+    [null, 'Barres fines', 'Intervalle de confiance à 95 %.']] },
+  mt: { t: 'Multi-tabling', i: [
+    [null, 'Tables', 'Nombre moyen de spins ouverts en même temps pendant chaque spin (arrondi, 6+ au-delà).'],
+    [null, '€/h', 'Profit par heure de jeu réelle à ce nombre de tables.'],
+    [null, 'cEV', 'Chips EV par spin : montre si ta qualité de jeu baisse quand tu ouvres plus de tables.']] },
+  fin: { t: 'Finishes', i: [[null, '1er / 2e / 3e', 'Part de tes spins terminés à chaque place. Sur un format à 3 où le gagnant prend tout, seule la 1re place compte (sauf grands multiplicateurs).']] },
+  theo: { t: 'Gain réel et théorique', i: [
+    [null, 'Gain réel', 'Ce que tu as vraiment gagné, rakeback compris.'],
+    [null, 'Théorique', 'Ce que tu aurais dû gagner : tes chips en EV et le multiplicateur moyen de la grille, rakeback compris (= EV profit).'],
+    [null, 'Écart', 'Réel − théorique : positif = tu as eu de la chance.'],
+    [null, 'Par heure', 'Divisé par ton temps de jeu réel (les spins joués en même temps ne comptent qu\'une fois).']] },
+  hud: { t: 'Les HUD du Leak Finder', i: [
+    [null, '14+ / 8-14 / 0-8', 'Stack effectif en big blinds au début de la main (le plus petit entre toi et le plus gros adversaire).'],
+    [null, 'BvS, SvB, BU…', 'La situation : BvS = tu es BB face à la SB (bouton foldé), SvB = SB face à la BB, BU = bouton premier à parler, BvBU = BB face à l\'open du bouton (SB foldée), SvBU = SB face à l\'open du bouton.'],
+    [null, 'VPiP, LiMP, L/F', 'Joue la main · limp · limp puis fold face à une relance.'],
+    [null, 'O, OS, O/FvAi', 'Open raise (hors tapis) · open shove · open puis fold face à un tapis.'],
+    [null, 'ISO, ISOAI', 'Face au limp : relance · tapis.'],
+    [null, 'FvO, 3B, FvOS', 'Face à une open raise : fold · relance (3-bet, tapis compris). Face à un open shove : fold.'],
+    [null, 'AF', 'Fréquence d\'agression flop / turn / river : (mises + relances) / (mises + relances + calls + folds).'],
+    [null, 'POST-F', 'Colonnes : F bleu = flop en pot limpé, F orange = flop en pot relancé, T = turn, R = river. CB = c-bet, FvR = fold face à une relance, X/F = check-fold, FvPROBE = fold face à une probe, FvCB / RvCB = fold / relance face au c-bet, BvX = mise quand l\'agresseur checke, Dk = donk bet, PROBE = mise après une street checkée.'],
+    [null, 'Couleurs', 'Vert = dans ta zone (référence ± écart toléré), rouge = trop haut, bleu = trop bas (plus vif quand l\'écart dépasse deux fois la tolérance), blanc = pas de référence, gris = trop peu d\'occasions. Un chiffre souligné utilise ta référence perso.']],
+    f: 'Clique une case pour voir le détail, fixer ta propre référence (et sa tolérance) ou rejouer les mains concernées. Sans référence perso, la case est comparée aux regs (ou fish) de ta base dès qu\'ils ont 30 occasions. Survole un en-tête pour sa définition.' }
+};
+function qm(topic) { return '<button class="qm" data-help="' + topic + '" aria-label="Explications">?</button>'; }
+function openHelp(k) {
+  const H = HELP[k]; if (!H) return;
+  $('#modalRoot').innerHTML = '<div class="modal-bg" data-act="closeModal"><div class="modal help-modal" role="dialog" aria-modal="true" aria-label="' + esc(H.t) + '"><div class="row"><h3 style="margin:0;font:700 22px var(--display)">' + esc(H.t) + '</h3><div class="grow" style="flex:1"></div><button class="btn small" data-act="closeModal">Fermer</button></div>' +
+    '<dl class="help-list">' + H.i.map(([c, n, d]) => '<dt>' + (c ? '<i style="background:' + c + '"></i>' : '') + esc(n) + '</dt><dd>' + esc(d) + '</dd>').join('') + '</dl>' + (H.f ? '<p class="note" style="margin:0;font-size:13px">' + esc(H.f) + '</p>' : '') + '</div></div>';
+}
+document.addEventListener('click', (e) => { const t = e.target.closest('[data-help]'); if (t) { e.stopPropagation(); openHelp(t.dataset.help); } }, true);
+
+// ---------- styled dropdowns: native <select> kept for logic, custom menu for looks ----------
+let DD = null;
+function ddClose() { if (DD) { DD.menu.remove(); DD.btn.setAttribute('aria-expanded', 'false'); DD = null; } }
+function ddLabel(sel) { const o = sel.options[sel.selectedIndex]; return o ? o.textContent : ''; }
+function enhanceSelect(sel) {
+  if (sel.dataset.dd) return; sel.dataset.dd = '1';
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'dd' + (sel.dataset.ov !== undefined ? ' dd-tag ' + (sel.dataset.tag || '') : '');
+  b.setAttribute('aria-haspopup', 'listbox'); b.setAttribute('aria-expanded', 'false');
+  if (sel.getAttribute('aria-label')) b.setAttribute('aria-label', sel.getAttribute('aria-label'));
+  if (sel.id) { b.id = sel.id + '_dd'; const lab = document.querySelector('label[for="' + sel.id + '"]'); if (lab) lab.htmlFor = b.id; }
+  const lab = () => sel.dataset.ov !== undefined ? (sel.dataset.tagl || ddLabel(sel)) + (sel.value ? ' <span class="man">manuel</span>' : '') : esc(ddLabel(sel));
+  b.innerHTML = '<span>' + lab() + '</span><svg viewBox="0 0 10 6" width="9" height="6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+  sel.style.display = 'none'; sel.after(b);
+  b.onclick = (e) => {
+    e.stopPropagation(); const open = DD && DD.btn === b; ddClose(); if (open) return;
+    const m = document.createElement('div'); m.className = 'dd-menu'; m.setAttribute('role', 'listbox');
+    const many = sel.options.length > 12;
+    m.innerHTML = (many ? '<input type="text" class="dd-q" placeholder="Filtrer…" aria-label="Filtrer">' : '') + '<div class="dd-list">' + [...sel.options].map((o, i) => '<button type="button" role="option" data-i="' + i + '" class="' + (i === sel.selectedIndex ? 'on' : '') + '">' + esc(o.textContent) + '</button>').join('') + '</div>';
+    document.body.appendChild(m);
+    const r = b.getBoundingClientRect(); m.style.minWidth = Math.max(r.width, 140) + 'px';
+    const mh = m.offsetHeight, below = window.innerHeight - r.bottom;
+    m.style.left = Math.min(r.left, window.innerWidth - m.offsetWidth - 8) + 'px';
+    m.style.top = (below < mh + 8 && r.top > mh ? r.top - mh - 4 : r.bottom + 4) + 'px';
+    DD = { menu: m, btn: b }; b.setAttribute('aria-expanded', 'true');
+    const cur = m.querySelector('.on'); if (cur) cur.scrollIntoView({ block: 'nearest' });
+    const q = m.querySelector('.dd-q'); if (q) { q.focus(); q.oninput = () => { const v = q.value.toLowerCase(); m.querySelectorAll('.dd-list button').forEach(x => x.style.display = x.textContent.toLowerCase().includes(v) ? '' : 'none'); }; } else if (cur) cur.focus();
+    m.onclick = (ev) => { const o = ev.target.closest('[data-i]'); if (!o) return; ev.stopPropagation(); ddClose(); if (+o.dataset.i !== sel.selectedIndex) { sel.selectedIndex = +o.dataset.i; b.firstChild.innerHTML = lab(); sel.dispatchEvent(new Event('change', { bubbles: true })); } b.focus(); };
+    m.onkeydown = (ev) => {
+      const items = [...m.querySelectorAll('.dd-list button')].filter(x => x.style.display !== 'none'); const i = items.indexOf(document.activeElement);
+      if (ev.key === 'ArrowDown') { ev.preventDefault(); (items[i + 1] || items[0]).focus(); }
+      else if (ev.key === 'ArrowUp') { ev.preventDefault(); (items[i - 1] || items[items.length - 1]).focus(); }
+      else if (ev.key === 'Escape') { ev.stopPropagation(); ddClose(); b.focus(); }
+      else if (ev.key === 'Enter' && document.activeElement.classList.contains('dd-q') && items[0]) { ev.preventDefault(); items[0].click(); }
+    };
+  };
+}
+function enhanceAll(root) { (root || document).querySelectorAll('select:not([data-dd]):not(.native)').forEach(enhanceSelect); }
+new MutationObserver(() => enhanceAll()).observe(document.documentElement, { childList: true, subtree: true });
+document.addEventListener('click', (e) => { if (DD && !DD.menu.contains(e.target)) ddClose(); });
+window.addEventListener('resize', ddClose);
+document.addEventListener('scroll', (e) => { if (DD && !DD.menu.contains(e.target)) ddClose(); }, true);
+
+// ---------- Multiplicateurs tab ----------
+function viewMulti() {
+  const C = F.C;
+  const mu = new Map(); for (const t of C) { const r = mu.get(t.mult) || { n: 0, w: 0, eur: 0 }; r.n++; if (t.place === 1) r.w++; r.eur += t.eur; mu.set(t.mult, r); }
+  const grid = gridFor(C.length ? C[0].bi : 10); for (const g of grid) if (!mu.has(g[0])) mu.set(g[0], { n: 0, w: 0, eur: 0 });
+  const ml = [...mu.keys()].sort((a, b) => a - b); const gp = (m) => { const g = grid.find(x => x[0] === m); return g ? g[1] / 1e6 : null; };
+  const avgM = C.length ? C.reduce((x, t) => x + t.mult, 0) / C.length : NaN, expM = C.length ? C.reduce((x, t) => x + expMult(t.bi), 0) / C.length : NaN;
+  const W = C.filter(t => t.place === 1), avgW = W.length ? W.reduce((x, t) => x + t.mult, 0) / W.length : NaN;
+  const mLuck = C.reduce((x, t) => x + t.profit - t.nmProfit, 0), gLuck = C.reduce((x, t) => x + t.nmProfit - t.evProfit, 0);
+  let h = '<div class="grid6 g4">' + [
+    ['Multiplicateur moyen', '<div class="v">x' + fmtN(avgM, 2) + '</div><div class="theo">attendu x' + fmtN(expM, 2) + '</div>'],
+    ['Sur tes victoires', '<div class="v ' + cls(avgW - expM) + '">x' + fmtN(avgW, 2) + '</div><div class="theo">' + fmtN(W.length) + ' spins gagnés</div>'],
+    ['Chance multiplicateurs', '<div class="v ' + cls(mLuck) + '">' + fmtS(mLuck, 2) + ' €</div><div class="theo">victoires payées au-dessus ou en dessous de la moyenne</div>'],
+    ['Chance jeu', '<div class="v ' + cls(gLuck) + '">' + fmtS(gLuck, 2) + ' €</div><div class="theo">spins gagnés vs ce que prévoyait ton EV</div>']
+  ].map(([l, v]) => '<div class="tile"><div class="l">' + l + '</div>' + v + '</div>').join('') + '</div>';
+  h += '<div class="panel"><h3>D\'où vient ta chance <span class="help">en €, cumulé spin après spin</span><span class="r">' + qm('multi') + '</span></h3><div class="chart-wrap short" id="chart"></div><div class="legend" id="legend"></div></div>';
+  h += '<div class="grid2b"><div class="panel"><h3>Multiplicateur moyen <span class="help">moyenne cumulée</span><span class="r">' + qm('mavg') + '</span></h3><div class="chart-wrap mini" id="chart2"></div><div class="legend" id="legend2"></div></div>' +
+    '<div class="panel"><h3>Multiplicateurs <span class="help">réels vs grille officielle Betclic</span><span class="r">' + qm('mtab') + '</span></h3><div class="scroll"><table><thead><tr><th>Multiplicateur</th><th class="n">Spins</th><th class="n">Réel</th><th class="n">Attendu</th><th class="n">Écart</th><th class="n">Victoires</th><th class="n">Gains</th></tr></thead><tbody>' + ml.map(m => { const r = mu.get(m), e = gp(m), en = e != null ? e * C.length : null; return '<tr><td><span class="pill">x' + fmtN(m) + '</span>' + (grid.find(x => x[0] === m && x[2]) ? ' <span class="sub">75/15/10</span>' : '') + '</td><td class="n">' + fmtN(r.n) + '</td><td class="n">' + fmtP(C.length ? r.n / C.length * 100 : NaN, m >= 20 ? 2 : 1) + '</td><td class="n mut">' + (e != null ? fmtP(e * 100, m >= 20 ? 3 : 1) : '—') + '</td><td class="n ' + (en != null ? cls(r.n - en) : '') + '">' + (en != null ? fmtS(r.n - en, en < 10 ? 1 : 0) : '—') + '</td><td class="n">' + fmtN(r.w) + (r.n ? ' <span class="sub">(' + fmtP(r.w / r.n * 100, 0) + ')</span>' : '') + '</td><td class="n">' + fmtE(r.eur, 0) + '</td></tr>'; }).join('') + '</tbody></table></div></div></div>';
+  return h;
+}
+function afterMulti() {
+  const C = F.C; const tot = [], ml = [], gl = [], am = [], aw = [], ex = [];
+  let a = 0, b = 0, sm = 0, sw = 0, nw = 0, se = 0, vr = 0;
+  for (let i = 0; i < C.length; i++) {
+    const t = C[i]; b += t.profit - t.nmProfit; a += t.nmProfit - t.evProfit;
+    tot.push(a + b); ml.push(b); gl.push(a);
+    sm += t.mult; se += expMult(t.bi); if (t.place === 1) { sw += t.mult; nw++; }
+    am.push(sm / (i + 1)); ex.push(se / (i + 1)); aw.push(nw ? sw / nw : null);
+    // variance of what this finish pays, over the Betclic grid
+    const g = gridFor(t.bi), k = t.place ? t.place - 1 : -1;
+    if (k >= 0) { let m1 = 0, m2 = 0; for (const q of g) { const w = (q[2] ? [0.75, 0.15, 0.1] : [1, 0, 0])[k] * q[0] * t.bi; m1 += q[1] / 1e6 * w; m2 += q[1] / 1e6 * w * w; } vr += m2 - m1 * m1; }
+  }
+  const LB = luckBadge(b, vr, '€');
+  LB.html = LB.html.replace('<b>', '<b>Multiplicateurs : ').replace('vs EV', 'vs multiplicateur moyen');
+  const ser = S.ui.series.mu;
+  const series = [{ k: 't', name: 'Chance totale', color: '#e861ae', data: tot }, { k: 'm', name: 'Chance multiplicateurs', color: '#f2a93b', data: ml }, { k: 'g', name: 'Chance jeu', color: '#4a90ff', data: gl }].map(s => Object.assign(s, { on: !!ser[s.k] }));
+  const tip = (i) => 'Tournoi ' + fmtN(i + 1) + ' · ' + fmtDate(C[i].start, true) + ' · x' + C[i].mult + (C[i].place ? ' · ' + C[i].place + (C[i].place === 1 ? 'er' : 'e') : '');
+  lineChart($('#chart'), { series, xLabel: 'Tournois joués', yFmt: (v) => fmtN(v, Math.abs(v) < 10 && v % 1 ? 1 : 0) + ' €', tipHead: tip, onPick: (i) => openSpin(C[i].gid), badge: LB.html, badgeCls: LB.cls });
+  legend(series, 'mu');
+  const s2 = [{ name: 'Tous tes spins', color: '#f2a93b', data: am, on: 1 }, { name: 'Tes victoires', color: '#33c27a', data: aw, on: 1 }, { name: 'Attendu', color: '#8d9198', data: ex, on: 1, dash: 1 }];
+  lineChart($('#chart2'), { series: s2, xLabel: 'Tournois joués', noZero: 1, yFmt: (v) => v == null ? '—' : 'x' + fmtN(v, 2), tipHead: tip, onPick: (i) => openSpin(C[i].gid) });
+  $('#legend2').innerHTML = s2.map(s => '<span class="chip"><i class="dot" style="background:' + s.color + '"></i>' + esc(s.name) + '</span>').join('');
 }
 
 // ---------- render & events ----------

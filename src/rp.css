@@ -1,0 +1,55 @@
+/* replayer */
+.rp-bg { position: fixed; inset: 0; background: rgba(0,0,0,.72); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 18px; }
+.rp { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; width: min(1320px, 100%); max-height: 100%; display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; overflow: auto; }
+.rp-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rp-title { font: 700 21px/1.2 var(--display); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.rp-nav { display: flex; gap: 8px; align-items: center; }
+.rp-body { display: grid; grid-template-columns: 1fr 320px; gap: 14px; min-height: 0; }
+.rp-main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.felt { position: relative; aspect-ratio: 16 / 9.2; width: 100%; max-height: calc(100vh - 260px); margin: 0 auto; }
+.felt-in { position: absolute; inset: 9% 7%; border-radius: 999px; background: radial-gradient(ellipse at 50% 45%, #22654c 0%, #164735 55%, #0f3326 100%); border: 12px solid #2b1f15; box-shadow: inset 0 0 40px rgba(0,0,0,.55), 0 10px 30px rgba(0,0,0,.5); }
+.rp-pot { position: absolute; left: 50%; top: 35%; transform: translate(-50%,-50%); font: 700 18px var(--display); color: #f3e7c8; background: rgba(0,0,0,.35); border-radius: 999px; padding: 2px 14px; white-space: nowrap; }
+.rp-board { position: absolute; left: 50%; top: 49%; transform: translate(-50%,-50%); display: flex; gap: 6px; }
+.rp-note { position: absolute; left: 50%; top: 61%; transform: translateX(-50%); font-size: 13px; color: #cfccc5; background: #0c0d0f; border: 1px solid var(--line); border-radius: 999px; padding: 3px 14px; white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis; }
+.card.big { width: 40px; height: 56px; font-size: 20px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,.4); }
+.card.big small { font-size: 14px; }
+.card.big.back { background: repeating-linear-gradient(45deg, #3a2f6b 0 6px, #2c2454 6px 12px); border: 2px solid #ddd; }
+.card.slot { background: rgba(255,255,255,.05); box-shadow: none; border: 1px dashed rgba(255,255,255,.15); }
+.rp-seat { position: absolute; transform: translate(-50%,-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; width: 190px; transition: opacity .2s; }
+.rp-seat.folded { opacity: .38; }
+.rp-cards { display: flex; gap: 3px; margin-bottom: -14px; z-index: 1; }
+.rp-box { background: #101113; border: 1px solid #353a41; border-radius: 10px; padding: 6px 10px 5px; width: 100%; text-align: center; z-index: 2; }
+.rp-seat.hero .rp-box { border-color: #7a5a22; }
+.rp-seat.active .rp-box { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(242,169,59,.35), 0 0 18px rgba(242,169,59,.35); }
+.rp-seat.winner .rp-box { border-color: var(--good); box-shadow: 0 0 16px rgba(51,194,122,.35); }
+.rp-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-stack { font: 700 17px var(--display); font-variant-numeric: tabular-nums; display: flex; justify-content: center; gap: 8px; align-items: center; }
+.rp-eq { font: 600 12px var(--body); color: #111; background: var(--accent); border-radius: 4px; padding: 0 5px; }
+.rp-act { font-size: 12px; font-weight: 700; border-radius: 6px; padding: 2px 8px; background: #2a2e34; color: #e8e5de; white-space: nowrap; }
+.rp-act.a-r, .rp-act.a-b { background: #6b2f22; color: #ffd8cf; } .rp-act.a-c { background: #1f4a7a; color: #d5e6ff; } .rp-act.a-f { background: #2a2e34; color: #9aa0a8; } .rp-act.a-x { background: #2c3a2f; color: #c8e8cf; }
+.rp-act.ai { background: var(--accent); color: #1a1205; } .rp-act.win { background: var(--good); color: #062014; }
+.rp-bet { position: absolute; transform: translate(-50%,-50%); font: 700 14px var(--display); color: #f3e7c8; display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,.4); border-radius: 999px; padding: 1px 9px 1px 3px; white-space: nowrap; }
+.rp-bet i { width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle, #f2a93b 35%, #fff 36% 45%, #c9811f 46%); display: inline-block; }
+.rp-dealer { position: absolute; transform: translate(-50%,-50%); width: 22px; height: 22px; border-radius: 50%; background: #f1ede4; color: #111; font: 700 12px/22px var(--body); text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,.5); }
+.rp-ctrl { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.rp-ctrl .btn { min-width: 40px; justify-content: center; }
+.rp-play { min-width: 56px !important; }
+#rpSlider { flex: 1; min-width: 140px; accent-color: var(--accent); }
+.rp-chk { display: inline-flex; gap: 5px; align-items: center; font-size: 12px; color: var(--muted); }
+.rp-side { display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 0; }
+.rp-res { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.rp-res > div { background: var(--panel2); border-radius: 8px; padding: 6px; text-align: center; display: flex; flex-direction: column; }
+.rp-res b { font: 700 20px var(--display); font-variant-numeric: tabular-nums; }
+.rp-log { flex: 1; min-height: 160px; max-height: 360px; overflow: auto; background: #0f1012; border: 1px solid var(--line); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 1px; }
+.rp-st { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding: 6px 4px 3px; display: flex; gap: 6px; align-items: center; }
+.rp-line { text-align: left; border: 0; background: transparent; padding: 3px 6px; border-radius: 5px; font-size: 13px; color: var(--text); }
+.rp-line.me { color: #9cc3ff; }
+.rp-line.todo { opacity: .4; }
+.rp-line.on { background: #2b2410; outline: 1px solid var(--accent); }
+.rp-line:hover { background: #1c1f23; }
+.chart-wrap canvas { cursor: pointer; }
+.legend-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin-top: 8px; }
+.legend-row .legend { margin-top: 0; }
+.rb-ctl { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.rb-ctl input { width: 70px; }
+@media (max-width: 1000px) { .rp-body { grid-template-columns: 1fr; } .rp-seat { width: 150px; } .card.big { width: 30px; height: 42px; font-size: 15px; } .felt { aspect-ratio: 4 / 3.4; } }

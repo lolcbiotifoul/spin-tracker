@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spin Tracker Betclic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Layout: fixed left rail + scrolling workspace of dense dark panels, like a grinder's desk at night */
+  --bg: #0d0e10;
+  --panel: #16181b;
+  --panel2: #1e2125;
+  --line: #2b2f35;
+  --text: #ece8df;
+  --muted: #8d9198;
+  --accent: #f2a93b;
+  --good: #33c27a;
+  --bad: #ec5257;
+  --fish: #4a90ff;
+  --reg: #ec5257;
+  --pink: #e861ae;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "Barlow", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--text); font: 14px/1.4 var(--body); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num, td.n, .mono { font-variant-numeric: tabular-nums; }
+.app { display: grid; grid-template-columns: 210px 1fr; height: 100%; }
+/* rail */
+.rail { background: #0a0b0c; border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 16px 10px; gap: 4px; min-height: 0; }
+.brand { font: 700 24px/1 var(--display); letter-spacing: .01em; padding: 4px 8px 14px; display: flex; align-items: center; gap: 8px; }
+.brand b { color: var(--accent); }
+.brand svg { flex: none; }
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 7px; color: #c9c6bf; text-decoration: none; font-weight: 500; }
+.nav a:hover { background: var(--panel); }
+.nav a.on { background: var(--panel2); color: var(--text); box-shadow: inset 2px 0 0 var(--accent); }
+.nav svg { width: 17px; height: 17px; stroke: currentColor; fill: none; stroke-width: 1.7; flex: none; }
+.rail .spacer { flex: 1; }
+.store-state { font-size: 12px; color: var(--muted); padding: 8px 10px; line-height: 1.35; }
+.store-state i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--good); margin-right: 6px; }
+.store-state i.warn { background: var(--accent); }
+/* main */
+.main { overflow: auto; min-width: 0; padding: 18px 20px 40px; display: flex; flex-direction: column; gap: 14px; }
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; text-align: center; }
+.kpi .l { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kpi .v { font: 700 26px/1.15 var(--display); font-variant-numeric: tabular-nums; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.bar .grow { flex: 1; }
+.seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; padding: 5px 11px; border-radius: 6px; color: #cfccc5; font-weight: 500; font-size: 13px; }
+.seg button.on { background: var(--text); color: #111; }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 6px 12px; font-weight: 500; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: #444a52; }
+.btn.primary { background: var(--accent); color: #1a1205; border-color: var(--accent); font-weight: 600; }
+.btn.danger { border-color: #5a2a2c; color: #ff9a9d; }
+.btn.small { padding: 3px 8px; font-size: 12px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 3px 10px; font-size: 12px; }
+.chip.on { border-color: var(--accent); color: var(--accent); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+.panel h3 { margin: 0 0 8px; font: 600 15px/1.2 var(--body); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.panel h3 .help { color: var(--muted); font-weight: 400; font-size: 12px; }
+.panel h3 .r { margin-left: auto; display: flex; gap: 6px; }
+.grid2 { display: grid; grid-template-columns: 1.55fr 1fr; gap: 12px; }
+.grid2b { display: grid; grid-template-columns: 1fr 1.25fr; gap: 12px; }
+.grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
+.tile .l { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.tile .l .qm { width: 18px; height: 18px; font-size: 11px; }
+.tile .v { font: 700 22px/1.2 var(--display); font-variant-numeric: tabular-nums; }
+.pos { color: var(--good); } .neg { color: var(--bad); } .mut { color: var(--muted); }
+.chart-wrap { position: relative; height: max(420px, calc(100vh - 290px)); }
+.chart-wrap canvas { width: 100%; height: 100%; display: block; }
+.tip { position: absolute; pointer-events: none; background: #0b0c0e; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font-size: 12px; white-space: nowrap; display: none; z-index: 5; }
+.legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.legend button { border: 1px solid var(--line); background: var(--panel2); border-radius: 7px; padding: 4px 10px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+.legend button.off { opacity: .4; }
+.legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.luck { position: absolute; left: 10px; top: 8px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; font-size: 12px; z-index: 2; }
+.luck b { display: block; font-size: 13px; }
+.luck.good { border-color: rgba(51,194,122,.55); background: rgba(51,194,122,.12); } .luck.good b { color: var(--good); }
+.luck.bad { border-color: rgba(236,82,87,.55); background: rgba(236,82,87,.12); } .luck.bad b { color: var(--bad); }
+table { border-collapse: collapse; width: 100%; }
+th { text-align: left; font-weight: 600; font-size: 12px; color: var(--muted); padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th.sort { cursor: pointer; } th.sort:hover { color: var(--text); }
+td { padding: 7px 8px; border-bottom: 1px solid #202328; vertical-align: middle; }
+td.n, th.n { text-align: right; }
+tr.click { cursor: pointer; } tr.click:hover td { background: #1b1e22; }
+tr.tot td { font-weight: 700; border-top: 1px solid var(--line); }
+.scroll { overflow-x: auto; }
+.sub { font-size: 11px; color: var(--muted); }
+.ci { font-size: 10px; color: var(--muted); margin-left: 3px; }
+.tag { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; border-radius: 5px; padding: 1px 7px; }
+.tag.reg { color: #ff8f93; background: rgba(236, 82, 87, .13); }
+.tag.fish { color: #8dbaff; background: rgba(74, 144, 255, .14); }
+.tag.unknown { color: var(--muted); background: #23262b; }
+.tag .man { font-weight: 400; opacity: .7; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.dot.reg { background: var(--reg); } .dot.fish { background: var(--fish); } .dot.unknown { background: #666; }
+.cards { display: inline-flex; gap: 3px; }
+.card { width: 22px; height: 30px; border-radius: 4px; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; font: 700 13px/1 var(--display); color: #fff; }
+.card small { font-size: 10px; line-height: 1; }
+.c-s { background: #5b6069; } .c-h { background: #d2393f; } .c-d { background: #2f6fd6; } .c-c { background: #2a9a52; }
+.card.back { background: #2a2d33; }
+.acts { display: flex; gap: 14px; font-family: var(--mono); font-size: 12px; }
+.acts span.st { color: var(--muted); font: 10px var(--body); display: block; }
+.acts b { font-weight: 600; color: #7fb2ff; } .acts em { font-style: normal; color: #6e737b; }
+.acts sub { font-size: 8px; }
+.star { background: none; border: 0; color: #555; font-size: 16px; padding: 0 4px; }
+.star.on { color: var(--accent); }
+.pill { font-size: 11px; font-weight: 600; background: var(--panel2); border: 1px solid var(--line); border-radius: 5px; padding: 2px 6px; }
+.pager { display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 10px; color: var(--muted); font-size: 13px; }
+input[type=text], input[type=number], input[type=date], select { background: var(--panel2); border: 1px solid var(--line); border-radius: 7px; padding: 5px 9px; }
+input[type=number] { width: 80px; }
+label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.pop { position: absolute; right: 0; top: calc(100% + 6px); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px; z-index: 30; width: 340px; box-shadow: 0 12px 40px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 12px; }
+.pop h4 { margin: 0 0 6px; font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
+.pop .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.rel { position: relative; }
+.drop { border: 2px dashed #3a3f46; border-radius: 12px; padding: 34px; text-align: center; background: var(--panel); }
+.drop.over { border-color: var(--accent); background: #1d1a14; }
+.drop h2 { font: 700 26px var(--display); margin: 0 0 6px; }
+.progress { height: 8px; background: var(--panel2); border-radius: 4px; overflow: hidden; }
+.progress div { height: 100%; background: var(--accent); width: 0; transition: width .15s; }
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px; z-index: 50; overflow: auto; }
+.modal { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; width: min(820px, 100%); padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.modal pre { background: #0b0c0e; border: 1px solid var(--line); border-radius: 8px; padding: 10px; font: 12px/1.45 var(--mono); max-height: 320px; overflow: auto; white-space: pre-wrap; }
+.seats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.seat { background: var(--panel2); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+.seat.hero { box-shadow: inset 0 0 0 1px var(--accent); }
+.street { display: grid; grid-template-columns: 70px 1fr; gap: 8px; padding: 6px 0; border-top: 1px solid #23262b; font-size: 13px; }
+.street .nm { color: var(--muted); font-weight: 600; }
+.lf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(430px, 1fr)); gap: 12px; }
+.lf h3 { font-size: 14px; }
+.lf .head { display: flex; gap: 6px; margin-bottom: 8px; }
+.lf .head div { flex: 1; background: var(--panel2); border-radius: 7px; text-align: center; padding: 6px 2px; }
+.lf .head b { display: block; font: 700 21px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.lf .head span { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.lf td, .lf th { padding: 3px 6px; font-size: 12px; }
+.c-ok { color: var(--good); } .c-agg { color: var(--bad); } .c-pas { color: var(--fish); } .c-na { color: #686c73; }
+.donuts { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
+.donuts .grp { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.donuts .grp > div { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 330px; }
+.donut { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11px; color: var(--muted); }
+.empty { padding: 30px; text-align: center; color: var(--muted); }
+.note { font-size: 12px; color: var(--muted); }
+.settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+.settings .panel { display: flex; flex-direction: column; gap: 12px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.banner { background: #1d1a14; border: 1px solid #4a3a1d; border-radius: 10px; padding: 10px 14px; font-size: 13px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.toast { position: fixed; right: 20px; bottom: 20px; background: var(--panel2); border: 1px solid var(--line); border-radius: 9px; padding: 10px 14px; z-index: 60; }
+@media (max-width: 1100px) { .grid2, .grid2b { grid-template-columns: 1fr; } .grid5 { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .rail { flex-direction: row; overflow-x: auto; padding: 8px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .nav { flex-direction: row; } .brand { padding: 4px 8px; font-size: 18px; } .rail .spacer, .store-state { display: none; }
+  .kpis { grid-template-columns: repeat(2, 1fr); } .grid5 { grid-template-columns: repeat(2, 1fr); }
+  .main { padding: 12px 16px 30px; } .chart-wrap { height: 340px; } .lf-grid { grid-template-columns: 1fr; }
+}
+/*RPCSS*/
+.fm { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; width: min(980px, 100%); display: flex; flex-direction: column; max-height: calc(100vh - 60px); }
+.fm-tabs { display: flex; gap: 4px; padding: 14px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; align-items: center; }
+.fm-tabs button { border: 1px solid transparent; background: none; border-radius: 8px; padding: 8px 14px; font-weight: 500; color: #d6d3cc; }
+.fm-tabs button.on { background: var(--panel2); border-color: #4a4f56; color: var(--text); font-weight: 600; }
+.fm-tabs .fm-x { margin-left: auto; color: var(--muted); }
+.fm-body { padding: 14px 20px 18px; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+.fm-body h4 { margin: 10px 0 2px; font-size: 13px; font-weight: 600; color: #d6d3cc; }
+.fm-chip { align-self: flex-start; font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; background: var(--panel2); }
+.fm-row6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.fm-roll { display: flex; gap: 8px; flex-wrap: wrap; }
+.fm-roll .fm-card { flex: 1 1 auto; }
+.fm-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.fm-card { background: #1a1c20; border: 1px solid #2b2f35; border-radius: 9px; padding: 12px 14px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; font-size: 14px; text-align: center; flex-wrap: wrap; min-height: 48px; }
+.fm-grid2 .fm-card, .fm-tog { justify-content: flex-start; text-align: left; min-height: 54px; }
+.fm-tog { align-self: flex-start; }
+.fm-card .sub { width: 100%; }
+.fm-card:hover { border-color: #444a52; }
+.fm-card.on { background: #2a2b2e; border-color: #8a8f96; box-shadow: inset 0 0 0 1px #8a8f96; font-weight: 600; }
+.fm-card input[type=number] { width: 58px; text-align: center; }
+.fm-card input[type=date] { margin-left: 6px; }
+.fm-ic { color: var(--muted); display: inline-flex; }
+.fm-foot { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); }
+.btn.on-acc { border-color: var(--accent); color: var(--accent); }
+.grid6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+.tile .theo { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.tile .theo b { font-variant-numeric: tabular-nums; }
+@media (max-width: 1100px) { .grid6 { grid-template-columns: repeat(3, 1fr); } .fm-row6 { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 760px) { .grid6 { grid-template-columns: repeat(2, 1fr); } .fm-row6, .fm-grid2 { grid-template-columns: 1fr 1fr; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+/* "?" buttons and help windows */
+.qm { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel2); color: var(--muted); font: 700 12px/1 var(--body); display: inline-flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; flex: none; }
+.qm:hover { color: var(--accent); border-color: var(--accent); }
+.has-qm { position: relative; }
+.has-qm > .qm { position: absolute; top: 10px; right: 10px; z-index: 3; }
+.grid6.has-qm > .qm { top: -9px; right: -9px; }
+.help-modal { width: min(640px, 100%); }
+.help-list { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 10px 16px; }
+.help-list dt { align-self: start; padding-top: 1px; font-weight: 600; display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+.help-list dt i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.help-list dd { margin: 0; color: #cfccc5; font-size: 13px; line-height: 1.45; }
+.chart-wrap.short { height: max(340px, calc(100vh - 470px)); }
+.chart-wrap.mini { height: 280px; }
+.stack { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.stack > .panel { flex: 1; }
+.grid6.g4 { grid-template-columns: repeat(4, 1fr); }
+.grid6.g4 .theo { font-size: 11.5px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+/* styled dropdowns */
+.dd { display: inline-flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--panel2); border: 1px solid var(--line); border-radius: 7px; padding: 5px 9px; min-height: 31px; font-size: 13px; color: var(--text); cursor: pointer; text-align: left; }
+.dd:hover, .dd[aria-expanded="true"] { border-color: #4a4f57; }
+.dd svg { color: var(--muted); flex: none; }
+.dd-tag { min-height: 0; padding: 2px 7px 2px 8px; font-size: 12px; font-weight: 600; border-radius: 5px; border-color: transparent; gap: 6px; }
+.dd-tag.reg { color: #ff8f93; background: rgba(236, 82, 87, .13); }
+.dd-tag.fish { color: #8dbaff; background: rgba(74, 144, 255, .14); }
+.dd-tag.unknown { color: var(--muted); background: #23262b; }
+.dd-tag svg { color: currentColor; opacity: .7; }
+.dd-tag .man { font-weight: 400; font-size: 10.5px; opacity: .75; }
+.dd-menu { position: fixed; z-index: 80; background: #1b1d21; border: 1px solid #3a3f46; border-radius: 9px; padding: 4px; box-shadow: 0 12px 30px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 4px; max-width: 360px; }
+.dd-list { max-height: 320px; overflow: auto; display: flex; flex-direction: column; }
+.dd-list button { border: 0; background: transparent; text-align: left; padding: 6px 10px; border-radius: 6px; font-size: 13px; color: #d9d6cf; white-space: nowrap; }
+.dd-list button:hover, .dd-list button:focus { background: #2a2d33; outline: none; color: var(--text); }
+.dd-list button.on { color: var(--accent); font-weight: 600; }
+.dd-q { margin: 2px; }
+label.f .dd, label.f input, label.f select { color: var(--text); }
+/* PT4-style HUD */
+.hud-bar label.f { flex-direction: row; align-items: center; gap: 8px; }
+.hud-bar input[type=number] { width: 64px; }
+.hud-wrap { display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
+.hud { background: #000; border: 1px solid #222; border-radius: 10px; padding: 16px; display: flex; gap: 18px; align-items: flex-start; flex: none; overflow-x: auto; max-width: 100%; }
+.hcol { display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
+.hrow { display: flex; gap: 18px; align-items: flex-start; }
+.hud-box { border-collapse: collapse; font: 600 21px/1 var(--display); font-variant-numeric: tabular-nums; width: auto; }
+.hud-box th, .hud-box td { padding: 4px 9px; text-align: center; border: 0; white-space: nowrap; }
+.hud-box th { font: 600 17px/1 var(--display); color: #fff; background: #555; cursor: help; }
+.hud-box td.hl { font-size: 19px; }
+.hud-box .hw { background: #fff; color: #1d38ff; } .hud-box .hc { background: #3df0ff; color: #000; } .hud-box .ho { background: #ff8a1c; color: #fff; }
+.hud-box .hp { background: #7a2ea6; color: #fff; } .hud-box .hb { background: #1f37ff; color: #fff; } .hud-box .hr { background: #ff2a2a; color: #fff; }
+.hud-box .hy { background: #ffe600; color: #000; } .hud-box .hg { background: #5c5c5c; color: #fff; }
+.hud-box .hl { background: #fff; color: #000; text-align: center; font-weight: 600; }
+.hud-box td.blank { background: transparent; }
+.hud-box td.hv { background: #111; min-width: 46px; cursor: pointer; }
+.hud-box tr:nth-child(even) td.hv { background: #1a1a1a; }
+.hud-box td.hv:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
+.hv.ok { color: #3ee68a; } .hv.hi { color: #ff6b6b; } .hv.hi2 { color: #ff2e2e; font-weight: 700; } .hv.lo { color: #5cc8ff; } .hv.lo2 { color: #36a3ff; font-weight: 700; }
+.hv.nr { color: #f2f2f2; } .hv.few { color: #6c6c6c; } .hv.na { color: #555; cursor: default; }
+.hv.mine { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.hud-main { background: #5a5a5a; border-radius: 4px; }
+.hud-main th { background: #6a6a6a; color: #e6e6e6; text-align: left; font-size: 18px; }
+.hud-main td.nm { color: #fff; text-align: left; font-size: 19px; background: #5a5a5a; }
+.hud-main td.cnt { background: #000; color: #fff; }
+.hud-main td.cev { background: #222; text-align: left; } .hud-main td.cev.pos { color: #3ee68a; } .hud-main td.cev.neg { color: #ff6b6b; }
+.hud-post .hl { text-align: center; }
+.hud-post tr.sep td { border-top: 2px solid #c9b25a; }
+.hud-side { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 300px; }
+.hud-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.hud-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.hud-legend i.ok { background: #3ee68a; } .hud-legend i.hi { background: #ff6b6b; } .hud-legend i.lo { background: #5cc8ff; } .hud-legend i.nr { background: #f2f2f2; } .hud-legend i.few { background: #6c6c6c; }
+.hud-gaps table { width: 100%; }
+.hud-gaps tr { cursor: pointer; }
+.hud-gaps tr:hover td { background: var(--panel2); }
+.hud-gaps td.n b { font-size: 15px; }
+.hud-modal { width: min(700px, 100%); }
+.hud-edit { align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.hud-edit input { width: 110px; }
+@media (max-width: 760px) { .hud { flex-direction: column; } .hud-box { font-size: 17px; } .grid3, .grid6.g4 { grid-template-columns: 1fr 1fr; } .help-list { grid-template-columns: 1fr; } .help-list dd { margin-bottom: 6px; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="rail" aria-label="Navigation">
+    <div class="brand"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z" fill="#f2a93b"/></svg><span>Spin <b>Tracker</b></span></div>
+    <div class="nav" id="nav">
+      <a href="#tableau" data-v="tableau"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Tableau de bord</a>
+      <a href="#joueurs" data-v="joueurs"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 4a4 4 0 0 1 0 8M22 21c0-3-2-5-4-6"/></svg>Joueurs</a>
+      <a href="#review" data-v="review"><svg viewBox="0 0 24 24"><path d="M11 5 4 12l7 7M20 5l-7 7 7 7"/></svg>Review</a>
+      <a href="#leaks" data-v="leaks"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>Leak Finder</a>
+    </div>
+    <div class="spacer"></div>
+    <div class="nav">
+      <a href="#imports" data-v="imports"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></svg>Imports</a>
+      <a href="#reglages" data-v="reglages"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.3l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2.2-1.3L14 3h-4l-.4 2.4a7 7 0 0 0-2.2 1.3l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .9.1 1.3l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2.2 1.3L10 21h4l.4-2.4a7 7 0 0 0 2.2-1.3l2.4 1 2-3.4-2-1.6c.1-.4.1-.9.1-1.3z"/></svg>Réglages</a>
+    </div>
+    <div class="store-state" id="storeState"></div>
+  </nav>
+  <main class="main" id="main"></main>
+</div>
+<div id="modalRoot"></div>
+<script>
+/*ENGINE*/
+</script>
+<script>
+'use strict';
+const E = SpinEngine;
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtN = (v, d = 0) => (v == null || !isFinite(v)) ? '—' : v.toLocaleString('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtS = (v, d = 0) => (v == null || !isFinite(v)) ? '—' : (v > 0 ? '+' : '') + fmtN(v, d);
+const fmtE = (v, d = 0) => (v == null || !isFinite(v)) ? '—' : fmtN(v, d) + ' €';
+const fmtP = (v, d = 0) => (v == null || !isFinite(v)) ? '—' : fmtN(v, d) + ' %';
+const cls = (v) => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+const mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN;
+function ci95(a) { if (a.length < 2) return NaN; const m = mean(a); let v = 0; for (const x of a) v += (x - m) * (x - m); return 1.96 * Math.sqrt(v / (a.length - 1) / a.length); }
+const DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+const SLOTS = ['00-03h', '03-06h', '06-09h', '09-12h', '12-15h', '15-18h', '18-21h', '21-00h'];
+const BUCKETS = [[0, 4], [4, 6], [6, 8], [8, 10], [10, 12], [12, 14], [14, 16], [16, 18], [18, 20], [20, 1e9]];
+const bucketOf = (bb) => { for (let i = 0; i < BUCKETS.length; i++) if (bb < BUCKETS[i][1]) return i; return BUCKETS.length - 1; };
+const bucketName = (i) => i === BUCKETS.length - 1 ? '20+' : BUCKETS[i][0] + '-' + BUCKETS[i][1];
+const POSKEYS = ['BTN', 'SB vs BTN', 'SB vs BB', 'BB vs BTN', 'BB vs SB', 'BB vs 2', 'HU SB', 'HU BB'];
+const ACT_LABEL = { fold: 'Fold', limp: 'Limp', check: 'Check', call: 'Call', raise: 'Raise', shove: 'All-in' };
+const AGG = { raise: 1, shove: 1 };
+
+// ---------- state ----------
+const S = {
+  hands: [], byId: new Map(), players: new Map(), tours: [], hero: null,
+  prefs: null, filters: defaultFilters(),
+  ui: { dash: 'chips', posMode: 'hand', mtMode: 'eh', review: 'hands', rv: { pos: 'all', prof: 'all', kind: 'all', page: 0, sort: 'date', dir: -1, gid: null }, pl: { q: '', tag: 'all', sort: 'hands', dir: -1, page: 0 }, lf: { prof: 'hero', pos: 'all', ref: 'reg', sub: 'hud3', who: '', hudSrc: 'reg' }, series: { chips: { c: 1, sd: 0, nsd: 0, ev: 1 }, br: { p: 1, ev: 1, nm: 0 }, mu: { t: 1, m: 1, g: 1 } } },
+  storage: 'memory', seedLoaded: false, imports: [], skipIds: new Set(), skipped: { other: 0, bad: [] }, rvList: []
+};
+// Official Betclic Spin & Rush multiplier grids (chances per 1 000 000), payouts 1st/2nd/3rd
+const GRIDS = {
+  std: [[2, 478185, 0], [3, 346210, 0], [4, 130000, 0], [5, 40000, 0], [10, 5000, 0], [20, 500, 1], [100, 100, 1], [1000, 5, 1]],
+  hi: [[2, 479337, 0], [3, 345442, 0], [4, 130000, 0], [5, 40000, 0], [10, 5000, 0], [50, 200, 1], [500, 20, 1], [5000, 1, 1]]
+};
+const gridFor = (bi) => bi >= 200 ? GRIDS.hi : GRIDS.std;
+const expMult = (bi) => gridFor(bi).reduce((x, g) => x + g[0] * g[1], 0) / 1e6;
+const GRID_RAKE = +((1 - expMult(10) / 3) * 100).toFixed(1);
+function defaultPrefs() { return { v: 2, cls: { minHands: 50, maxLimpPct: 0, maxVpip: 0, unknownAs: 'fish' }, overrides: {}, favs: {}, rakeEff: GRID_RAKE, rakeback: 0, hudRefs: {}, hudTol: 8, hudMin: 15 }; }
+function migrate(p) { if (!p.v) { if (p.rakeEff === 7.8) p.rakeEff = GRID_RAKE; p.v = 2; } if (!p.hudRefs) p.hudRefs = {}; if (!p.hudTol) p.hudTol = 8; if (!p.hudMin) p.hudMin = 15; return p; }
+
+// ---------- persistence: IndexedDB for hands, localStorage + Claude db for prefs ----------
+const IDB = {
+  db: null,
+  open() { return new Promise(res => { try { const r = indexedDB.open('spintracker', 1); r.onupgradeneeded = () => r.result.createObjectStore('hands', { keyPath: 'i' }); r.onsuccess = () => { this.db = r.result; res(true); }; r.onerror = () => res(false); r.onblocked = () => res(false); } catch (e) { res(false); } }); },
+  all() { return new Promise(res => { try { const q = this.db.transaction('hands').objectStore('hands').getAll(); q.onsuccess = () => res(q.result || []); q.onerror = () => res([]); } catch (e) { res([]); } }); },
+  put(list) { return new Promise(res => { try { const tx = this.db.transaction('hands', 'readwrite'); const st = tx.objectStore('hands'); for (const o of list) st.put(o); tx.oncomplete = () => res(true); tx.onerror = () => res(false); } catch (e) { res(false); } }); },
+  clear() { return new Promise(res => { try { const tx = this.db.transaction('hands', 'readwrite'); tx.objectStore('hands').clear(); tx.oncomplete = () => res(true); tx.onerror = () => res(false); } catch (e) { res(false); } }); }
+};
+const LS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } } };
+let cloudDoc = null, saveTimer = null;
+function loadPrefs() {
+  let p = defaultPrefs();
+  try { const raw = LS.get('st_prefs'); if (raw) p = Object.assign(p, JSON.parse(raw)); } catch (e) { }
+  p.cls = Object.assign(defaultPrefs().cls, p.cls || {}); migrate(p);
+  S.prefs = p;
+}
+function savePrefs() {
+  LS.set('st_prefs', JSON.stringify(S.prefs));
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { if (cloudDoc) cloudDoc.set({ prefs: JSON.stringify(S.prefs), at: Date.now() }).catch(() => { }); }, 800);
+}
+async function connectCloud() {
+  try {
+    if (!window.claude || !window.claude.use) return;
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if (!db || !user) return;
+    const id = await user.id(); if (!id) return;
+    cloudDoc = db.collection('data/users/' + id).doc('prefs');
+    const snap = await cloudDoc.get();
+    const data = snap && (typeof snap.data === 'function' ? snap.data() : snap);
+    if (data && data.prefs) {
+      const remote = JSON.parse(data.prefs);
+      S.prefs = migrate(Object.assign(defaultPrefs(), remote, { v: remote.v })); S.prefs.cls = Object.assign(defaultPrefs().cls, remote.cls || {});
+      LS.set('st_prefs', JSON.stringify(S.prefs)); recompute(); render();
+    } else savePrefs();
+    S.cloud = true; renderStore();
+  } catch (e) { cloudDoc = null; }
+}
+
+// ---------- preparing hands ----------
+function prep(h) {
+  h.pf = E.preflopInfo(h);
+  const hp = h.players.find(p => p.hero);
+  h.opps = h.players.filter(p => !p.hero).map(p => p.name);
+  if (hp) {
+    if (h.n === 3) {
+      const btn = h.players.find(p => p.pos === 'BTN'), sb = h.players.find(p => p.pos === 'SB'), bb = h.players.find(p => p.pos === 'BB');
+      const first = btn && h.acts.find(a => a.st === 0 && a.p === btn.name && a.a !== 'sb' && a.a !== 'bb' && a.a !== 'ante');
+      const btnFold = !first || first.a === 'f';
+      if (hp.pos === 'BTN') { h.posKey = 'BTN'; h.mainOpp = null; }
+      else if (hp.pos === 'SB') { h.posKey = btnFold ? 'SB vs BB' : 'SB vs BTN'; h.mainOpp = btnFold ? (bb && bb.name) : (btn && btn.name); }
+      else {
+        const sbFirst = sb && h.acts.find(a => a.st === 0 && a.p === sb.name && a.a !== 'sb' && a.a !== 'bb' && a.a !== 'ante');
+        const sbFold = !sbFirst || sbFirst.a === 'f';
+        if (btnFold) { h.posKey = 'BB vs SB'; h.mainOpp = sb && sb.name; }
+        else if (sbFold) { h.posKey = 'BB vs BTN'; h.mainOpp = btn.name; }
+        else { h.posKey = 'BB vs 2'; h.mainOpp = null; }
+      }
+    } else { h.posKey = 'HU ' + hp.pos; h.mainOpp = h.opps[0]; }
+  }
+  if (!h.E) h.E = { adj: false, ev: Object.assign({}, h.net), vr: {}, st: -1 };
+  const tot = h.players.reduce((x, p) => x + p.stack, 0); h.cf = tot > 0 ? 1500 / tot : 1;
+  return h;
+}
+const NET = (h, n) => (h.net[n] || 0) * h.cf, EVc = (h, n) => (h.E.ev[n] || 0) * h.cf, VRc = (h, n) => (h.E.vr[n] || 0) * h.cf * h.cf;
+function isSpin(h) { const m = (h.mode || '') + ' ' + (h.gname || ''); return !m.trim() || /spin/i.test(m); }
+function integrity(h) {
+  let sc = 0, sw = 0;
+  for (const p of h.players) { const c = h.contrib[p.name] || 0; if (c < 0 || c > p.stack + 0.5) return 'mise supérieure au tapis (' + p.name + ')'; sc += c; }
+  for (const k in h.won) { if (!h.players.some(p => p.name === k)) return 'gagnant absent de la table (' + k + ')'; sw += h.won[k]; }
+  if (Math.abs(sc - sw) > 0.5) return 'pot incohérent (' + fmtN(sc) + ' misés, ' + fmtN(sw) + ' gagnés)';
+  for (const a of h.acts) if (!h.players.some(p => p.name === a.p)) return 'action d\'un joueur absent (' + a.p + ')';
+  return null;
+}
+function addHands(list) {
+  let added = 0;
+  for (const h of list) {
+    if (S.byId.has(h.id) || S.skipIds.has(h.id)) continue;
+    if (!isSpin(h)) { S.skipIds.add(h.id); S.skipped.other++; continue; }
+    const bad = integrity(h); if (bad) { S.skipIds.add(h.id); prep(h); S.skipped.bad.push({ h, why: bad }); continue; }
+    prep(h); S.byId.set(h.id, h); S.hands.push(h); added++;
+  }
+  S.hands.sort((a, b) => a.ts - b.ts || (a.id < b.id ? -1 : 1));
+  return added;
+}
+
+// ---------- players & classification ----------
+function computePlayers() {
+  const P = new Map();
+  const get = (n) => { let s = P.get(n); if (!s) { s = { name: n, hands: 0, vpip: 0, pfr: 0, btnOpp: 0, btnLimp: 0, tbOpp: 0, tb: 0, last: 0, evG: new Map(), huG: new Map(), hero: false }; P.set(n, s); } return s; };
+  for (const h of S.hands) {
+    for (const p of h.players) {
+      const s = get(p.name); s.hands++; if (h.ts > s.last) s.last = h.ts; if (p.hero) s.hero = true;
+      const I = h.pf[p.name];
+      if (I) { if (I.vpip) s.vpip++; if (I.pfr) s.pfr++; if (I.btnOpp) s.btnOpp++; if (I.btnLimp) s.btnLimp++; if (I.threeBetOpp) s.tbOpp++; if (I.threeBet) s.tb++; }
+      const ev = EVc(h, p.name);
+      s.evG.set(h.gid, (s.evG.get(h.gid) || 0) + ev);
+      if (h.n === 2) s.huG.set(h.gid, (s.huG.get(h.gid) || 0) + ev);
+    }
+  }
+  for (const s of P.values()) {
+    s.auto = autoClass(s);
+    const ev = [...s.evG.values()], hu = [...s.huG.values()];
+    s.cev = mean(ev); s.cevCi = ci95(ev); s.cevHu = mean(hu); s.cevHuCi = ci95(hu); s.tours = ev.length; s.hus = hu.length;
+  }
+  S.players = P;
+  const heroes = [...P.values()].filter(s => s.hero).sort((a, b) => b.hands - a.hands);
+  S.hero = heroes.length ? heroes[0].name : null;
+}
+function autoClass(s) {
+  const c = S.prefs.cls;
+  const limpPct = s.btnOpp ? s.btnLimp / s.btnOpp * 100 : 0;
+  if (s.btnLimp > 0 && limpPct > c.maxLimpPct) return 'fish';
+  if (c.maxVpip > 0 && s.hands >= c.minHands && s.vpip / s.hands * 100 > c.maxVpip) return 'fish';
+  if (s.hands >= c.minHands) return 'reg';
+  return c.unknownAs;
+}
+function tagOf(name) { const o = S.prefs.overrides[name]; if (o) return o; const s = S.players.get(name); return s ? s.auto : 'unknown'; }
+
+// ---------- tournaments ----------
+function buildTours() {
+  const G = new Map();
+  for (const h of S.hands) { if (!h.hero) continue; let t = G.get(h.gid); if (!t) { t = { gid: h.gid, hands: [] }; G.set(h.gid, t); } t.hands.push(h); }
+  const r = S.prefs.rakeEff / 100, rb = S.prefs.rakeback / 100;
+  const tours = [];
+  for (const t of G.values()) {
+    const hs = t.hands; const f = hs[0], l = hs[hs.length - 1]; const hero = f.hero;
+    t.bi = f.bi; t.mult = f.mult; t.prize = f.prize; t.start = f.ts; t.end = l.ts + 20000; t.hero = hero;
+    t.startStack = ((f.players.find(p => p.name === hero) || {}).stack || 500) * f.cf;
+    t.totalChips = 1500;
+    t.full = f.players.length === 3 && f.sb === Math.min(...hs.map(h => h.sb));
+    t.opps = f.players.filter(p => p.name !== hero).map(p => p.name);
+    let net = 0, ev = 0, vr = 0, huNet = 0, huEv = 0, huN = 0;
+    for (const h of hs) { net += NET(h, hero); ev += EVc(h, hero); vr += VRc(h, hero); if (h.n === 2) { huNet += NET(h, hero); huEv += EVc(h, hero); huN++; } }
+    t.gap = 0; for (let k = 1; k < hs.length; k++) { const a = hs[k - 1].players.find(p => p.name === hero), b = hs[k].players.find(p => p.name === hero); if (a && b && a.stack + (hs[k - 1].net[hero] || 0) !== b.stack) t.gap++; }
+    t.net = net; t.ev = ev; t.vr = vr;
+    const hu = hs.find(h => h.n === 2); t.huOpp = hu ? hu.opps[0] : null; t.huEv = huN ? huEv : null; t.huStart = hu ? (hu.players.find(p => p.name === hero) || {}).stack : null;
+    let fin = null; for (const h of hs) for (const x of h.fin) if (x.p === hero) fin = x;
+    t.place = fin ? fin.place : null; t.complete = !!fin; t.eur = fin ? fin.eur : 0;
+    t.rb = t.bi * r * rb;
+    t.profit = t.eur - t.bi + t.rb;
+    const share = Math.max(0, Math.min(1, (t.startStack + t.ev) / (t.totalChips || 1500)));
+    t.evProfit = 3 * t.bi * (1 - r) * share - t.bi + t.rb;
+    t.nmProfit = (t.place === 1 ? 3 * t.bi * (1 - r) : 0) - t.bi + t.rb;
+    tours.push(t);
+  }
+  tours.sort((a, b) => a.start - b.start);
+  // concurrency (time-weighted average of open tournaments)
+  for (let i = 0; i < tours.length; i++) {
+    const t = tours[i]; let w = 0;
+    for (let j = i; j >= 0 && j > i - 60; j--) { const u = tours[j]; w += Math.max(0, Math.min(t.end, u.end) - Math.max(t.start, u.start)); }
+    for (let j = i + 1; j < tours.length && tours[j].start < t.end; j++) { const u = tours[j]; w += Math.max(0, Math.min(t.end, u.end) - Math.max(t.start, u.start)); }
+    t.conc = Math.max(1, w / Math.max(1, t.end - t.start)); t.tables = Math.min(6, Math.max(1, Math.round(t.conc)));
+  }
+  S.tours = tours;
+}
+function tourProfile(t) {
+  const tags = t.opps.map(tagOf);
+  const nr = tags.filter(x => x === 'reg').length, nf = tags.filter(x => x === 'fish').length;
+  if (t.opps.length === 2) return nr === 2 ? 'RR' : nf === 2 ? 'FF' : (nr === 1 && nf === 1) ? 'RF' : 'U';
+  return nr === 1 ? 'R' : nf === 1 ? 'F' : 'U';
+}
+
+// ---------- filters ----------
+/*FILTERS*/
+let F = { T: [], C: [], H: [] };
+function recompute() { computePlayers(); buildTours(); F = filtered(); }
+
+// ---------- canvas line chart ----------
+function lineChart(wrap, cfg) {
+  wrap.innerHTML = '';
+  const cv = document.createElement('canvas'); wrap.appendChild(cv);
+  const tip = document.createElement('div'); tip.className = 'tip'; wrap.appendChild(tip);
+  if (cfg.badge) { const b = document.createElement('div'); b.className = 'luck' + (cfg.badgeCls ? ' ' + cfg.badgeCls : ''); b.innerHTML = cfg.badge; wrap.appendChild(b); }
+  const ser = cfg.series.filter(s => s.on);
+  const n = Math.max(0, ...cfg.series.map(s => s.data.length));
+  let geo = null;
+  function draw(hover) {
+    const r = wrap.getBoundingClientRect(); const dpr = window.devicePixelRatio || 1;
+    cv.width = Math.max(1, r.width * dpr); cv.height = Math.max(1, r.height * dpr);
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const W = r.width, H = r.height, L = 16, R = 70, T = cfg.badge ? 54 : 16, B = 46;
+    g.clearRect(0, 0, W, H);
+    if (!n) { g.fillStyle = '#8d9198'; g.font = '14px Barlow, Arial, sans-serif'; g.fillText('Aucune donnée pour ces filtres', W / 2 - 90, H / 2); return; }
+    let lo = cfg.noZero ? Infinity : 0, hi = cfg.noZero ? -Infinity : 0; for (const s of ser) for (const v of s.data) { if (v == null) continue; if (v < lo) lo = v; if (v > hi) hi = v; } if (!isFinite(lo)) { lo = 0; hi = 1; }
+    const pad = (hi - lo) * 0.03 || 1; lo -= pad; hi += pad;
+    if (hi === lo) hi = lo + 1;
+    const step = niceStep((hi - lo) / 8);
+    const X = (i) => L + (W - L - R) * (n <= 1 ? 0 : i / (n - 1)), Y = (v) => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+    geo = { X, Y, L, R, W, n };
+    g.font = '600 11px Barlow, Arial, sans-serif'; g.fillStyle = '#c9c6bf'; g.textAlign = 'left'; g.textBaseline = 'middle';
+    for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) { const y = Y(v); g.strokeStyle = v === 0 ? '#5a5f66' : '#202328'; g.lineWidth = v === 0 ? 1.2 : 1; g.beginPath(); g.moveTo(L, y); g.lineTo(W - R + 4, y); g.stroke(); g.fillText(cfg.yFmt(Math.abs(v) < step * 1e-6 ? 0 : v), W - R + 10, y); }
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    for (let k = 0; k <= 8; k++) { const i = Math.round((n - 1) * k / 8); g.fillText(fmtN(i + (cfg.x0 || 0)), X(i), H - B + 10); }
+    g.fillStyle = '#8d9198'; g.font = '12px Barlow, Arial, sans-serif'; g.fillText(cfg.xLabel, L + (W - L - R) / 2, H - 18);
+    for (const s of ser) {
+      g.strokeStyle = s.color; g.lineWidth = 1.4; g.setLineDash(s.dash ? [6, 5] : []); g.beginPath();
+      const d = s.data; const stride = Math.max(1, Math.floor(d.length / ((W - L - R) * 2))); let pen = false;
+      for (let i = 0; i < d.length; i += stride) { if (d[i] == null) { pen = false; continue; } const x = X(i), y = Y(d[i]); if (!pen) g.moveTo(x, y); else g.lineTo(x, y); pen = true; }
+      if (d[d.length - 1] != null) { g.lineTo(X(d.length - 1), Y(d[d.length - 1])); g.stroke(); g.setLineDash([]); g.fillStyle = s.color; g.beginPath(); g.arc(X(d.length - 1), Y(d[d.length - 1]), 3.5, 0, 7); g.fill(); } else { g.stroke(); g.setLineDash([]); }
+    }
+    if (hover != null) {
+      const x = X(hover); g.strokeStyle = '#555b63'; g.lineWidth = 1; g.beginPath(); g.moveTo(x, T); g.lineTo(x, H - B); g.stroke();
+      for (const s of ser) if (s.data[hover] != null) { g.fillStyle = s.color; g.beginPath(); g.arc(x, Y(s.data[hover]), 3.5, 0, 7); g.fill(); }
+    }
+  }
+  draw();
+  cv.onmousemove = (e) => {
+    if (!geo) return; const r = cv.getBoundingClientRect(); const x = e.clientX - r.left;
+    const i = Math.max(0, Math.min(n - 1, Math.round((x - geo.L) / (geo.W - geo.L - geo.R) * (n - 1))));
+    draw(i);
+    tip.style.display = 'block';
+    tip.innerHTML = '<div class="sub">' + esc(cfg.tipHead(i)) + '</div>' + (cfg.onPick ? '<div class="sub" style="color:var(--accent)">Clic : ouvrir dans le replayer</div>' : '') + ser.map(s => '<div><span class="dot" style="background:' + s.color + '"></span> ' + esc(s.name) + ' : <b>' + cfg.yFmt(s.data[i]) + '</b></div>').join('');
+    const tw = tip.offsetWidth; tip.style.left = (x + 14 + tw > r.width ? x - tw - 14 : x + 14) + 'px'; tip.style.top = '60px';
+  };
+  cv.onmouseleave = () => { tip.style.display = 'none'; draw(); };
+  cv.onclick = (e) => { if (!geo || !cfg.onPick) return; const r = cv.getBoundingClientRect(); const i = Math.max(0, Math.min(n - 1, Math.round((e.clientX - r.left - geo.L) / (geo.W - geo.L - geo.R) * (n - 1)))); cfg.onPick(i); };
+  const ro = new ResizeObserver(() => draw()); ro.observe(wrap);
+}
+function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(Math.max(raw, 1e-9)))); const m = raw / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
+
+// ---------- SVG bar chart with 95% intervals ----------
+function barChart(cfg) {
+  const W = cfg.w || 760, H = cfg.h || 280, L = 44, R = 10, T = 18, B = 34;
+  const cats = cfg.cats, ser = cfg.series;
+  let lo = 0, hi = 0;
+  for (const s of ser) for (const v of s.vals) if (v && isFinite(v.v)) { const c = isFinite(v.ci) && cfg.ci !== false ? v.ci : 0; lo = Math.min(lo, v.v - c); hi = Math.max(hi, v.v + c); }
+  if (hi === lo) hi = 1;
+  const step = niceStep((hi - lo) / 5); lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  const Y = (v) => T + (H - T - B) * (1 - (v - lo) / (hi - lo));
+  const gw = (W - L - R) / cats.length, bw = Math.min(30, gw * 0.7 / ser.length);
+  let o = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="' + esc(cfg.label || '') + '" style="font-family:Barlow,Arial,sans-serif;font-size:11px">';
+  for (let v = lo; v <= hi + 1e-9; v += step) o += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(v) + '" y2="' + Y(v) + '" stroke="' + (Math.abs(v) < 1e-9 ? '#4a4f56' : '#22252a') + '"/><text x="' + (L - 6) + '" y="' + (Y(v) + 4) + '" text-anchor="end" fill="#a7a49d">' + (cfg.yFmt ? cfg.yFmt(v) : fmtN(v)) + '</text>';
+  cats.forEach((c, ci) => {
+    const gx = L + gw * ci + gw / 2 - (bw * ser.length + 4 * (ser.length - 1)) / 2;
+    ser.forEach((s, si) => {
+      const v = s.vals[ci]; if (!v || !isFinite(v.v)) return;
+      const x = gx + si * (bw + 4), y0 = Y(0), y1 = Y(v.v), col = s.colors ? s.colors[ci] : s.color;
+      o += '<rect x="' + x + '" y="' + Math.min(y0, y1) + '" width="' + bw + '" height="' + Math.max(1, Math.abs(y1 - y0)) + '" rx="3" fill="' + col + '"><title>' + esc(s.name + ' · ' + c + ' : ' + fmtN(v.v, 1) + (isFinite(v.ci) ? ' ± ' + fmtN(v.ci, 1) : '') + (v.n != null ? ' (' + fmtN(v.n) + ')' : '')) + '</title></rect>';
+      if (cfg.ci !== false && isFinite(v.ci)) { const a = Y(v.v + v.ci), b = Y(v.v - v.ci), cx = x + bw / 2; o += '<path d="M' + cx + ' ' + a + 'V' + b + 'M' + (cx - 5) + ' ' + a + 'h10M' + (cx - 5) + ' ' + b + 'h10" stroke="#e8e5de" stroke-width="1.1" opacity=".8"/>'; }
+      const ly = v.v >= 0 ? (cfg.ci !== false && isFinite(v.ci) ? Y(v.v + v.ci) : y1) - 5 : (cfg.ci !== false && isFinite(v.ci) ? Y(v.v - v.ci) : y1) + 13;
+      o += '<text x="' + (x + bw / 2) + '" y="' + ly + '" text-anchor="middle" fill="' + col + '" font-weight="700">' + (cfg.vFmt ? cfg.vFmt(v.v) : fmtN(v.v, 1)) + '</text>';
+    });
+    o += '<text x="' + (L + gw * ci + gw / 2) + '" y="' + (H - 12) + '" text-anchor="middle" fill="#d6d3cc" font-weight="600">' + esc(c) + '</text>';
+  });
+  return o + '</svg>';
+}
+function donut(pct, size, label, sub) {
+  const r = size / 2 - 6, c = 2 * Math.PI * r, f = isFinite(pct) ? pct / 100 : 0;
+  return '<div class="donut"><svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '"><circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="' + (isFinite(pct) ? '#ec5257' : '#2b2f35') + '" stroke-width="' + (size > 100 ? 14 : 8) + '"/><circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="#4a90ff" stroke-width="' + (size > 100 ? 14 : 8) + '" stroke-dasharray="' + (c * f) + ' ' + c + '" transform="rotate(-90 ' + size / 2 + ' ' + size / 2 + ')"/><text x="50%" y="' + (sub ? '47%' : '53%') + '" text-anchor="middle" fill="#ece8df" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="700" font-size="' + (size > 100 ? 26 : 15) + '">' + (isFinite(pct) ? Math.round(pct) + '%' : '—') + '</text>' + (sub ? '<text x="50%" y="63%" text-anchor="middle" fill="#8d9198" font-size="12">' + esc(sub) + '</text>' : '') + '</svg>' + esc(label) + '</div>';
+}
+
+// ---------- shared bits ----------
+function cardHtml(c) { if (!c) return '<span class="card back"></span>'; const r = c[0] === 'T' ? '10' : c[0]; const s = c[1]; const sym = { s: '♠', h: '♥', d: '♦', c: '♣' }[s]; return '<span class="card c-' + s + '">' + r + '<small>' + sym + '</small></span>'; }
+function cardsHtml(a) { return '<span class="cards">' + (a || []).map(cardHtml).join('') + '</span>'; }
+function tagHtml(name, short) {
+  const t = tagOf(name); const man = !!S.prefs.overrides[name];
+  const lab = t === 'reg' ? 'Reg' : t === 'fish' ? 'Fish' : 'Inconnu';
+  if (short) return '<span class="dot ' + t + '" title="' + esc(name + ' · ' + lab) + '"></span>';
+  return '<span class="tag ' + t + '">' + lab + (man ? ' <span class="man">· manuel</span>' : '') + '</span>';
+}
+function fmtDate(ts, withTime) { const d = new Date(ts); const z = (x) => String(x).padStart(2, '0'); return z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(2) + (withTime ? ' ' + z(d.getHours()) + ':' + z(d.getMinutes()) : ''); }
+function ago(ts) { const s = (Date.now() - ts) / 1000; if (s < 3600) return 'il y a ' + Math.max(1, Math.round(s / 60)) + ' min'; if (s < 86400) return 'il y a ' + Math.round(s / 3600) + ' h'; if (s < 86400 * 45) return 'il y a ' + Math.round(s / 86400) + ' j'; return 'il y a ' + Math.round(s / 86400 / 30) + ' mois'; }
+function toast(msg) { document.querySelectorAll('.toast').forEach(x => x.remove()); const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
+function hoursPlayed(T) {
+  const iv = T.map(t => [t.start, t.end]).sort((a, b) => a[0] - b[0]); let tot = 0, cs = null, ce = null;
+  for (const [a, b] of iv) { if (cs == null || a > ce) { if (cs != null) tot += ce - cs; cs = a; ce = b; } else ce = Math.max(ce, b); }
+  if (cs != null) tot += ce - cs; return tot / 3600e3;
+}
+function kpis() {
+  const C = F.C, n = C.length;
+  const cev = n ? C.reduce((x, t) => x + t.ev, 0) / n : NaN;
+  const rb = C.reduce((x, t) => x + t.rb, 0), pr = C.reduce((x, t) => x + t.profit, 0);
+  return '<div class="kpis"><div class="kpi"><div class="l">Tournois</div><div class="v">' + fmtN(n) + '</div></div><div class="kpi"><div class="l">cEV</div><div class="v ' + cls(cev) + '">' + fmtN(cev, 1) + '</div></div><div class="kpi"><div class="l">Rakeback</div><div class="v">' + fmtE(rb, 2) + '</div></div><div class="kpi"><div class="l">Profit</div><div class="v ' + cls(pr) + '">' + fmtE(pr, 2) + '</div></div></div>';
+}
+// ---------- views ----------
+function viewDashboard() {
+  const u = S.ui;
+  let h = kpis() + '<div class="bar"><div class="seg">' + [['chips', 'Chips gagnés'], ['br', 'Bankroll'], ['multi', 'Multiplicateurs'], ['stats', 'Stats']].map(([k, l]) => '<button class="' + (u.dash === k ? 'on' : '') + '" data-dash="' + k + '">' + l + '</button>').join('') + '</div><div class="grow"></div>' + filterBar() + '</div>';
+  if (!F.H.length) return h + emptyState();
+  if (u.dash === 'chips') h += '<div class="panel has-qm">' + qm('chips') + '<div class="chart-wrap" id="chart"></div><div class="legend-row">' + rbCtl() + '<div class="legend" id="legend"></div><div></div></div></div>';
+  else if (u.dash === 'br') h += '<div class="panel has-qm">' + qm('br') + '<div class="chart-wrap" id="chart"></div><div class="legend-row">' + rbCtl() + '<div class="legend" id="legend"></div><div></div></div></div>';
+  else if (u.dash === 'multi') h += viewMulti() + '<div class="bar">' + rbCtl() + '</div>';
+  else h += viewStats() + '<div class="bar">' + rbCtl() + '</div>';
+  return h;
+}
+function rbCtl() { const rb = F.C.reduce((x, t) => x + t.rb, 0); return '<label class="rb-ctl" for="rbIn">Rakeback (%)<input type="number" id="rbIn" min="0" max="100" step="1" value="' + S.prefs.rakeback + '"><span title="Pourcentage du rake payé (rake effectif ' + fmtN(S.prefs.rakeEff, 1) + ' % du buy-in)">' + (rb ? '+' + fmtE(rb, 2) : 'du rake payé') + '</span></label>'; }
+// normal tail probability, and the luck badge shown on the charts
+function normCdf(z) { const t = 1 / (1 + 0.2316419 * Math.abs(z)), d = 0.3989423 * Math.exp(-z * z / 2); const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return z > 0 ? 1 - p : p; }
+function luckBadge(diff, vr, unit) {
+  const z = vr > 0 ? diff / Math.sqrt(vr) : 0;
+  const lab = z > 2 ? 'Très chanceux' : z > 1 ? 'Chanceux' : z > 0 ? 'Légèrement chanceux' : z < -2 ? 'Très malchanceux' : z < -1 ? 'Malchanceux' : z < 0 ? 'Légèrement malchanceux' : 'Neutre';
+  const pr = (1 - normCdf(Math.abs(z))) * 100;
+  const ps = pr < 0.1 ? '< 0,1 %' : fmtP(pr, pr < 10 ? 1 : 0);
+  return { html: '<b>' + lab + '</b>' + fmtS(diff, unit === '€' ? 2 : 0) + (unit === '€' ? ' €' : ' chips') + ' vs EV · ' + ps + ' de chances d\'être aussi ' + (z >= 0 ? 'chanceux' : 'malchanceux'), cls: diff > 0 ? 'good' : diff < 0 ? 'bad' : '' };
+}
+function emptyState() { return '<div class="panel empty">Aucune main pour ces filtres. <a href="#imports" style="color:var(--accent)">Importer des historiques</a> ou élargir les filtres.</div>'; }
+function afterDashboard() {
+  const u = S.ui; if (!F.H.length) return;
+  if (u.dash === 'chips') {
+    const hero = S.hero; const c = [], sd = [], nsd = [], ev = []; let a = 0, b = 0, d = 0, e = 0, dv = 0, vr = 0;
+    const hs = F.H.filter(h => h.hero);
+    for (const h of hs) { const n = NET(h, h.hero); a += n; if (h.sd && !h.folded[h.hero]) b += n; else d += n; e += EVc(h, h.hero); vr += VRc(h, h.hero); c.push(a); sd.push(b); nsd.push(d); ev.push(e); }
+    dv = a - e; const z = vr > 0 ? dv / Math.sqrt(vr) : 0;
+    const LB = luckBadge(dv, vr, 'chips');
+    const ser = S.ui.series.chips;
+    const series = [{ k: 'c', name: 'Chips', color: '#33c27a', data: c }, { k: 'sd', name: 'Chips (SD)', color: '#4a90ff', data: sd }, { k: 'nsd', name: 'Chips (NSD)', color: '#ec5257', data: nsd }, { k: 'ev', name: 'EV (chips)', color: '#f2a93b', data: ev }].map(s => Object.assign(s, { on: !!ser[s.k] }));
+    lineChart($('#chart'), { series, xLabel: 'Mains jouées', yFmt: (v) => fmtN(v), tipHead: (i) => 'Main ' + fmtN(i + 1) + ' · ' + fmtDate(hs[i].ts, true) + ' · net ' + fmtS(NET(hs[i], hs[i].hero)) + ' · EV ' + fmtS(EVc(hs[i], hs[i].hero)), onPick: (i) => openReplayer(hs, i, 'Graphique des chips'), badge: LB.html, badgeCls: LB.cls });
+    legend(series, 'chips');
+  } else if (u.dash === 'br') {
+    const C = F.C; const p = [], ev = [], nm = []; let a = 0, b = 0, c = 0;
+    let vr = 0;
+    for (const t of C) {
+      a += t.profit; b += t.evProfit; c += t.nmProfit; p.push(a); ev.push(b); nm.push(c);
+      // variance of the payout around its EV: win prob = EV chip share, prize = random multiplier from the Betclic grid
+      const g = gridFor(t.bi), sh = Math.max(0, Math.min(1, (t.startStack + t.ev) / t.totalChips));
+      const m1 = g.reduce((x, q) => x + q[0] * q[1], 0) / 1e6, m2 = g.reduce((x, q) => x + q[0] * q[0] * q[1], 0) / 1e6;
+      vr += t.bi * t.bi * (sh * m2 - sh * sh * m1 * m1);
+    }
+    const BL = luckBadge(a - b, vr, '€');
+    const ser = S.ui.series.br;
+    const series = [{ k: 'p', name: 'Profit', color: '#4a90ff', data: p }, { k: 'ev', name: 'EV profit', color: '#e861ae', data: ev }, { k: 'nm', name: 'Multiplicateur neutralisé', color: '#f2a93b', data: nm }].map(s => Object.assign(s, { on: !!ser[s.k] }));
+    lineChart($('#chart'), { series, xLabel: 'Tournois joués', yFmt: (v) => fmtN(v, Math.abs(v) < 10 && v % 1 ? 1 : 0) + ' €', tipHead: (i) => 'Tournoi ' + fmtN(i + 1) + ' · ' + fmtDate(C[i].start, true) + ' · x' + C[i].mult, onPick: (i) => openSpin(C[i].gid), badge: BL.html, badgeCls: BL.cls });
+    legend(series, 'br');
+  } else if (u.dash === 'multi') afterMulti();
+}
+function legend(series, key) {
+  $('#legend').innerHTML = series.map(s => '<button class="' + (s.on ? '' : 'off') + '" data-ser="' + key + ':' + s.k + '" aria-pressed="' + s.on + '"><i style="background:' + s.color + '"></i>' + esc(s.name) + '</button>').join('');
+}
+function viewStats() {
+  const C = F.C, H = F.H.filter(h => h.hero); const hrs = hoursPlayed(C);
+  const pr = C.reduce((x, t) => x + t.profit, 0), bi = C.reduce((x, t) => x + t.bi, 0);
+  const prEV = C.reduce((x, t) => x + t.evProfit, 0);
+  const cmp = (real, theo, f) => '<div class="v ' + cls(real) + '">' + f(real) + '</div><div class="theo" title="Théorique : tes chips en EV (all-in sans chance) et le multiplicateur moyen de la grille Betclic, rakeback inclus">Théorique <b class="' + cls(theo) + '">' + f(theo) + '</b><br>Écart <b class="' + cls(real - theo) + '">' + (real - theo > 0 ? '+' : '') + f(real - theo) + '</b></div>';
+  let h = '<div class="grid6">' + [['Buy-in moyen', '<div class="v">' + fmtE(C.length ? bi / C.length : NaN, 2) + '</div>'], ['Temps joué', '<div class="v">' + Math.floor(hrs) + 'h ' + String(Math.round((hrs % 1) * 60)).padStart(2, '0') + 'm</div>'], ['Spins / h', '<div class="v">' + fmtN(hrs ? C.length / hrs : NaN, 1) + '</div>'],
+    ['Gain réel ' + qm('theo'), cmp(pr, prEV, (v) => fmtE(v, 2))], ['Gain / heure réel', cmp(hrs ? pr / hrs : NaN, hrs ? prEV / hrs : NaN, (v) => fmtE(v, 2))], ['ROI réel', cmp(bi ? pr / bi * 100 : NaN, bi ? prEV / bi * 100 : NaN, (v) => fmtP(v, 1))]].map(([l, v]) => '<div class="tile"><div class="l">' + l + '</div>' + v + '</div>').join('') + '</div>';
+  // cEV by position
+  const mode = S.ui.posMode; const nT = Math.max(1, F.T.length);
+  const acc = {}; for (const k of POSKEYS) acc[k] = { all: [], fish: [], reg: [] };
+  const perT = {}; // pos -> gid -> {all,fish,reg}
+  for (const x of H) {
+    if (!x.posKey || !acc[x.posKey]) continue; const ev = EVc(x, x.hero);
+    let prof;
+    if (x.mainOpp) prof = tagOf(x.mainOpp); else { const t = x.opps.map(tagOf); prof = t.every(y => y === 'fish') ? 'fish' : t.every(y => y === 'reg') ? 'reg' : 'mix'; }
+    if (mode === 'hand') { acc[x.posKey].all.push(ev); if (prof === 'fish' || prof === 'reg') acc[x.posKey][prof].push(ev); }
+    else { const m = (perT[x.posKey] = perT[x.posKey] || {}); const r = (m[x.gid] = m[x.gid] || { all: 0, fish: 0, reg: 0 }); r.all += ev; if (prof === 'fish' || prof === 'reg') r[prof] += ev; }
+  }
+  if (mode === 'tour') for (const k of POSKEYS) { const m = perT[k] || {}; const ids = F.T.map(t => t.gid); for (const g of ids) { const r = m[g] || { all: 0, fish: 0, reg: 0 }; acc[k].all.push(r.all); acc[k].fish.push(r.fish); acc[k].reg.push(r.reg); } }
+  const sv = (k, p) => ({ v: mean(acc[k][p]), ci: ci95(acc[k][p]), n: acc[k][p].length });
+  h += '<div class="grid2"><div class="panel"><h3>cEV par position <span class="help">chips ' + (mode === 'hand' ? 'par main' : 'par tournoi') + ', barres = intervalle de confiance à 95 %</span><span class="r">' + qm('pos') + '<span class="seg"><button class="' + (mode === 'hand' ? 'on' : '') + '" data-posmode="hand">Par main</button><button class="' + (mode === 'tour' ? 'on' : '') + '" data-posmode="tour">Par tournoi</button></span></span></h3>' +
+    barChart({ label: 'cEV par position', cats: POSKEYS, series: [{ name: 'vs Reg', color: '#ec5257', vals: POSKEYS.map(k => sv(k, 'reg')) }, { name: 'vs Fish', color: '#4a90ff', vals: POSKEYS.map(k => sv(k, 'fish')) }, { name: 'Tous', color: '#f2a93b', vals: POSKEYS.map(k => sv(k, 'all')) }] }) +
+    '<div class="legend"><span class="chip"><i class="dot reg"></i>vs Reg</span><span class="chip"><i class="dot fish"></i>vs Fish</span><span class="chip"><i class="dot" style="background:var(--accent)"></i>Tous</span></div></div><div class="stack">';
+  // results by buy-in
+  const byBi = new Map(); for (const t of C) { const r = byBi.get(t.bi) || { n: 0, ev: 0, p: 0, T: [] }; r.n++; r.ev += t.ev; r.p += t.profit; r.T.push(t); byBi.set(t.bi, r); }
+  h += '<div class="panel"><h3>Résultats par buy-in</h3><div class="scroll"><table><thead><tr><th>Buy-in</th><th class="n">Spins</th><th class="n">cEV</th><th class="n">Profit</th><th class="n">ROI</th><th class="n">€/h</th></tr></thead><tbody>' +
+    [...byBi.entries()].sort((a, b) => a[0] - b[0]).map(([b, r]) => { const hh = hoursPlayed(r.T); return '<tr><td>' + fmtE(b, b % 1 ? 2 : 0) + '<div class="sub">Betclic · Spin & Rush</div></td><td class="n">' + fmtN(r.n) + '</td><td class="n">' + fmtN(r.ev / r.n, 0) + '</td><td class="n ' + cls(r.p) + '">' + fmtE(r.p, 2) + '</td><td class="n ' + cls(r.p) + '">' + fmtP(r.p / (b * r.n) * 100, 1) + '</td><td class="n ' + cls(r.p) + '">' + fmtE(hh ? r.p / hh : NaN, 2) + '</td></tr>'; }).join('') +
+    '<tr class="tot"><td>Total</td><td class="n">' + fmtN(C.length) + '</td><td class="n">' + fmtN(C.length ? C.reduce((x, t) => x + t.ev, 0) / C.length : NaN, 0) + '</td><td class="n ' + cls(pr) + '">' + fmtE(pr, 2) + '</td><td class="n ' + cls(pr) + '">' + fmtP(bi ? pr / bi * 100 : NaN, 1) + '</td><td class="n ' + cls(pr) + '">' + fmtE(hrs ? pr / hrs : NaN, 2) + '</td></tr></tbody></table></div></div>';
+  const fin = [0, 0, 0]; for (const t of C) if (t.place >= 1 && t.place <= 3) fin[t.place - 1]++;
+  h += '<div class="panel"><h3>Finishes<span class="r">' + qm('fin') + '</span></h3>' + barChart({ label: 'Finishes', w: 520, h: 190, ci: false, cats: ['1er', '2e', '3e'], series: [{ name: 'Finishes', color: '#f2a93b', vals: fin.map(x => ({ v: C.length ? x / C.length * 100 : NaN, n: x })) }], yFmt: (v) => fmtN(v) + ' %', vFmt: (v) => fmtN(v, 1) + ' %' }) + '</div></div></div>';
+  // cEV by table profile
+  const prof = { 'Spin R R': [], 'Spin R F': [], 'Spin F F': [], 'HU vs R': [], 'HU vs F': [] };
+  for (const t of F.T) { const p = tourProfile(t); if (p === 'RR') prof['Spin R R'].push(t.ev); else if (p === 'RF') prof['Spin R F'].push(t.ev); else if (p === 'FF') prof['Spin F F'].push(t.ev); if (t.huOpp && t.huEv != null) { const g = tagOf(t.huOpp); if (g === 'reg') prof['HU vs R'].push(t.huEv); else if (g === 'fish') prof['HU vs F'].push(t.huEv); } }
+  const pc = Object.keys(prof), colors = ['#ec5257', '#f2a93b', '#4a90ff', '#ec5257', '#4a90ff'];
+  h += '<div class="grid2b"><div class="panel"><h3>cEV par profil de table <span class="help">chips par tournoi (Spin) ou par heads-up (HU) · R = reg, F = fish</span><span class="r">' + qm('prof') + '</span></h3>' +
+    barChart({ label: 'cEV par profil', w: 560, cats: pc.map((k, i) => k + ' (' + prof[k].length + ')'), series: [{ name: 'cEV', colors, vals: pc.map(k => ({ v: mean(prof[k]), ci: ci95(prof[k]), n: prof[k].length })) }], vFmt: (v) => fmtN(v, 0) }) + '</div>';
+  // multi-tabling
+  const mt = {}; for (const t of C) { const r = mt[t.tables] = mt[t.tables] || { p: 0, hrs: 0, ev: [] }; r.p += t.profit; r.hrs += (t.end - t.start) / 3600e3 / t.conc; r.ev.push(t.ev); }
+  const mk = Object.keys(mt).map(Number).sort((a, b) => a - b); const mm = S.ui.mtMode;
+  h += '<div class="panel"><h3>Multi-tabling <span class="help">nombre moyen de spins ouverts en même temps</span><span class="r">' + qm('mt') + '<span class="seg"><button class="' + (mm === 'eh' ? 'on' : '') + '" data-mt="eh">€/h</button><button class="' + (mm === 'cev' ? 'on' : '') + '" data-mt="cev">cEV</button></span></span></h3>' +
+    barChart({ label: 'Multi-tabling', w: 640, ci: mm === 'cev', cats: mk.map(k => (k === 6 ? '6+' : k) + ' table' + (k > 1 ? 's' : '') + ' (' + mt[k].ev.length + ')'), series: [{ name: mm === 'eh' ? '€/h' : 'cEV', color: '#33c27a', vals: mk.map(k => mm === 'eh' ? { v: mt[k].hrs ? mt[k].p / mt[k].hrs : NaN, n: mt[k].ev.length } : { v: mean(mt[k].ev), ci: ci95(mt[k].ev), n: mt[k].ev.length }) }], yFmt: mm === 'eh' ? (v) => fmtN(v) + ' €' : null, vFmt: mm === 'eh' ? (v) => fmtN(v, 1) + ' €/h' : (v) => fmtN(v, 0) }) + '</div></div>';
+  return h;
+}
+
+function viewPlayers() {
+  const u = S.ui.pl; const hero = S.hero;
+  let list = [...S.players.values()].filter(s => !s.hero);
+  if (u.q) { const q = u.q.toLowerCase(); list = list.filter(s => s.name.toLowerCase().includes(q)); }
+  if (u.tag === 'man') list = list.filter(s => S.prefs.overrides[s.name]); else if (u.tag !== 'all') list = list.filter(s => tagOf(s.name) === u.tag);
+  const key = { name: (s) => s.name.toLowerCase(), hands: (s) => s.hands, tours: (s) => s.tours, vpip: (s) => s.vpip / s.hands, pfr: (s) => s.pfr / s.hands, limp: (s) => s.btnOpp ? s.btnLimp / s.btnOpp : -1, cevHu: (s) => isFinite(s.cevHu) ? s.cevHu : -1e9, cev: (s) => isFinite(s.cev) ? s.cev : -1e9, last: (s) => s.last }[u.sort];
+  list.sort((a, b) => { const x = key(a), y = key(b); return (x < y ? -1 : x > y ? 1 : 0) * u.dir; });
+  const per = 50, pages = Math.max(1, Math.ceil(list.length / per)); u.page = Math.min(u.page, pages - 1);
+  const all = [...S.players.values()].filter(s => !s.hero);
+  const cnt = { reg: all.filter(s => tagOf(s.name) === 'reg').length, fish: all.filter(s => tagOf(s.name) === 'fish').length, unknown: all.filter(s => tagOf(s.name) === 'unknown').length };
+  const th = (k, l, n) => '<th class="sort ' + (n ? 'n' : '') + '" data-plsort="' + k + '">' + l + (u.sort === k ? (u.dir < 0 ? ' ↓' : ' ↑') : '') + '</th>';
+  const heroS = S.players.get(hero);
+  const row = (s, isHero) => {
+    const t = tagOf(s.name), ov = S.prefs.overrides[s.name] || '';
+    return '<tr><td>' + (isHero ? '★ ' : '') + '<b>' + esc(s.name) + '</b></td><td>' + (isHero ? '<span class="tag unknown">Hero</span>' : '<select data-ov="' + esc(s.name) + '" data-tag="' + t + '" data-tagl="' + (t === 'reg' ? 'Reg' : t === 'fish' ? 'Fish' : 'Inconnu') + '" aria-label="Statut de ' + esc(s.name) + '"><option value=""' + (!ov ? ' selected' : '') + '>Auto (' + (s.auto === 'reg' ? 'Reg' : s.auto === 'fish' ? 'Fish' : 'Inconnu') + ')</option><option value="reg"' + (ov === 'reg' ? ' selected' : '') + '>Toujours Reg</option><option value="fish"' + (ov === 'fish' ? ' selected' : '') + '>Toujours Fish</option></select>') + '</td>' +
+      '<td class="n">' + fmtN(s.hands) + '</td><td class="n">' + fmtN(s.tours) + '</td><td class="n">' + fmtP(s.vpip / s.hands * 100) + '</td><td class="n">' + fmtP(s.pfr / s.hands * 100) + '</td><td class="n">' + (s.btnOpp ? fmtN(s.btnLimp) + '/' + fmtN(s.btnOpp) : '—') + '</td>' +
+      '<td class="n ' + cls(s.cevHu) + '">' + fmtN(s.cevHu) + (isFinite(s.cevHuCi) ? '<span class="ci">±' + fmtN(s.cevHuCi) + '</span>' : '') + '</td><td class="n ' + cls(s.cev) + '">' + fmtN(s.cev) + (isFinite(s.cevCi) ? '<span class="ci">±' + fmtN(s.cevCi) + '</span>' : '') + '</td><td class="n mut">' + ago(s.last) + '</td>' +
+      '<td class="n">' + (isHero ? '' : '<button class="btn small" data-lfwho="' + esc(s.name) + '">Leaks</button>') + '</td></tr>';
+  };
+  let h = '<div class="bar"><input type="text" id="plq" placeholder="Rechercher un pseudo…" value="' + esc(u.q) + '" aria-label="Rechercher un pseudo" style="min-width:220px">' +
+    [['all', 'Tous', all.length], ['reg', 'Reg', cnt.reg], ['fish', 'Fish', cnt.fish], ['unknown', 'Inconnus', cnt.unknown], ['man', 'Corrigés à la main', Object.keys(S.prefs.overrides).length]].map(([k, l, n]) => '<button class="chip ' + (u.tag === k ? 'on' : '') + '" data-pltag="' + k + '">' + (k === 'reg' || k === 'fish' || k === 'unknown' ? '<i class="dot ' + k + '"></i>' : '') + l + ' · ' + n + '</button>').join('') +
+    '<div class="grow"></div><span class="note">Règle auto : ' + esc(ruleText()) + ' · <a href="#reglages" style="color:var(--accent)">modifier</a></span></div>';
+  h += '<div class="panel" style="padding:0"><div class="scroll"><table><thead><tr>' + th('name', 'Pseudo') + '<th>Statut</th>' + th('hands', 'Mains', 1) + th('tours', 'Spins', 1) + th('vpip', 'VPIP', 1) + th('pfr', 'PFR', 1) + th('limp', 'Limp BTN', 1) + th('cevHu', 'cEV HU', 1) + th('cev', 'cEV', 1) + th('last', 'Vu', 1) + '<th></th></tr></thead><tbody>' +
+    (heroS && !u.q && u.tag === 'all' ? row(heroS, true) : '') + list.slice(u.page * per, u.page * per + per).map(s => row(s, false)).join('') + '</tbody></table></div>' +
+    '<div class="pager" style="padding-bottom:10px"><button class="btn small" data-plpage="-1"' + (u.page ? '' : ' disabled') + '>Précédent</button>' + (u.page + 1) + ' / ' + pages + '<button class="btn small" data-plpage="1"' + (u.page < pages - 1 ? '' : ' disabled') + '>Suivant</button><span class="mut" style="margin-left:20px">Adversaires : <b>' + fmtN(all.length) + '</b></span></div></div>' +
+    '<p class="note" style="margin:0">cEV = chips gagnés en EV par spin (pour toi : sur tes spins ; pour un adversaire : sur les mains jouées avec toi). cEV HU = par heads-up. ± = intervalle de confiance 95 %.</p>';
+  // table quality
+  const q = { all: [0, 0], day: DAYS.map(() => [0, 0]), slot: SLOTS.map(() => [0, 0]) };
+  for (const t of F.T) { const d = new Date(t.start); for (const o of t.opps) { const g = tagOf(o); if (g === 'unknown') continue; const isF = g === 'fish' ? 1 : 0; q.all[0] += isF; q.all[1]++; q.day[d.getDay()][0] += isF; q.day[d.getDay()][1]++; const s = Math.floor(d.getHours() / 3); q.slot[s][0] += isF; q.slot[s][1]++; } }
+  const pct = (x) => x[1] ? x[0] / x[1] * 100 : NaN; const p = pct(q.all), moe = q.all[1] ? 1.96 * Math.sqrt(p / 100 * (1 - p / 100) / q.all[1]) * 100 : NaN;
+  h += '<div class="panel"><h3>Qualité des tables <span class="help">part de fish parmi tes adversaires (en bleu), sur les spins filtrés</span></h3><div class="donuts"><div class="grp"><div class="sub">GLOBALE</div>' + donut(p, 140, '', isFinite(moe) ? '±' + Math.round(moe) + '%' : '') + '</div>' +
+    '<div class="grp"><div class="sub">PAR JOUR</div><div>' + [1, 2, 3, 4, 5, 6, 0].map(i => donut(pct(q.day[i]), 62, DAYS[i] + (q.day[i][1] ? '' : ''))).join('') + '</div></div>' +
+    '<div class="grp"><div class="sub">PAR TRANCHE HORAIRE</div><div>' + SLOTS.map((s, i) => q.slot[i][1] ? donut(pct(q.slot[i]), 62, s) : '').join('') + '</div></div></div></div>';
+  return h;
+}
+function ruleText() { const c = S.prefs.cls; return 'Reg dès ' + c.minHands + ' mains et ' + (c.maxLimpPct > 0 ? '≤ ' + c.maxLimpPct + ' % de limp' : 'aucun limp') + ' au BTN' + (c.maxVpip ? ', VPIP ≤ ' + c.maxVpip + ' %' : '') + ' · sous le seuil : ' + ({ fish: 'Fish', reg: 'Reg', unknown: 'Inconnu' }[c.unknownAs]); }
+
+function viewReview() {
+  const u = S.ui.rv;
+  let h = '<div class="bar"><div class="seg"><button class="' + (S.ui.review === 'hands' ? 'on' : '') + '" data-rvtab="hands">Mains</button><button class="' + (S.ui.review === 'spins' ? 'on' : '') + '" data-rvtab="spins">Spins</button></div>';
+  if (S.ui.review === 'spins') return h + '<div class="grow"></div>' + filterBar() + '</div>' + viewSpins();
+  h += '<select id="rvPos" aria-label="Position"><option value="all">Toutes positions</option>' + POSKEYS.map(k => '<option ' + (u.pos === k ? 'selected' : '') + '>' + k + '</option>').join('') + '</select>' +
+    '<select id="rvProf" aria-label="Adversaire"><option value="all">Tous adversaires</option><option value="reg"' + (u.prof === 'reg' ? ' selected' : '') + '>vs Reg</option><option value="fish"' + (u.prof === 'fish' ? ' selected' : '') + '>vs Fish</option></select>' +
+    '<select id="rvKind" aria-label="Type de main">' + [['all', 'Toutes les mains'], ['allin', 'All-in avec cartes montrées'], ['sd', 'Showdown'], ['vpip', 'Mains jouées (VPIP)'], ['big', 'Gros pots (≥ 10 bb)'], ['fav', 'Favoris']].map(([k, l]) => '<option value="' + k + '"' + (u.kind === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
+    '<button class="btn small primary" data-act="replayList">▶ Rejouer la liste</button>' +
+    (u.gid ? '<button class="chip on" data-act="clearGid">Spin du ' + fmtDate((S.tours.find(t => t.gid === u.gid) || {}).start || 0, true) + ' ✕</button>' : '') + '<div class="grow"></div>' + filterBar() + '</div>';
+  let list = (u.gid ? (S.tours.find(t => t.gid === u.gid) || { hands: [] }).hands : F.H).filter(x => x.hero);
+  if (u.pos !== 'all') list = list.filter(x => x.posKey === u.pos);
+  if (u.prof !== 'all') list = list.filter(x => { const t = x.mainOpp ? [tagOf(x.mainOpp)] : x.opps.map(tagOf); return t.every(y => y === u.prof); });
+  if (u.kind === 'allin') list = list.filter(x => x.E.adj && x.E.ev[x.hero] != null && !x.folded[x.hero]);
+  else if (u.kind === 'sd') list = list.filter(x => x.sd && !x.folded[x.hero]);
+  else if (u.kind === 'vpip') list = list.filter(x => x.pf[x.hero] && x.pf[x.hero].vpip);
+  else if (u.kind === 'big') list = list.filter(x => x.pot >= 10 * x.bb);
+  else if (u.kind === 'fav') list = list.filter(x => S.prefs.favs[x.id]);
+  const sk = u.sort === 'ev' ? (x) => EVc(x, x.hero) : u.sort === 'net' ? (x) => NET(x, x.hero) : (x) => x.ts;
+  if (u.sort === 'luck') u.sort = 'date';
+  list = list.slice().sort((a, b) => (sk(a) - sk(b)) * u.dir || a.ts - b.ts);
+  S.rvList = list;
+  const per = 100, pages = Math.max(1, Math.ceil(list.length / per)); u.page = Math.min(u.page, pages - 1);
+  const evSum = list.reduce((x, y) => x + EVc(y, y.hero), 0);
+  const th = (k, l) => '<th class="sort n" data-rvsort="' + k + '">' + l + (u.sort === k ? (u.dir < 0 ? ' ↓' : ' ↑') : '') + '</th>';
+  h += '<div class="panel" style="padding:0"><div class="scroll"><table><thead><tr><th class="sort" data-rvsort="date">Date' + (u.sort === 'date' ? (u.dir < 0 ? ' ↓' : ' ↑') : '') + '</th><th>Opp.</th><th>Main</th><th>Board</th><th>Hero</th><th>Stack</th><th>Actions</th>' + th('net', 'Net') + th('ev', 'EV') + '<th>Fav</th></tr></thead><tbody>' +
+    (list.length ? list.slice(u.page * per, u.page * per + per).map(rvRow).join('') : '<tr><td colspan="10" class="empty">Aucune main</td></tr>') + '</tbody></table></div>' +
+    '<div class="pager" style="padding-bottom:10px"><button class="btn small" data-rvpage="-1"' + (u.page ? '' : ' disabled') + '>Précédent</button>' + (u.page + 1) + ' / ' + pages + '<button class="btn small" data-rvpage="1"' + (u.page < pages - 1 ? '' : ' disabled') + '>Suivant</button><span style="margin-left:20px">cEV / main <b class="' + cls(evSum) + '">' + fmtS(list.length ? evSum / list.length : NaN, 1) + '</b> · Mains <b>' + fmtN(list.length) + '</b></span></div></div>';
+  return h;
+}
+function rvRow(x) {
+  const hero = x.hero, al = E.actionLine(x, hero), st = ['Preflop', 'Flop', 'Turn', 'River'];
+  const acts = '<div class="acts">' + al.map((a, i) => a.length ? '<div><span class="st">' + st[i] + '</span>' + a.map(z => (z.me ? '<b>' : '<em>') + z.L + (z.ai ? '<sub>A</sub>' : '') + (z.me ? '</b>' : '</em>')).join(' ') + '</div>' : '').join('') + '</div>';
+  const ev = EVc(x, hero), net = NET(x, hero); const me = x.players.find(p => p.hero);
+  return '<tr class="click" data-hand="' + x.id + '"><td>' + fmtDate(x.ts, true) + '</td><td>' + x.opps.map(o => tagHtml(o, true)).join(' ') + '</td><td>' + cardsHtml(x.hole[hero]) + '</td><td>' + cardsHtml(x.board) + '</td><td><span class="pill">' + esc(x.posKey || '') + '</span></td><td class="mono">' + fmtN(me.stack / x.bb, 1) + ' bb</td><td>' + acts + '</td>' +
+    '<td class="n ' + cls(net) + '">' + fmtS(net) + '</td><td class="n ' + cls(ev) + '">' + fmtS(ev) + (x.E.adj && !x.folded[hero] ? ' <span class="sub">AI</span>' : '') + '</td><td><button class="star ' + (S.prefs.favs[x.id] ? 'on' : '') + '" data-fav="' + x.id + '" aria-label="Favori">★</button></td></tr>';
+}
+function viewSpins() {
+  const u = S.ui.sp || (S.ui.sp = { sort: 'date', dir: -1 });
+  const key = { date: (t) => t.start, ev: (t) => t.ev, profit: (t) => t.complete ? t.profit : -1e9, hands: (t) => t.hands.length }[u.sort];
+  const T = F.T.slice().sort((a, b) => (key(a) - key(b)) * u.dir || b.start - a.start);
+  const th = (k, l, n) => '<th class="sort' + (n ? ' n' : '') + '" data-spsort="' + k + '">' + l + (u.sort === k ? (u.dir < 0 ? ' ↓' : ' ↑') : '') + '</th>';
+  return '<div class="bar"><button class="chip' + (u.sort === 'ev' && u.dir === 1 ? ' on' : '') + '" data-spsort-preset="worst">Pires spins (cEV)</button><button class="chip' + (u.sort === 'ev' && u.dir === -1 ? ' on' : '') + '" data-spsort-preset="best">Meilleurs spins</button><span class="note">Clic sur un spin : le rejouer main par main.</span></div>' +
+    '<div class="panel" style="padding:0"><div class="scroll"><table><thead><tr>' + th('date', 'Début') + '<th class="n">Buy-in</th><th class="n">Multi.</th><th>Adversaires</th>' + th('hands', 'Mains', 1) + '<th class="n">Tables</th><th class="n">Place</th>' + th('ev', 'cEV', 1) + th('profit', 'Profit', 1) + '<th></th></tr></thead><tbody>' +
+    T.slice(0, 500).map(t => '<tr class="click" data-spinplay="' + t.gid + '"><td>' + fmtDate(t.start, true) + '</td><td class="n">' + fmtE(t.bi, 0) + '</td><td class="n"><span class="pill">x' + t.mult + '</span></td><td>' + t.opps.map(o => tagHtml(o, true) + ' ' + esc(o)).join(' &nbsp; ') + '</td><td class="n">' + t.hands.length + (t.gap ? ' <span class="sub" title="Mains manquantes dans l\'historique">⚠</span>' : '') + '</td><td class="n">' + t.tables + '</td><td class="n">' + (t.place ? (t.place === 1 ? '<b class="pos">1er</b>' : t.place + 'e') : '<span class="mut">incomplet</span>') + '</td><td class="n ' + cls(t.ev) + '">' + fmtS(t.ev) + '</td><td class="n ' + cls(t.profit) + '">' + (t.complete ? fmtE(t.profit, 2) : '—') + '</td><td class="n"><button class="btn small" data-gid="' + t.gid + '">Liste</button> <button class="btn small primary" data-spinplay="' + t.gid + '">▶ Rejouer</button></td></tr>').join('') +
+    '</tbody></table></div>' + (T.length > 500 ? '<p class="note" style="padding:0 12px">500 premiers spins affichés, utilise les filtres pour affiner.</p>' : '') + '</div>';
+}
+function openHand(id) {
+  const L = S.rvList || []; const i = L.findIndex(z => z.id === id); if (i >= 0) { openReplayer(L, i, 'Liste Review'); return; }
+  const one = S.byId.get(id) || (S.skipped.bad.find(z => z.h.id === id) || {}).h; if (one) { openReplayer([one], 0, 'Main'); return; }
+  const x = S.byId.get(id); if (!x) return;
+  const st = ['Preflop', 'Flop', 'Turn', 'River'], V = { sb: 'poste SB', bb: 'poste BB', f: 'fold', x: 'check', c: 'call', b: 'bet', r: 'raise à', ante: 'ante' };
+  const t = S.tours.find(z => z.gid === x.gid);
+  let h = '<div class="modal-bg" data-act="closeModal"><div class="modal" role="dialog" aria-modal="true" aria-label="Détail de la main"><div class="row"><h3 style="margin:0;font:700 22px var(--display)">Main du ' + fmtDate(x.ts, true) + '</h3><span class="pill">' + esc(x.posKey || '') + '</span><span class="pill">Blinds ' + x.sb + '/' + x.bb + '</span><span class="pill">' + fmtE(x.bi, 0) + ' · x' + x.mult + '</span><div class="grow" style="flex:1"></div><button class="btn small" data-act="closeModal">Fermer</button></div>';
+  h += '<div class="seats">' + x.players.map(p => '<div class="seat ' + (p.hero ? 'hero' : '') + '"><div class="row"><b>' + esc(p.name) + '</b>' + (p.hero ? '' : tagHtml(p.name)) + '<span class="pill" style="margin-left:auto">' + p.pos + '</span></div><div class="row">' + cardsHtml(x.hole[p.name] || [null, null]) + '<span class="mono">' + fmtN(p.stack) + ' (' + fmtN(p.stack / x.bb, 1) + ' bb)</span></div><div class="mono ' + cls(x.net[p.name]) + '">Net ' + fmtS(x.net[p.name]) + (x.E.adj && x.E.eq && x.E.eq[p.name] != null ? ' · EV ' + fmtS(x.E.ev[p.name]) + ' · équité ' + fmtP(x.E.eq[p.name] * 100, 1) : '') + '</div></div>').join('') + '</div>';
+  for (let s = 0; s < 4; s++) {
+    const a = x.acts.filter(z => z.st === s); if (!a.length && (s === 0 || x.board.length < s + 2)) continue;
+    h += '<div class="street"><div class="nm">' + st[s] + (s ? '<div style="margin-top:4px">' + cardsHtml(s === 1 ? x.board.slice(0, 3) : x.board.slice(s + 1, s + 2)) + '</div>' : '') + '</div><div>' + a.map(z => '<div' + (z.p === x.hero ? ' style="color:#7fb2ff"' : '') + '><b>' + esc(z.p) + '</b> ' + V[z.a] + (z.a === 'f' || z.a === 'x' ? '' : ' ' + fmtN(z.n)) + (z.ai ? ' <b style="color:var(--accent)">all-in</b>' : '') + '</div>').join('') + (!a.length ? '<span class="mut">pas d\'action</span>' : '') + '</div></div>';
+  }
+  if (x.E.adj) h += '<div class="note">All-in ' + st[x.E.st].toLowerCase() + ' : EV calculée sur toutes les runouts possibles (' + (x.E.st === 0 ? 'simulation 10 000 tirages' : 'énumération exacte') + '), pots et side pots compris.</div>';
+  const text = E.toText(x);
+  h += '<details><summary style="cursor:pointer;color:var(--muted)">Historique texte</summary><pre id="hhText">' + esc(text) + '</pre><button class="btn small" data-act="copyHH">Copier</button></details>' + (t ? '<div><button class="btn small" data-gotogid="' + x.gid + '">Voir toutes les mains de ce spin</button></div>' : '') + '</div></div>';
+  $('#modalRoot').innerHTML = h;
+}
+
+// ---------- Leak finder ----------
+function lfProfileHands() {
+  const p = S.ui.lf.prof, who = S.ui.lf.who;
+  if (p === 'hero') return { hs: F.H, pick: (h) => h.hero ? [h.hero] : [] , label: 'Hero' };
+  if (p === 'player' && who) return { hs: S.hands, pick: (h) => h.pf[who] ? [who] : [], label: who };
+  return { hs: S.hands, pick: (h) => h.opps.filter(o => tagOf(o) === p), label: p === 'reg' ? 'Regs' : 'Fish' };
+}
+function lfAggregate(hs, pick, posF) {
+  const M = new Map();
+  for (const h of hs) for (const name of pick(h)) {
+    const I = h.pf[name]; if (!I) continue;
+    for (const d of I.decisions) {
+      const pos = d.key.split(' | ')[0]; if (posF !== 'all' && pos !== posF) continue;
+      let r = M.get(d.key); if (!r) { r = { key: d.key, n: 0, a: {}, b: BUCKETS.map(() => ({ n: 0, a: {} })) }; M.set(d.key, r); }
+      r.n++; r.a[d.act] = (r.a[d.act] || 0) + 1; const bk = r.b[bucketOf(d.eff)]; bk.n++; bk.a[d.act] = (bk.a[d.act] || 0) + 1;
+    }
+  }
+  return M;
+}
+function viewLeaks() {
+  const u = S.ui.lf;
+  const opps = [...S.players.values()].filter(s => !s.hero).sort((a, b) => b.hands - a.hands);
+  let h = '<div class="bar"><div class="seg"><button class="' + (u.sub === 'hud3' ? 'on' : '') + '" data-lfsub="hud3">HUD 3 joueurs</button><button class="' + (u.sub === 'hudhu' ? 'on' : '') + '" data-lfsub="hudhu">HUD heads-up</button><button class="' + (u.sub === 'sit' ? 'on' : '') + '" data-lfsub="sit">Préflop par stack</button><button class="' + (u.sub === 'stats' ? 'on' : '') + '" data-lfsub="stats">Stats générales</button></div>' +
+    '<label class="f" style="flex-direction:row;align-items:center" for="lfProf">Profil <select id="lfProf"><option value="hero"' + (u.prof === 'hero' ? ' selected' : '') + '>Hero (' + esc(S.hero || '') + ')</option><option value="reg"' + (u.prof === 'reg' ? ' selected' : '') + '>Tous les regs</option><option value="fish"' + (u.prof === 'fish' ? ' selected' : '') + '>Tous les fish</option><option value="player"' + (u.prof === 'player' ? ' selected' : '') + '>Un joueur…</option></select></label>' +
+    (u.prof === 'player' ? '<select id="lfWho" aria-label="Joueur">' + opps.slice(0, 400).map(s => '<option' + (s.name === u.who ? ' selected' : '') + ' value="' + esc(s.name) + '">' + esc(s.name) + ' (' + s.hands + ')</option>').join('') + '</select>' : '') +
+    (u.sub === 'sit' ? '<label class="f" style="flex-direction:row;align-items:center" for="lfPos">Position <select id="lfPos">' + ['all', 'BTN', 'SB', 'BB', 'HU SB', 'HU BB'].map(k => '<option value="' + k + '"' + (u.pos === k ? ' selected' : '') + '>' + (k === 'all' ? 'Toutes' : k) + '</option>').join('') + '</select></label>' +
+      '<label class="f" style="flex-direction:row;align-items:center" for="lfRef">Comparer à <select id="lfRef"><option value="reg"' + (u.ref === 'reg' ? ' selected' : '') + '>Regs de ta base</option><option value="fish"' + (u.ref === 'fish' ? ' selected' : '') + '>Fish de ta base</option><option value="none"' + (u.ref === 'none' ? ' selected' : '') + '>Rien</option></select></label>' : '') +
+    '<div class="grow"></div>' + filterBar() + '</div>';
+  if (u.prof === 'player' && !u.who && opps.length) u.who = opps[0].name;
+  const P = lfProfileHands();
+  if (u.sub === 'stats') return h + lfStats(P);
+  if (u.sub === 'hud3' || u.sub === 'hudhu') return h + viewHud(u.sub === 'hudhu' ? 'hu' : '3');
+  const M = lfAggregate(P.hs, P.pick, u.pos);
+  const R = u.ref !== 'none' ? lfAggregate(S.hands, (x) => x.opps.filter(o => tagOf(o) === u.ref), u.pos) : null;
+  const list = [...M.values()].filter(r => r.n >= 5).sort((a, b) => b.n - a.n).slice(0, 30);
+  if (!list.length) return h + '<div class="panel empty">Pas assez de mains pour ce profil.</div>';
+  h += '<p class="note" style="margin:0">Chaque carte = une situation préflop (ta position et les actions avant ta décision), découpée par stack effectif en big blinds. ' + (R ? 'Couleurs vs ' + (u.ref === 'reg' ? 'les regs' : 'les fish') + ' de ta base, dans la même case : <span class="c-ok">vert</span> écart ≤ 5 pts, <span class="c-agg">rouge</span> plus agressif, <span class="c-pas">bleu</span> plus passif, gris = référence trop petite (survole une case pour voir la référence).' : '') + '</p><div class="lf-grid">' + list.map(r => lfCard(r, R && R.get(r.key))).join('') + '</div>';
+  return h;
+}
+function lfCard(r, ref) {
+  const acts = ['fold', 'check', 'limp', 'call', 'raise', 'shove'].filter(a => r.a[a] || (ref && ref.a[a]));
+  const [pos, seq] = r.key.split(' | ');
+  const cell = (bk, rb, a) => {
+    if (!bk.n) return '<td class="n c-na">—</td>';
+    const v = (bk.a[a] || 0) / bk.n * 100;
+    if (!rb || rb.n < 8) return '<td class="n c-na" title="Référence insuffisante">' + Math.round(v) + '<span class="sub">%</span></td>';
+    const rv = (rb.a[a] || 0) / rb.n * 100, d = v - rv;
+    const c = Math.abs(d) <= 5 ? 'c-ok' : ((AGG[a] ? d > 0 : d < 0) ? 'c-agg' : 'c-pas');
+    return '<td class="n ' + c + '" title="Réf. ' + Math.round(rv) + ' % sur ' + rb.n + ' mains">' + Math.round(v) + '<span class="sub">%</span></td>';
+  };
+  let h = '<div class="panel lf"><h3><span class="pill">' + esc(pos) + '</span> ' + esc(seq === 'premier à parler' ? 'Premier à parler' : 'après ' + seq) + '</h3>';
+  h += '<div class="head"><div><b>' + fmtN(r.n) + '</b><span>Mains</span></div>' + acts.map(a => '<div><b>' + Math.round((r.a[a] || 0) / r.n * 100) + '%</b><span>' + ACT_LABEL[a] + '</span>' + (ref && ref.n ? '<span class="sub" style="display:block;text-transform:none;letter-spacing:0">réf. ' + Math.round((ref.a[a] || 0) / ref.n * 100) + ' %</span>' : '') + '</div>').join('') + '</div>';
+  h += '<table><thead><tr><th>Stack (bb)</th><th class="n">Mains</th>' + acts.map(a => '<th class="n">' + ACT_LABEL[a] + '</th>').join('') + '</tr></thead><tbody>';
+  for (let i = BUCKETS.length - 1; i >= 0; i--) { const bk = r.b[i]; if (!bk.n && !(ref && ref.b[i].n)) continue; h += '<tr><td>' + bucketName(i) + '</td><td class="n">' + bk.n + '</td>' + acts.map(a => cell(bk, ref && ref.b[i], a)).join('') + '</tr>'; }
+  return h + '</tbody></table></div>';
+}
+function lfStats(P) {
+  const rows = ['BTN', 'SB', 'BB', 'HU SB', 'HU BB', 'Total'];
+  const acc = {}; for (const r of rows) acc[r] = { n: 0, vpip: 0, pfr: 0, tbo: 0, tb: 0, cbo: 0, cb: 0, fco: 0, fc: 0, sf: 0, wtsd: 0, wsd: 0, ab: 0, ac: 0, ev: 0, limpo: 0, limp: 0 };
+  for (const h of P.hs) for (const name of P.pick(h)) {
+    const p = h.players.find(z => z.name === name); if (!p) continue; const I = h.pf[name]; const po = E.postflopInfo(h, name);
+    const k = h.n === 2 ? 'HU ' + p.pos : p.pos;
+    for (const r of [acc[k], acc.Total]) { if (!r) continue; r.n++; if (I.vpip) r.vpip++; if (I.pfr) r.pfr++; if (I.threeBetOpp) r.tbo++; if (I.threeBet) r.tb++; if (I.btnOpp) r.limpo++; if (I.btnLimp) r.limp++; if (po.cbOpp) r.cbo++; if (po.cb) r.cb++; if (po.fcbOpp) r.fco++; if (po.fcb) r.fc++; if (po.sawFlop) r.sf++; if (po.wtsd && po.sawFlop) r.wtsd++; if (po.wsd && po.sawFlop) r.wsd++; r.ab += po.af_b; r.ac += po.af_c; r.ev += EVc(h, name); }
+  }
+  const pc = (a, b) => b ? fmtP(a / b * 100) : '—';
+  return '<div class="panel" style="padding:0"><div class="scroll"><table><thead><tr><th>' + esc(P.label) + '</th><th class="n">Mains</th><th class="n">VPIP</th><th class="n">PFR</th><th class="n">Limp BTN</th><th class="n">3-bet</th><th class="n">C-bet flop</th><th class="n">Fold vs c-bet</th><th class="n">WTSD</th><th class="n">W$SD</th><th class="n">AF</th><th class="n">cEV / main</th></tr></thead><tbody>' +
+    rows.map(k => { const r = acc[k]; return '<tr' + (k === 'Total' ? ' class="tot"' : '') + '><td>' + k + '</td><td class="n">' + fmtN(r.n) + '</td><td class="n">' + pc(r.vpip, r.n) + '</td><td class="n">' + pc(r.pfr, r.n) + '</td><td class="n">' + pc(r.limp, r.limpo) + '</td><td class="n">' + pc(r.tb, r.tbo) + '</td><td class="n">' + pc(r.cb, r.cbo) + '</td><td class="n">' + pc(r.fc, r.fco) + '</td><td class="n">' + pc(r.wtsd, r.sf) + '</td><td class="n">' + pc(r.wsd, r.wtsd) + '</td><td class="n">' + (r.ac ? fmtN(r.ab / r.ac, 1) : '—') + '</td><td class="n ' + cls(r.ev) + '">' + fmtS(r.n ? r.ev / r.n : NaN, 1) + '</td></tr>'; }).join('') +
+    '</tbody></table></div></div><p class="note">WTSD et W$SD sont calculés sur les mains où le joueur a vu le flop. AF = (bets + raises) / calls après le flop.</p>';
+}
+
+// ---------- imports & settings ----------
+function viewImports() {
+  let h = '<div class="drop" id="drop"><h2>Importer des historiques Betclic</h2><p class="mut">Glisse ici des fichiers .txt ou des dossiers entiers (sous-dossiers compris), ou</p><div class="row" style="justify-content:center"><label class="btn primary" for="dirIn" style="cursor:pointer">Choisir un dossier</label><label class="btn" for="fileIn" style="cursor:pointer">Choisir des fichiers</label></div><input type="file" id="fileIn" multiple accept=".txt,text/plain" style="display:none"><input type="file" id="dirIn" webkitdirectory directory multiple style="display:none"><p class="note">Réimporte le même dossier quand tu veux : les fichiers déjà lus et les mains déjà présentes sont sautés.</p><p class="note">Tout est calculé dans ton navigateur : rien n\'est envoyé ailleurs.</p><div id="impProg" style="display:none;margin-top:14px"><div class="progress"><div id="impBar"></div></div><div class="note" id="impMsg"></div></div></div>';
+  const n = S.hands.length, T = S.tours.length;
+  const first = n ? S.hands[0].ts : null, last = n ? S.hands[n - 1].ts : null;
+  h += '<div class="grid2b"><div class="panel"><h3>Base actuelle</h3><table><tbody><tr><td>Mains</td><td class="n"><b>' + fmtN(n) + '</b></td></tr><tr><td>Spins</td><td class="n"><b>' + fmtN(T) + '</b> <span class="sub">(' + fmtN(S.tours.filter(t => !t.complete).length) + ' incomplets)</span></td></tr><tr><td>All-in recalculés en EV</td><td class="n">' + fmtN(S.hands.filter(x => x.E.adj).length) + '</td></tr><tr><td>Période</td><td class="n">' + (n ? fmtDate(first, true) + ' → ' + fmtDate(last, true) : '—') + '</td></tr><tr><td>Hero détecté</td><td class="n">' + esc(S.hero || '—') + '</td></tr><tr><td>Stockage</td><td class="n">' + (S.storage === 'idb' ? 'Navigateur (IndexedDB)' : 'Mémoire seulement') + '</td></tr></tbody></table>' +
+    (S.storage !== 'idb' ? '<p class="note">Ce navigateur ne garde pas les mains entre deux visites : il faudra réimporter tes fichiers à chaque ouverture.</p>' : '<p class="note">Les mains restent dans ce navigateur. Sur un autre appareil, réimporte tes fichiers.</p>') +
+    (S.skipped.other ? '<p class="note">' + fmtN(S.skipped.other) + ' main(s) d\'autres formats (MTT, cash…) ignorée(s).</p>' : '') +
+    (S.skipped.bad.length ? '<p class="note" style="color:#ff9a9d">' + S.skipped.bad.length + ' main(s) incohérente(s) écartée(s) des stats :</p><table><tbody>' + S.skipped.bad.slice(0, 30).map(z => '<tr class="click" data-badhand="' + z.h.id + '"><td>' + fmtDate(z.h.ts, true) + '</td><td class="sub">' + esc(z.why) + '</td><td class="n"><span class="btn small">▶ Voir</span></td></tr>').join('') + '</tbody></table>' : '') +
+    (S.tours.some(t => t.gap) ? '<p class="note">' + S.tours.filter(t => t.gap).length + ' spin(s) avec des mains manquantes dans l\'historique (tapis qui ne se suivent pas).</p>' : '') +
+    '<div class="row" style="margin-top:8px"><button class="btn danger" data-act="askClear">Vider la base</button><span id="clearAsk"></span></div></div>' +
+    '<div class="panel"><h3>Imports de cette session</h3>' + (S.imports.length ? '<table><thead><tr><th>Fichier</th><th class="n">Mains lues</th><th class="n">Nouvelles</th><th class="n">Spins</th></tr></thead><tbody>' + S.imports.map(i => '<tr><td>' + esc(i.name) + '</td><td class="n">' + fmtN(i.read) + '</td><td class="n">' + fmtN(i.added) + '</td><td class="n">' + fmtN(i.games) + '</td></tr>').join('') + '</tbody></table>' : '<p class="note">Aucun import pour l\'instant.' + (S.seedLoaded ? ' La base contient ton export du 11/11/2026, chargé au démarrage.' : '') + '</p>') +
+    '<p class="note">Où trouver les fichiers : dans le client Betclic Poker, exporte l\'historique des mains (fichier « ExportHH_… .txt »). Importe-les régulièrement, les doublons sont ignorés.</p></div></div>';
+  return h;
+}
+function viewSettings() {
+  const c = S.prefs.cls;
+  return '<div class="settings"><div class="panel"><h3>Classification Reg / Fish</h3>' +
+    '<label class="f" for="sMin">Mains minimum pour être Reg<input type="number" id="sMin" min="1" value="' + c.minHands + '"></label>' +
+    '<label class="f" for="sLimp">Limp au BTN (3 joueurs) toléré, en % des occasions<input type="number" id="sLimp" min="0" max="100" step="1" value="' + c.maxLimpPct + '"><span class="note">0 = un seul limp au BTN suffit pour être Fish.</span></label>' +
+    '<label class="f" for="sVpip">VPIP maximum d\'un Reg (%) · 0 = ignoré<input type="number" id="sVpip" min="0" max="100" value="' + c.maxVpip + '"></label>' +
+    '<label class="f" for="sUnk">Joueurs sous le seuil de mains, sans limp<select id="sUnk"><option value="fish"' + (c.unknownAs === 'fish' ? ' selected' : '') + '>Fish</option><option value="unknown"' + (c.unknownAs === 'unknown' ? ' selected' : '') + '>Inconnu (exclus des stats vs Reg / vs Fish)</option><option value="reg"' + (c.unknownAs === 'reg' ? ' selected' : '') + '>Reg</option></select></label>' +
+    '<div class="row"><button class="btn primary" data-act="saveCls">Appliquer</button><span class="note">' + Object.keys(S.prefs.overrides).length + ' joueur(s) corrigé(s) à la main, ils gardent leur statut.</span></div>' +
+    '<div class="row"><button class="btn" data-act="resetOv">Effacer les corrections manuelles</button></div></div>' +
+    '<div class="panel"><h3>Argent</h3><label class="f" for="sRake">Rake effectif du format (%)<input type="number" id="sRake" step="0.1" min="0" max="30" value="' + S.prefs.rakeEff + '"><span class="note">Sert à l\'EV profit : prize pool moyen = 3 × buy-in × (1 − rake). La grille officielle Betclic donne ' + fmtN(GRID_RAKE, 1) + ' % (multiplicateur moyen x' + fmtN(expMult(10), 2) + ').</span></label>' +
+    '<label class="f" for="sRb">Rakeback (% du rake payé)<input type="number" id="sRb" step="1" min="0" max="100" value="' + S.prefs.rakeback + '"></label><div class="row"><button class="btn primary" data-act="saveMoney">Appliquer</button></div></div>' +
+    '<div class="panel"><h3>Où sont gardées tes données</h3><p class="note" style="font-size:13px">Les mains sont stockées dans ce navigateur. Tes réglages, corrections de statut et favoris ' + (S.cloud ? 'sont aussi sauvegardés sur ton compte Claude et te suivent sur tes autres appareils.' : 'sont gardés dans ce navigateur.') + '</p><p class="note">Heures affichées dans le fuseau de ton appareil (' + esc(Intl.DateTimeFormat().resolvedOptions().timeZone || 'local') + ').</p></div></div>';
+}
+
+/*HUD*/
+/*EXTRA*/
+// ---------- render & events ----------
+const VIEWS = { tableau: viewDashboard, joueurs: viewPlayers, review: viewReview, leaks: viewLeaks, imports: viewImports, reglages: viewSettings };
+function currentView() { const v = (location.hash || '').slice(1); return VIEWS[v] ? v : 'tableau'; }
+function render() {
+  const v = currentView();
+  document.querySelectorAll('#nav a, .rail .nav a').forEach(a => a.classList.toggle('on', a.dataset.v === v));
+  const m = $('#main'); const sc = m.scrollTop;
+  m.innerHTML = (S.seedBanner && v !== 'imports' ? '<div class="banner">Ton export Betclic du 11/11/2026 est chargé (' + fmtN(S.hands.length) + ' mains). <a href="#imports" style="color:var(--accent)">Importer d\'autres fichiers</a><button class="btn small" data-act="hideBanner" style="margin-left:auto">OK</button></div>' : '') + VIEWS[v]();
+  if (v === 'tableau') afterDashboard();
+  m.scrollTop = sc;
+  if (v === 'imports') bindDrop();
+  renderStore();
+}
+function renderStore() { $('#storeState').innerHTML = '<i class="' + (S.storage === 'idb' ? '' : 'warn') + '"></i>' + fmtN(S.hands.length) + ' mains<br>' + (S.storage === 'idb' ? 'gardées dans ce navigateur' : 'en mémoire seulement') + (S.cloud ? '<br>réglages synchronisés' : ''); }
+function refresh() { recompute(); render(); }
+window.addEventListener('hashchange', () => { $('#main').scrollTop = 0; render(); });
+
+document.addEventListener('click', (e) => {
+  if (FM.draft && $('.fm')) { fmClick(e); return; }
+  const fo = e.target.closest('[data-fopen]'); if (fo) { openFilters(fo.dataset.fopen); return; }
+  const r = e.target.closest('[data-rp],[data-rpgo]');
+  if (r) { if (r.dataset.rpgo != null) { rpStop(); RP.step = +r.dataset.rpgo; rpUpdate(); return; } if (r.dataset.rp === 'bg' && e.target !== r) return; rpCmd(r.dataset.rp); return; }
+  const t = e.target.closest('[data-preset],[data-spinplay],[data-spsort],[data-spsort-preset],[data-badhand],[data-dash],[data-ser],[data-posmode],[data-mt],[data-act],[data-pltag],[data-plsort],[data-plpage],[data-rvtab],[data-rvsort],[data-rvpage],[data-hand],[data-fav],[data-gid],[data-gotogid],[data-lfsub],[data-lfwho]');
+  if (!t) return;
+  const d = t.dataset, u = S.ui;
+  if (d.spinplay) { e.stopPropagation(); openSpin(d.spinplay); return; }
+  if (d.badhand) { const z = S.skipped.bad.find(x => x.h.id === d.badhand); if (z) openReplayer([z.h], 0, 'Main écartée : ' + z.why); return; }
+  if (d.spsortPreset) { S.ui.sp = { sort: 'ev', dir: d.spsortPreset === 'worst' ? 1 : -1 }; render(); return; }
+  if (d.spsort) { const sp = S.ui.sp; if (sp.sort === d.spsort) sp.dir *= -1; else { sp.sort = d.spsort; sp.dir = -1; } render(); return; }
+  if (d.act === 'replayList') { openReplayer(S.rvList, 0, 'Liste Review'); return; }
+  if (d.fav) { e.stopPropagation(); if (S.prefs.favs[d.fav]) delete S.prefs.favs[d.fav]; else S.prefs.favs[d.fav] = 1; savePrefs(); t.classList.toggle('on'); return; }
+  if (d.act === 'closeModal') { if (e.target === t || t.tagName === 'BUTTON') $('#modalRoot').innerHTML = ''; return; }
+  if (d.dash) { u.dash = d.dash; render(); }
+  else if (d.ser) { const [g, k] = d.ser.split(':'); u.series[g][k] = u.series[g][k] ? 0 : 1; render(); }
+  else if (d.posmode) { u.posMode = d.posmode; render(); }
+  else if (d.mt) { u.mtMode = d.mt; render(); }
+  else if (d.act === 'hideBanner') { S.seedBanner = false; LS.set('st_banner_off', '1'); render(); }
+  else if (d.act === 'clearGid') { u.rv.gid = null; render(); }
+  else if (d.act === 'copyHH') { try { navigator.clipboard.writeText($('#hhText').textContent).then(() => toast('Historique copié'), () => toast('Copie refusée par le navigateur')); } catch (er) { toast('Copie refusée par le navigateur'); } }
+  else if (d.act === 'askClear') { $('#clearAsk').innerHTML = 'Sûr ? Toutes les mains seront supprimées. <button class="btn small danger" data-act="doClear">Oui, vider</button>'; }
+  else if (d.act === 'doClear') { clearAll(); }
+  else if (d.act === 'saveCls') { const c = S.prefs.cls; c.minHands = Math.max(1, +$('#sMin').value || 50); c.maxLimpPct = Math.max(0, +$('#sLimp').value || 0); c.maxVpip = Math.max(0, +$('#sVpip').value || 0); c.unknownAs = $('#sUnk').value; savePrefs(); refresh(); toast('Classification recalculée'); }
+  else if (d.act === 'resetOv') { S.prefs.overrides = {}; savePrefs(); refresh(); toast('Corrections effacées'); }
+  else if (d.act === 'saveMoney') { S.prefs.rakeEff = Math.max(0, +$('#sRake').value || 0); S.prefs.rakeback = Math.max(0, +$('#sRb').value || 0); savePrefs(); refresh(); toast('Réglages appliqués'); }
+  else if (d.pltag) { u.pl.tag = d.pltag; u.pl.page = 0; render(); }
+  else if (d.plsort) { if (u.pl.sort === d.plsort) u.pl.dir *= -1; else { u.pl.sort = d.plsort; u.pl.dir = d.plsort === 'name' ? 1 : -1; } render(); }
+  else if (d.plpage) { u.pl.page += +d.plpage; render(); $('#main').scrollTop = 0; }
+  else if (d.rvtab) { S.ui.review = d.rvtab; render(); }
+  else if (d.rvsort) { if (u.rv.sort === d.rvsort) u.rv.dir *= -1; else { u.rv.sort = d.rvsort; u.rv.dir = -1; } render(); }
+  else if (d.rvpage) { u.rv.page += +d.rvpage; render(); $('#main').scrollTop = 0; }
+  else if (d.hand) { openHand(d.hand); }
+  else if (d.gid || d.gotogid) { u.rv.gid = d.gid || d.gotogid; u.rv.page = 0; S.ui.review = 'hands'; $('#modalRoot').innerHTML = ''; if (location.hash !== '#review') location.hash = 'review'; else render(); }
+  else if (d.lfsub) { u.lf.sub = d.lfsub; render(); }
+  else if (d.lfwho) { u.lf.prof = 'player'; u.lf.who = d.lfwho; location.hash = 'leaks'; }
+});
+document.addEventListener('change', (e) => {
+  if (FM.draft && /^fm/.test(e.target.id || '')) { fmReadInputs(); const keep = S.filters; S.filters = FM.draft; const r = filtered(); S.filters = keep; const n = $('.fm-foot .note'); if (n) n.textContent = fmtN(r.T.length) + ' spins correspondent'; const c = $('.fm-chip'); if (c) c.textContent = 'Date : ' + dateLabel(FM.draft); return; }
+  const t = e.target, u = S.ui;
+  if (t.dataset.ov !== undefined) { const n = t.dataset.ov; if (t.value) S.prefs.overrides[n] = t.value; else delete S.prefs.overrides[n]; savePrefs(); F = filtered(); render(); return; }
+  if (t.id === 'rpSpeed') { RP.speed = +t.value; return; }
+  if (t.id === 'rpHide') { RP.hide = t.checked; rpUpdate(); return; }
+  if (t.id === 'rpChain') { RP.chain = t.checked; return; }
+  if (t.id === 'rbIn') { S.prefs.rakeback = Math.max(0, Math.min(100, +t.value || 0)); savePrefs(); refresh(); return; }
+  if (t.id === 'rvPos') { u.rv.pos = t.value; u.rv.page = 0; render(); }
+  else if (t.id === 'rvProf') { u.rv.prof = t.value; u.rv.page = 0; render(); }
+  else if (t.id === 'rvKind') { u.rv.kind = t.value; u.rv.page = 0; render(); }
+  else if (t.id === 'lfProf') { u.lf.prof = t.value; render(); }
+  else if (t.id === 'lfWho') { u.lf.who = t.value; render(); }
+  else if (t.id === 'lfPos') { u.lf.pos = t.value; render(); }
+  else if (t.id === 'lfRef') { u.lf.ref = t.value; render(); }
+  else if (t.id === 'fileIn' || t.id === 'dirIn') { importFiles([...t.files], t.id === 'dirIn'); t.value = ''; }
+});
+let qTimer = null;
+document.addEventListener('input', (e) => { if (e.target.id === 'rpSlider') { rpStop(); RP.step = +e.target.value; rpUpdate(); return; } if (e.target.id === 'plq') { clearTimeout(qTimer); const v = e.target.value; qTimer = setTimeout(() => { S.ui.pl.q = v; S.ui.pl.page = 0; render(); const i = $('#plq'); if (i) { i.focus(); i.setSelectionRange(v.length, v.length); } }, 250); } });
+document.addEventListener('keydown', (e) => {
+  if (FM.draft && (e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('fm-card')) { e.preventDefault(); e.target.click(); return; }
+  if (RP.h && $('#rpFelt')) {
+    if (e.target.tagName === 'INPUT' && e.target.type !== 'range' && e.target.type !== 'checkbox') return;
+    const k = e.key, m = { ArrowRight: 'fwd', ArrowLeft: 'back', ' ': 'play', ArrowDown: 'nextHand', PageDown: 'nextHand', ArrowUp: 'prevHand', PageUp: 'prevHand', Home: 'first', End: 'last', Escape: 'close' }[k];
+    if (m) { e.preventDefault(); rpCmd(m); return; }
+  }
+  if (e.key === 'Escape') { FM.draft = null; $('#modalRoot').innerHTML = ''; } });
+function bindDrop() {
+  const d = $('#drop'); if (!d) return;
+  d.ondragover = (e) => { e.preventDefault(); d.classList.add('over'); };
+  d.ondragleave = () => d.classList.remove('over');
+  d.ondrop = async (e) => {
+    e.preventDefault(); d.classList.remove('over');
+    const items = [...(e.dataTransfer.items || [])].map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+    if (!items.length) { importFiles([...e.dataTransfer.files]); return; }
+    const files = []; const folder = items.some(x => x.isDirectory);
+    const msg = $('#impMsg'), prog = $('#impProg'); if (prog) prog.style.display = 'block'; if (msg) msg.textContent = 'Lecture du dossier…';
+    await Promise.all(items.map(x => walkEntry(x, files)));
+    importFiles(files, folder);
+  };
+}
+function walkEntry(entry, out) {
+  return new Promise(res => {
+    if (entry.isFile) { entry.file(f => { out.push(f); res(); }, () => res()); return; }
+    if (!entry.isDirectory) return res();
+    const reader = entry.createReader(); const subs = [];
+    const next = () => reader.readEntries(async (batch) => {
+      if (!batch.length) { await Promise.all(subs.map(x => walkEntry(x, out))); res(); return; }
+      subs.push(...batch); next();
+    }, () => res());
+    next();
+  });
+}
+const fileKey = (f) => (f.webkitRelativePath || f.name) + '|' + f.size + '|' + f.lastModified;
+function seenFiles() { try { return JSON.parse(LS.get('st_files') || '{}'); } catch (e) { return {}; } }
+async function importFiles(files, folder) {
+  files = files.filter(f => /\.txt$/i.test(f.name) || f.type === 'text/plain'); if (!files.length) { toast(folder ? 'Aucun fichier .txt dans ce dossier' : 'Choisis des fichiers .txt'); return; }
+  const seen = seenFiles(); const total = files.length;
+  if (S.storage === 'idb') files = files.filter(f => !seen[fileKey(f)]);
+  const skippedSeen = total - files.length; let empty = 0, newHands = 0;
+  if (!files.length) { toast('Rien de nouveau : les ' + total + ' fichiers sont déjà importés'); return; }
+  const prog = $('#impProg'), bar = $('#impBar'), msg = $('#impMsg');
+  if (prog) prog.style.display = 'block';
+  const setP = (p, m) => { if (bar) bar.style.width = (p * 100).toFixed(1) + '%'; if (msg) msg.textContent = m; };
+  for (let fi = 0; fi < files.length; fi++) {
+    const f = files[fi]; const tag = files.length > 1 ? 'Fichier ' + (fi + 1) + ' / ' + files.length + ' · ' : ''; setP(fi / files.length, tag + 'lecture de ' + f.name + '…'); await sleep(0);
+    let text = ''; try { text = await f.text(); } catch (er) { toast('Impossible de lire ' + f.name); continue; }
+    const parsed = E.parseFile(text);
+    const fresh = parsed.filter(h => !S.byId.has(h.id));
+    if (!parsed.length) { empty++; seen[fileKey(f)] = 1; LS.set('st_files', JSON.stringify(seen)); if (!folder) { S.imports.push({ name: f.name, read: 0, added: 0, games: 0 }); toast(f.name + ' : aucune main Betclic reconnue'); } continue; }
+    for (let i = 0; i < fresh.length; i++) {
+      fresh[i].E = E.computeEV(fresh[i], 10000);
+      if (i % 40 === 0) { setP((fi + i / fresh.length) / files.length, tag + f.name + ' : calcul des EV ' + i + ' / ' + fresh.length); await sleep(0); }
+    }
+    if (S.storage === 'idb' && fresh.length) await IDB.put(fresh.map(E.pack));
+    const added = addHands(fresh); newHands += added;
+    seen[fileKey(f)] = 1; LS.set('st_files', JSON.stringify(seen));
+    S.imports.push({ name: f.webkitRelativePath || f.name, read: parsed.length, added, games: new Set(parsed.map(h => h.gid)).size });
+  }
+  setP(1, 'Terminé');
+  S.seedBanner = false; refresh();
+  toast('Import terminé : ' + fmtN(newHands) + ' nouvelles mains' + (skippedSeen ? ' · ' + skippedSeen + ' fichier(s) déjà lus' : '') + (empty ? ' · ' + empty + ' fichier(s) sans main Betclic' : ''));
+}
+async function clearAll() {
+  if (S.storage === 'idb') await IDB.clear();
+  LS.set('st_seed_off', '1'); LS.set('st_files', '{}');
+  S.hands = []; S.byId = new Map(); S.seedLoaded = false; S.seedBanner = false; refresh(); toast('Base vidée');
+}
+
+/*REPLAYER*/
+// ---------- boot ----------
+(async function boot() {
+  loadPrefs();
+  $('#main').innerHTML = '<div class="panel empty">Chargement de tes mains…</div>';
+  const ok = await IDB.open(); S.storage = ok ? 'idb' : 'memory';
+  let stored = ok ? await IDB.all() : [];
+  if (stored.length) addHands(stored.map(o => { try { return E.unpack(o); } catch (e) { return null; } }).filter(Boolean));
+  else if (LS.get('st_seed_off') !== '1') {
+    try {
+      const r = await fetch('data/seed.json');
+      if (r.ok) { const seed = await r.json(); addHands(seed.map(E.unpack)); S.seedLoaded = true; S.seedBanner = LS.get('st_banner_off') !== '1'; if (ok) IDB.put(seed); }
+    } catch (e) { }
+  }
+  recompute();
+  if (!S.hands.length && !location.hash) location.hash = 'imports';
+  render();
+  connectCloud();
+})();
+</script>
+</body>
+</html>
