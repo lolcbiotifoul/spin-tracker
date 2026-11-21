@@ -5,11 +5,14 @@ const KV = {
   set(k, v) { return new Promise(res => { try { const tx = IDB.db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = () => res(true); tx.onerror = () => res(false); } catch (e) { res(false); } }); }
 };
 const fsaOk = () => 'showDirectoryPicker' in window;
-async function walkDir(dir, prefix, out) {
-  for await (const [name, h] of dir.entries()) {
-    if (h.kind === 'file') { if (/\.txt$/i.test(name)) { try { const f = await h.getFile(); f._path = prefix + name; out.push(f); } catch (e) { } } }
-    else if (h.kind === 'directory') await walkDir(h, prefix + name + '/', out);
-  }
+async function walkDir(dir, prefix, out, depth) {
+  // one unreadable sub-folder must not stop the whole update
+  try {
+    for await (const [name, h] of dir.entries()) {
+      if (h.kind === 'file') { if (/\.txt$/i.test(name)) { try { const f = await h.getFile(); f._path = prefix + name; out.push(f); } catch (e) { } } }
+      else if (h.kind === 'directory' && (depth || 0) < 8 && name[0] !== '.') await walkDir(h, prefix + name + '/', out, (depth || 0) + 1);
+    }
+  } catch (e) { FSA.skipped = (FSA.skipped || 0) + 1; }
 }
 async function pickDir() {
   if (!fsaOk()) { location.hash = 'imports'; toast('Ce navigateur ne sait pas relier un dossier : utilise Chrome ou Edge, ou importe tes fichiers à la main.'); return; }
@@ -21,25 +24,29 @@ async function pickDir() {
 }
 async function syncDir(gesture, quiet) {
   if (!FSA.handle) { if (gesture) return pickDir(); return; }
-  if (FSA.busy) return;
+  if (FSA.busy) { if (gesture) toast('Mise à jour déjà en cours… ' + (FSA.step || '')); return; }
   let p = 'denied';
   try { p = await FSA.handle.queryPermission({ mode: 'read' }); if (p !== 'granted' && gesture) p = await FSA.handle.requestPermission({ mode: 'read' }); } catch (e) { }
   FSA.perm = p; renderSync();
-  if (p !== 'granted') { if (gesture) toast('Accès au dossier refusé'); return; }
-  FSA.busy = true; renderSync();
+  if (p !== 'granted') { if (gesture) toast('Accès au dossier refusé : clique sur « Autoriser » quand Chrome le demande.'); return; }
+  FSA.busy = true; FSA.step = 'lecture du dossier'; FSA.skipped = 0; renderSync();
+  window.onImpProgress = (pr, m) => { FSA.step = Math.round(pr * 100) + ' %'; const s = $('#syncState'); if (s) s.textContent = FSA.name + ' · ' + FSA.step; };
+  const before = S.hands.length;
   try {
     const files = []; await walkDir(FSA.handle, FSA.handle.name + '/', files);
+    if (!quiet) toast('Dossier lu : ' + files.length + ' fichier(s) .txt trouvé(s)' + (FSA.skipped ? ' · ' + FSA.skipped + ' sous-dossier(s) illisible(s)' : '') + '…', 2500);
     await importFiles(files, true, quiet);
     FSA.last = Date.now(); LS.set('st_last_sync', String(FSA.last));
+    if (quiet && S.hands.length > before) toast('Dossier relu : ' + fmtN(S.hands.length - before) + ' nouvelles mains');
   } catch (e) { if (!quiet) toast('Lecture du dossier impossible : ' + (e.message || e)); }
-  FSA.busy = false; renderSync(); if (currentView() === 'imports') render();
+  finally { FSA.busy = false; FSA.step = ''; window.onImpProgress = null; renderSync(); if (currentView() === 'imports') render(); }
 }
 function renderSync() {
   const b = $('#syncBtn'), s = $('#syncState'); if (!b) return;
   if (!fsaOk()) { b.textContent = 'Importer des mains'; s.textContent = ''; return; }
   b.disabled = FSA.busy;
   b.textContent = FSA.busy ? 'Mise à jour…' : FSA.handle ? '⟳ Mettre à jour' : 'Relier mon dossier';
-  s.textContent = FSA.handle ? FSA.name + (FSA.perm !== 'granted' ? ' · clique pour autoriser' : FSA.last ? ' · ' + ago(FSA.last) : '') : 'Aucun dossier relié';
+  s.textContent = FSA.busy && FSA.handle ? FSA.name + ' · ' + (FSA.step || '') : FSA.handle ? FSA.name + (FSA.perm !== 'granted' ? ' · clique pour autoriser' : FSA.last ? ' · ' + ago(FSA.last) : '') : 'Aucun dossier relié';
 }
 function folderPanel() {
   if (!fsaOk()) return '<div class="banner">Ce navigateur ne permet pas de relier un dossier. Avec Chrome ou Edge, l\'appli relit ton dossier d\'historiques toute seule. En attendant, importe tes fichiers ci-dessous.</div>';
