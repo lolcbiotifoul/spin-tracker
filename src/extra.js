@@ -2,10 +2,9 @@
 const HELP = {
   chips: { t: 'Graphique des chips', i: [
     ['#22c55e', 'Chips', 'Tes chips gagnés ou perdus, cumulés main après main (stacks ramenés à 500 chips par joueur au départ).'],
-    ['#3b82f6', 'Chips (SD)', 'La part gagnée ou perdue dans les mains allées à l\'abattage (showdown).'],
-    ['#ef4444', 'Chips (NSD)', 'La part gagnée ou perdue sans abattage : pots ramassés parce que l\'adversaire a foldé, blindes perdues en foldant. Si elle monte, tu voles bien.'],
-    ['#fb923c', 'cEV', 'Tes chips si chaque all-in avait été payé à ton équité au moment du tapis. C\'est ta vraie performance, sans la chance des all-in.'],
-    ['#f472b6', 'cEV ajusté', '<p>Le <b>cEV</b>, sans en plus la chance des <b>setups préflop</b> : les all-in préflop où tout le monde a une grosse main (AA contre KK, QQ contre AK…). Personne ne peut s\'en sortir : c\'est la distribution des cartes qui décide.</p><p>Dans ces coups-là, chaque pot est <b>partagé à parts égales</b> entre les joueurs encore dedans, comme si tu avais eu la meilleure main une fois sur deux. Sur le long terme, ça ne change pas ton résultat moyen, mais ça retire du bruit.</p><p>Grosses mains retenues selon le tapis effectif : <b>20 bb et plus</b> : TT+, AK · <b>12 à 20 bb</b> : 88+, AQ+, AJs · <b>moins de 12 bb</b> : 66+, AJ+, ATs, KQs.</p>']],
+    ['#3b82f6', 'Chips avec showdown', 'La part gagnée ou perdue dans les mains allées à l\'abattage (showdown).'],
+    ['#ef4444', 'Chips sans showdown', 'La part gagnée ou perdue sans abattage : pots ramassés parce que l\'adversaire a foldé, blindes perdues en foldant. Si elle monte, tu voles bien.'],
+    ['#fb923c', 'cEV', 'Tes chips si chaque all-in avait été payé à ton équité au moment du tapis. C\'est ta vraie performance, sans la chance des all-in.']],
     f: 'Le badge en haut à gauche compare Chips et EV : l\'écart est ta chance aux all-in, et le pourcentage indique la probabilité d\'être au moins aussi chanceux (ou malchanceux) sur ce nombre d\'all-in. Clique sur un point de la courbe pour ouvrir la main dans le replayer.' },
   br: { t: 'Graphique de bankroll', i: [
     ['#3b82f6', 'Profit', '<p>L\'<b>argent réellement gagné</b> : gains − buy-ins + rakeback.</p>'],
