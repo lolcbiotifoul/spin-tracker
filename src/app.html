@@ -55,7 +55,7 @@ button { cursor: pointer; }
 .store-state i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--good); margin-right: 6px; }
 .store-state i.warn { background: var(--accent); }
 /* main */
-.main { overflow: auto; min-width: 0; padding: 18px 20px 40px; display: flex; flex-direction: column; gap: 14px; }
+.main { overflow: auto; min-width: 0; padding: 18px 20px 22px; display: flex; flex-direction: column; gap: 14px; }
 .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; text-align: center; }
 .kpi .l { font-size: 11px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
@@ -236,23 +236,77 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12px; colo
 .qm { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel2); color: var(--muted); font: 700 12px/1 var(--body); display: inline-flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; flex: none; }
 .qm:hover { color: var(--accent); border-color: var(--accent); }
 /* dashboard: summary column + chart */
-.dash-grid { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 12px; align-items: stretch; }
-.dside { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr auto 1fr auto 1fr 1fr 1fr auto 1fr auto 1fr; gap: 7px; }
-.dsec { grid-column: 1 / -1; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: #737373; margin: 7px 2px -1px; }
+.dash-grid { display: grid; grid-template-columns: 320px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 12px; align-items: stretch; flex: 1 1 0; min-height: 470px; }
+.dside { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto minmax(min-content, 84px) auto minmax(min-content, 84px) auto minmax(min-content, 84px) minmax(min-content, 84px) minmax(min-content, 84px) auto minmax(min-content, 84px); gap: 6px; align-content: start; }
+.dsec { grid-column: 1 / -1; font-size: 10.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: #737373; margin: 5px 2px -2px; line-height: 1.3; }
 .dsec:first-child { margin-top: 0; }
-.dt { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 9px; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
-.dt .l { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+.dt { background: var(--panel); border: 1px solid var(--line); border-radius: 9px; padding: 5px 11px 6px; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.dt .l { font-size: 11.5px; line-height: 16px; color: var(--muted); display: flex; align-items: center; gap: 3px; white-space: nowrap; }
 .dt .l .qm.sm { margin-left: auto; }
-.dt .v { font: 700 21px/1.3 var(--display); letter-spacing: -.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dt .v { font: 700 19px/24px var(--display); letter-spacing: -.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dt .v small { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 1px; }
-.dt .s { font-size: 11.5px; color: #8a8a8a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dt .s { font-size: 11px; line-height: 15px; color: #8a8a8a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dt .s b { font-weight: 600; }
 .dfoot { grid-column: 1 / -1; font-size: 12px; color: #8a8a8a; text-align: center; padding: 6px 0 0; }
 .lnk { border: 0; background: none; padding: 0; color: var(--accent); font-size: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .dchart { display: flex; flex-direction: column; }
-.dchart .chart-wrap { flex: 1 1 auto; height: auto; min-height: max(440px, calc(100vh - 215px)); }
-@media (max-width: 1150px) { .dash-grid { grid-template-columns: 1fr; } .dside { grid-template-columns: repeat(4, 1fr); grid-template-rows: none; order: 2; } .dsec { display: none; } .dchart .chart-wrap { min-height: 420px; } }
+.dchart .chart-wrap { flex: 1 1 auto; height: auto; min-height: 300px; }
+@media (max-height: 820px) { .kpi { padding: 6px 14px; } .kpi .v { font-size: 20px; } .dt { padding: 3px 10px 4px; } .dt .v { font-size: 17px; line-height: 21px; } .dsec { margin-top: 2px; } .dside { gap: 5px; } }
+@media (max-width: 1150px) { .dash-grid { grid-template-columns: 1fr; } .dash-grid { grid-template-rows: none; flex: none; } .dside { grid-template-columns: repeat(4, 1fr); grid-template-rows: none; order: 2; } .dsec { display: none; } .dchart .chart-wrap { min-height: 380px; } .dt { padding: 7px 11px; } }
 @media (max-width: 700px) { .dside { grid-template-columns: 1fr 1fr; } }
+/* hand filter window (Review) */
+.hfm { width: min(1000px, 100%); max-height: calc(100vh - 60px); overflow: hidden; }
+.hf-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.hf-head b { font-size: 16px; } .hf-head .fm-x { margin-left: auto; border: 0; background: none; color: var(--muted); font-size: 16px; }
+.hf-bar { display: flex; align-items: center; gap: 10px; padding: 12px 18px; }
+.hf-box { margin: 0 18px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 4px; background: var(--panel2); display: flex; flex-direction: column; gap: 6px; min-height: 180px; }
+.hf-boxh { display: flex; align-items: center; justify-content: space-between; font-weight: 600; color: #d6d3cc; }
+.hf-row { display: flex; align-items: center; gap: 10px; background: #1f1f1f; border: 1px solid #333; border-radius: 8px; padding: 8px 10px; }
+.hf-row span { flex: 1; } .hf-row.not span { color: #fca5a5; }
+.hf-not { border: 1px solid #3a3a3a; background: none; border-radius: 6px; font-size: 11px; font-weight: 700; padding: 2px 7px; color: #777; }
+.hf-not.on { background: #7f1d1d; border-color: #b91c1c; color: #fff; }
+.hf-del { border: 0; background: none; color: var(--bad); font-size: 15px; padding: 2px 6px; }
+.hf-empty { color: var(--muted); padding: 22px 8px; text-align: center; }
+.hf-tip { margin: 4px 2px 6px; font-size: 12px; }
+.hf-q { padding: 4px 18px 16px; } .hf-q h4 { margin: 12px 0 8px; font-size: 13px; color: #d6d3cc; }
+.hf-chips, .hf-active { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.hf-chip { display: inline-flex; align-items: center; border: 1px solid var(--line); background: var(--panel2); border-radius: 999px; font-size: 12.5px; }
+.hf-chip button { border: 0; background: none; padding: 5px 11px; }
+.hf-chip .x { padding: 5px 9px 5px 0; color: var(--muted); }
+.hf-chip.ex { border-style: dashed; color: var(--muted); }
+.hf-chip.on { border-color: var(--accent); background: #1d1a14; }
+.hf-save { display: flex; gap: 8px; align-items: center; margin-top: 12px; } .hf-save input { width: 220px; }
+.hf-add { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 0; flex: 1; overflow: hidden; }
+.hf-cats { border-right: 1px solid var(--line); padding: 12px 8px; display: flex; flex-direction: column; gap: 4px; }
+.hf-cats button { display: flex; align-items: center; gap: 10px; border: 0; background: none; border-radius: 8px; padding: 11px 12px; text-align: left; font-weight: 500; color: #cfcfcf; }
+.hf-cats button:hover { background: var(--hover); } .hf-cats button.on { background: #2a2b2e; color: var(--text); font-weight: 600; box-shadow: inset 3px 0 0 var(--accent); }
+.hf-pane { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.hf-pane .hf-bar { padding: 12px 18px 4px; } .hf-pane h3 { margin: 6px 18px 8px; font-size: 15px; }
+.hf-st { margin: 0 18px 8px; align-self: flex-start; }
+.hf-list { overflow: auto; padding: 0 18px 18px; max-height: calc(100vh - 260px); }
+.hf-list h4 { margin: 14px 0 6px; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: #737373; }
+.hf-group { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.hf-item { border-top: 1px solid var(--line); background: #1a1a1a; } .hf-item:first-child { border-top: 0; }
+.hf-ih { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; font-weight: 600; }
+.hf-item.on .hf-ih { background: #232323; }
+.hf-sw { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #3a3a3a; background: #141414; border-radius: 999px; padding: 2px 9px 2px 3px; font-size: 11px; font-weight: 700; color: #777; min-width: 62px; }
+.hf-sw i { width: 16px; height: 16px; border-radius: 50%; background: #555; }
+.hf-sw.on { flex-direction: row-reverse; padding: 2px 3px 2px 9px; background: #3a2a0a; border-color: var(--accent); color: var(--accent); } .hf-sw.on i { background: var(--accent); }
+.hf-opts { display: flex; flex-direction: column; padding: 0 0 4px; }
+.hf-opt { border: 0; background: none; text-align: left; padding: 7px 12px 7px 34px; color: #9a9a9a; position: relative; }
+.hf-opt:hover { background: #222; color: var(--text); }
+.hf-opt.sel { color: var(--text); font-weight: 500; } .hf-opt.sel::before { content: '✓'; position: absolute; left: 13px; color: var(--accent); font-weight: 700; }
+.hf-opts.chips { flex-direction: row; flex-wrap: wrap; gap: 5px; padding: 2px 12px 10px; }
+.hf-opts.chips .hf-opt { border: 1px solid #333; border-radius: 6px; padding: 4px 0; width: 36px; text-align: center; }
+.hf-opts.chips .hf-opt.sel { background: #3a2a0a; border-color: var(--accent); } .hf-opts.chips .hf-opt.sel::before { content: none; }
+.hf-range { display: flex; align-items: center; gap: 8px; padding: 2px 12px 11px; color: var(--muted); } .hf-range input { width: 90px; }
+.hf-grid { display: grid; grid-template-columns: repeat(13, 1fr); gap: 2px; padding: 4px 12px; user-select: none; }
+.hf-cell { border: 0; border-radius: 3px; font-size: 11px; font-weight: 600; padding: 6px 0; color: #9a9a9a; background: #242424; font-family: var(--mono); }
+.hf-cell.pp { background: #2b2b2b; } .hf-cell.su { background: #212a33; } .hf-cell.of { background: #262222; }
+.hf-cell.sel { background: var(--accent); color: #1a1205; }
+.hf-gq { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 6px 12px 12px; } .hf-gq .note { margin-left: auto; }
+.hf-active { margin-top: -4px; }
+.hfm .btn:disabled { opacity: .4; cursor: default; }
 .has-qm { position: relative; }
 .has-qm > .qm { position: absolute; top: 10px; right: 10px; z-index: 3; }
 .grid6.has-qm > .qm { top: -9px; right: -9px; }
@@ -377,7 +431,7 @@ const AGG = { raise: 1, shove: 1 };
 const S = {
   hands: [], byId: new Map(), players: new Map(), tours: [], hero: null,
   prefs: null, filters: defaultFilters(),
-  ui: { dash: 'chips', posMode: 'hand', mtMode: 'eh', review: 'hands', rv: { pos: 'all', prof: 'all', kind: 'all', page: 0, sort: 'date', dir: -1, gid: null }, pl: { q: '', tag: 'all', sort: 'hands', dir: -1, page: 0 }, lf: { prof: 'hero', pos: 'all', ref: 'reg', sub: 'hud3', who: '', hudSrc: 'reg' }, series: { chips: { c: 1, sd: 0, nsd: 0, ev: 1, adj: 1 }, br: { p: 1, ev: 1, evm: 1, evp: 0, nm: 0, mk: 1 }, mu: { t: 1, m: 1, g: 1 } } },
+  ui: { dash: 'chips', posMode: 'hand', mtMode: 'eh', review: 'hands', rv: { pos: 'all', prof: 'all', kind: 'all', page: 0, sort: 'date', dir: -1, gid: null, hf: [] }, pl: { q: '', tag: 'all', sort: 'hands', dir: -1, page: 0 }, lf: { prof: 'hero', pos: 'all', ref: 'reg', sub: 'hud3', who: '', hudSrc: 'reg' }, series: { chips: { c: 1, sd: 0, nsd: 0, ev: 1, adj: 1 }, br: { p: 1, ev: 1, evm: 1, evp: 0, nm: 0, mk: 1 }, mu: { t: 1, m: 1, g: 1 } } },
   storage: 'memory', seedLoaded: false, imports: [], skipIds: new Set(), skipped: { other: 0, bad: [] }, rvList: []
 };
 // Official Betclic Spin & Rush multiplier grids (chances per 1 000 000), payouts 1st/2nd/3rd
@@ -388,8 +442,8 @@ const GRIDS = {
 const gridFor = (bi) => bi >= 200 ? GRIDS.hi : GRIDS.std;
 const expMult = (bi) => gridFor(bi).reduce((x, g) => x + g[0] * g[1], 0) / 1e6;
 const GRID_RAKE = +((1 - expMult(10) / 3) * 100).toFixed(1);
-function defaultPrefs() { return { v: 2, cls: { minHands: 50, maxLimpPct: 0, maxVpip: 0, unknownAs: 'fish' }, overrides: {}, favs: {}, rakeEff: GRID_RAKE, rakeback: 0, hudRefs: {}, hudTol: 8, hudMin: 15 }; }
-function migrate(p) { if (!p.v) { if (p.rakeEff === 7.8) p.rakeEff = GRID_RAKE; p.v = 2; } if (!p.hudRefs) p.hudRefs = {}; if (!p.hudTol) p.hudTol = 8; if (!p.hudMin) p.hudMin = 15; return p; }
+function defaultPrefs() { return { v: 2, cls: { minHands: 50, maxLimpPct: 0, maxVpip: 0, unknownAs: 'fish' }, overrides: {}, favs: {}, rakeEff: GRID_RAKE, rakeback: 0, hudRefs: {}, hudTol: 8, hudMin: 15, hfq: [] }; }
+function migrate(p) { if (!p.v) { if (p.rakeEff === 7.8) p.rakeEff = GRID_RAKE; p.v = 2; } if (!p.hudRefs) p.hudRefs = {}; if (!p.hudTol) p.hudTol = 8; if (!p.hudMin) p.hudMin = 15; if (!Array.isArray(p.hfq)) p.hfq = []; return p; }
 
 // ---------- persistence: IndexedDB for hands, localStorage + Claude db for prefs ----------
 const IDB = {
@@ -716,11 +770,11 @@ function kpis() {
 // ---------- views ----------
 function viewDashboard() {
   const u = S.ui;
-  let h = '<div class="bar"><div class="seg">' + [['chips', 'Chips gagnés'], ['br', 'Bankroll'], ['multi', 'Multiplicateurs'], ['stats', 'Stats']].map(([k, l]) => '<button class="' + (u.dash === k ? 'on' : '') + '" data-dash="' + k + '">' + l + '</button>').join('') + '</div><div class="grow"></div>' + filterBar() + '</div>';
+  let h = kpis() + '<div class="bar"><div class="seg">' + [['chips', 'Chips gagnés'], ['br', 'Bankroll'], ['multi', 'Multiplicateurs'], ['stats', 'Stats']].map(([k, l]) => '<button class="' + (u.dash === k ? 'on' : '') + '" data-dash="' + k + '">' + l + '</button>').join('') + '</div><div class="grow"></div>' + filterBar() + '</div>';
   if (!F.H.length) return h + emptyState();
   if (u.dash === 'chips' || u.dash === 'br') h += '<div class="dash-grid"><aside class="dside" aria-label="Résumé">' + dashSide() + '</aside><div class="panel has-qm dchart">' + qm(u.dash) + '<div class="chart-wrap" id="chart"></div><div class="legend-row">' + rbCtl() + '<div class="legend" id="legend"></div><div></div></div></div></div>';
-  else if (u.dash === 'multi') h += kpis() + viewMulti() + '<div class="bar">' + rbCtl() + '</div>';
-  else h += kpis() + viewStats() + '<div class="bar">' + rbCtl() + '</div>';
+  else if (u.dash === 'multi') h += viewMulti() + '<div class="bar">' + rbCtl() + '</div>';
+  else h += viewStats() + '<div class="bar">' + rbCtl() + '</div>';
   return h;
 }
 // left column of the dashboard: results, hourly rates and where the cEV comes from
@@ -739,7 +793,7 @@ function dashSide() {
     T('Profit net', 0, fmtE(pr, 2), cls(pr), 'ROI ' + fmtP(bi ? pr / bi * 100 : NaN, 1)) +
     T('EV Profit', 1, fmtE(prEV, 2), cls(prEV), 'ROI ' + fmtP(bi ? prEV / bi * 100 : NaN, 1)) +
     S2('Taux horaire') +
-    T('Net', 2, eh(ph(pr)), cls(pr), 'sur ' + hm + ' de jeu') +
+    T('Net', 2, eh(ph(pr)), cls(pr), hm + ' · ' + fmtN(hrs ? n / hrs : NaN, 0) + ' spins/h') +
     T('Expected', 3, eh(ph(prEV)), cls(prEV), 'ajusté setups <b class="' + cls(prA) + '">' + fmtE(ph(prA), 2) + '</b>') +
     S2('cEV par spin') +
     T('cEV', 4, fmtS(per(ev), 1), cls(ev), '± ' + fmtN(ci95(C.map(t => t.ev)), 1) + ' (95 %)') +
@@ -751,9 +805,7 @@ function dashSide() {
     S2('Chance par spin') +
     T('All-in', 10, fmtS(per(net - ev), 1), cls(net - ev), 'chips réels − cEV') +
     T('Setups', 11, fmtS(per(ev - evA), 1), cls(ev - evA), su ? fmtN(su) + ' setup' + (su > 1 ? 's' : '') + ' · <button class="lnk" data-act="goSetups">voir</button>' : 'aucun setup') +
-    S2('Volume') +
-    T('Spins', null, fmtN(n), '', fmtN(hands) + ' mains') +
-    T('Temps de jeu', null, hm, '', fmtN(hrs ? n / hrs : NaN, 1) + ' spins/h');
+    '';
 }
 function rbCtl() { const rb = F.C.reduce((x, t) => x + t.rb, 0); return '<label class="rb-ctl" for="rbIn">Rakeback (%)<input type="number" id="rbIn" min="0" max="100" step="1" value="' + S.prefs.rakeback + '"><span title="Pourcentage du rake payé (rake effectif ' + fmtN(S.prefs.rakeEff, 1) + ' % du buy-in)">' + (rb ? '+' + fmtE(rb, 2) : 'du rake payé') + '</span></label>'; }
 // normal tail probability, and the luck badge shown on the charts
@@ -903,8 +955,9 @@ function viewReview() {
   h += '<select id="rvPos" aria-label="Position"><option value="all">Toutes positions</option>' + POSKEYS.map(k => '<option ' + (u.pos === k ? 'selected' : '') + '>' + k + '</option>').join('') + '</select>' +
     '<select id="rvProf" aria-label="Adversaire"><option value="all">Tous adversaires</option><option value="reg"' + (u.prof === 'reg' ? ' selected' : '') + '>vs Reg</option><option value="fish"' + (u.prof === 'fish' ? ' selected' : '') + '>vs Fish</option></select>' +
     '<select id="rvKind" aria-label="Type de main">' + [['all', 'Toutes les mains'], ['allin', 'All-in avec cartes montrées'], ['sd', 'Showdown'], ['vpip', 'Mains jouées (VPIP)'], ['big', 'Gros pots (≥ 10 bb)'], ['setup', 'Setups préflop'], ['fav', 'Favoris']].map(([k, l]) => '<option value="' + k + '"' + (u.kind === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
+    '<button class="btn' + ((u.hf || []).length ? ' on-acc' : '') + '" data-hfopen="1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 5h18l-7 8v6l-4-2v-4z"/></svg>Filtres de mains' + ((u.hf || []).length ? ' (' + u.hf.length + ')' : '') + '</button>' +
     '<button class="btn small primary" data-act="replayList">▶ Rejouer la liste</button>' +
-    (u.gid ? '<button class="chip on" data-act="clearGid">Spin du ' + fmtDate((S.tours.find(t => t.gid === u.gid) || {}).start || 0, true) + ' ✕</button>' : '') + '<div class="grow"></div>' + filterBar() + '</div>';
+    (u.gid ? '<button class="chip on" data-act="clearGid">Spin du ' + fmtDate((S.tours.find(t => t.gid === u.gid) || {}).start || 0, true) + ' ✕</button>' : '') + '<div class="grow"></div>' + filterBar() + '</div>' + hfBarHtml();
   let list = (u.gid ? (S.tours.find(t => t.gid === u.gid) || { hands: [] }).hands : F.H).filter(x => x.hero);
   if (u.pos !== 'all') list = list.filter(x => x.posKey === u.pos);
   if (u.prof !== 'all') list = list.filter(x => { const t = x.mainOpp ? [tagOf(x.mainOpp)] : x.opps.map(tagOf); return t.every(y => y === u.prof); });
@@ -913,6 +966,7 @@ function viewReview() {
   else if (u.kind === 'vpip') list = list.filter(x => x.pf[x.hero] && x.pf[x.hero].vpip);
   else if (u.kind === 'big') list = list.filter(x => x.pot >= 10 * x.bb);
   else if (u.kind === 'setup') list = list.filter(x => x.SU && x.SU.adj[x.hero] != null);
+  if (u.hf && u.hf.length) list = list.filter(x => hfMatch(x, u.hf));
   else if (u.kind === 'fav') list = list.filter(x => S.prefs.favs[x.id]);
   const sk = u.sort === 'ev' ? (x) => EVc(x, x.hero) : u.sort === 'net' ? (x) => NET(x, x.hero) : (x) => x.ts;
   if (u.sort === 'luck') u.sort = 'date';
@@ -1063,6 +1117,7 @@ function viewSettings() {
 
 /*HUD*/
 /*EXTRA*/
+/*HFILTERS*/
 // ---------- render & events ----------
 const VIEWS = { tableau: viewDashboard, joueurs: viewPlayers, review: viewReview, leaks: viewLeaks, imports: viewImports, reglages: viewSettings };
 function currentView() { const v = (location.hash || '').slice(1); return VIEWS[v] ? v : 'tableau'; }
