@@ -235,6 +235,24 @@ label.f { display: flex; flex-direction: column; gap: 4px; font-size: 12px; colo
 /* "?" buttons and help windows */
 .qm { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel2); color: var(--muted); font: 700 12px/1 var(--body); display: inline-flex; align-items: center; justify-content: center; padding: 0; cursor: pointer; flex: none; }
 .qm:hover { color: var(--accent); border-color: var(--accent); }
+/* dashboard: summary column + chart */
+.dash-grid { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 12px; align-items: stretch; }
+.dside { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr auto 1fr auto 1fr 1fr 1fr auto 1fr auto 1fr; gap: 7px; }
+.dsec { grid-column: 1 / -1; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: #737373; margin: 7px 2px -1px; }
+.dsec:first-child { margin-top: 0; }
+.dt { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 9px; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+.dt .l { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+.dt .l .qm.sm { margin-left: auto; }
+.dt .v { font: 700 21px/1.3 var(--display); letter-spacing: -.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dt .v small { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 1px; }
+.dt .s { font-size: 11.5px; color: #8a8a8a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dt .s b { font-weight: 600; }
+.dfoot { grid-column: 1 / -1; font-size: 12px; color: #8a8a8a; text-align: center; padding: 6px 0 0; }
+.lnk { border: 0; background: none; padding: 0; color: var(--accent); font-size: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.dchart { display: flex; flex-direction: column; }
+.dchart .chart-wrap { flex: 1 1 auto; height: auto; min-height: max(440px, calc(100vh - 215px)); }
+@media (max-width: 1150px) { .dash-grid { grid-template-columns: 1fr; } .dside { grid-template-columns: repeat(4, 1fr); grid-template-rows: none; order: 2; } .dsec { display: none; } .dchart .chart-wrap { min-height: 420px; } }
+@media (max-width: 700px) { .dside { grid-template-columns: 1fr 1fr; } }
 .has-qm { position: relative; }
 .has-qm > .qm { position: absolute; top: 10px; right: 10px; z-index: 3; }
 .grid6.has-qm > .qm { top: -9px; right: -9px; }
@@ -359,7 +377,7 @@ const AGG = { raise: 1, shove: 1 };
 const S = {
   hands: [], byId: new Map(), players: new Map(), tours: [], hero: null,
   prefs: null, filters: defaultFilters(),
-  ui: { dash: 'chips', posMode: 'hand', mtMode: 'eh', review: 'hands', rv: { pos: 'all', prof: 'all', kind: 'all', page: 0, sort: 'date', dir: -1, gid: null }, pl: { q: '', tag: 'all', sort: 'hands', dir: -1, page: 0 }, lf: { prof: 'hero', pos: 'all', ref: 'reg', sub: 'hud3', who: '', hudSrc: 'reg' }, series: { chips: { c: 1, sd: 0, nsd: 0, ev: 1 }, br: { p: 1, ev: 1, evm: 1, evp: 0, nm: 0, mk: 1 }, mu: { t: 1, m: 1, g: 1 } } },
+  ui: { dash: 'chips', posMode: 'hand', mtMode: 'eh', review: 'hands', rv: { pos: 'all', prof: 'all', kind: 'all', page: 0, sort: 'date', dir: -1, gid: null }, pl: { q: '', tag: 'all', sort: 'hands', dir: -1, page: 0 }, lf: { prof: 'hero', pos: 'all', ref: 'reg', sub: 'hud3', who: '', hudSrc: 'reg' }, series: { chips: { c: 1, sd: 0, nsd: 0, ev: 1, adj: 1 }, br: { p: 1, ev: 1, evm: 1, evp: 0, nm: 0, mk: 1 }, mu: { t: 1, m: 1, g: 1 } } },
   storage: 'memory', seedLoaded: false, imports: [], skipIds: new Set(), skipped: { other: 0, bad: [] }, rvList: []
 };
 // Official Betclic Spin & Rush multiplier grids (chances per 1 000 000), payouts 1st/2nd/3rd
@@ -435,9 +453,37 @@ function prep(h) {
   }
   if (!h.E) h.E = { adj: false, ev: Object.assign({}, h.net), vr: {}, st: -1 };
   const tot = h.players.reduce((x, p) => x + p.stack, 0); h.cf = tot > 0 ? 1500 / tot : 1;
+  h.SU = setupOf(h);
+  // postflop for hero = hero still had a decision to make after the flop
+  h.post = !!h.hero && h.acts.some(a => a.p === h.hero && a.st >= 1);
   return h;
 }
 const NET = (h, n) => (h.net[n] || 0) * h.cf, EVc = (h, n) => (h.E.ev[n] || 0) * h.cf, VRc = (h, n) => (h.E.vr[n] || 0) * h.cf * h.cf;
+// ---------- preflop setups (coolers) ----------
+// A setup = preflop all-in, cards shown, where every player in the pot holds a hand nobody folds at that depth.
+// Who got the best of it is pure card distribution: on average you are the favourite half the time,
+// so the adjusted cEV splits those pots evenly between the players still in.
+const RK = '23456789TJQKA';
+function handKey(c) { const a = RK.indexOf(c[0][0]), b = RK.indexOf(c[1][0]); if (a === b) return RK[a] + RK[a]; return RK[Math.max(a, b)] + RK[Math.min(a, b)] + (c[0][1] === c[1][1] ? 's' : 'o'); }
+function setupHand(k, eff) {
+  const r1 = RK.indexOf(k[0]), r2 = RK.indexOf(k[1]);
+  if (k.length === 2) return r1 >= (eff >= 20 ? 8 : eff >= 12 ? 6 : 4); // TT+ / 88+ / 66+
+  const s = k[2] === 's';
+  if (k[0] === 'A') return eff >= 20 ? r2 === 11 : eff >= 12 ? (r2 >= 10 || (s && r2 === 9)) : (r2 >= 9 || (s && r2 === 8)); // AK / AQ+ AJs / AJ+ ATs
+  return eff < 12 && k === 'KQs';
+}
+function setupOf(h) {
+  if (!h.E || !h.E.adj || h.E.st !== 0 || !h.bb) return null;
+  const live = h.players.map(p => p.name).filter(n => !h.folded[n]);
+  if (live.length < 2 || live.some(n => !h.hole[n] || h.hole[n].length !== 2)) return null;
+  const st = live.map(n => h.players.find(p => p.name === n).stack).sort((a, b) => b - a), eff = st[1] / h.bb;
+  const keys = live.map(n => handKey(h.hole[n]));
+  if (!keys.every(k => setupHand(k, eff))) return null;
+  const pots = E.buildPots(h), adj = {};
+  for (const n of live) { let t = 0; for (const p of pots) if (p.elig.includes(n)) t += p.amt / p.elig.length; adj[n] = t - h.contrib[n]; }
+  return { eff, keys, adj };
+}
+const EVa = (h, n) => h.SU && h.SU.adj[n] != null ? h.SU.adj[n] * h.cf : EVc(h, n);
 function isSpin(h) { const m = (h.mode || '') + ' ' + (h.gname || ''); return !m.trim() || /spin/i.test(m); }
 function integrity(h) {
   let sc = 0, sw = 0;
@@ -505,8 +551,14 @@ function buildTours() {
     t.totalChips = 1500;
     t.full = f.players.length === 3 && f.sb === Math.min(...hs.map(h => h.sb));
     t.opps = f.players.filter(p => p.name !== hero).map(p => p.name);
-    let net = 0, ev = 0, vr = 0, huNet = 0, huEv = 0, huN = 0;
-    for (const h of hs) { net += NET(h, hero); ev += EVc(h, hero); vr += VRc(h, hero); if (h.n === 2) { huNet += NET(h, hero); huEv += EVc(h, hero); huN++; } }
+    let net = 0, ev = 0, vr = 0, huNet = 0, huEv = 0, huN = 0, evA = 0, evPre = 0, nPre = 0, su = 0;
+    for (const h of hs) {
+      const x = EVc(h, hero); net += NET(h, hero); ev += x; vr += VRc(h, hero); evA += EVa(h, hero);
+      if (!h.post) { evPre += x; nPre++; }
+      if (h.SU && h.SU.adj[hero] != null) su++;
+      if (h.n === 2) { huNet += NET(h, hero); huEv += x; huN++; }
+    }
+    t.evA = evA; t.evPre = evPre; t.evPost = ev - evPre; t.nPre = nPre; t.su = su;
     t.gap = 0; for (let k = 1; k < hs.length; k++) { const a = hs[k - 1].players.find(p => p.name === hero), b = hs[k].players.find(p => p.name === hero); if (a && b && a.stack + (hs[k - 1].net[hero] || 0) !== b.stack) t.gap++; }
     t.net = net; t.ev = ev; t.vr = vr;
     const hu = hs.find(h => h.n === 2); t.huOpp = hu ? hu.opps[0] : null; t.huEv = huN ? huEv : null; t.huStart = hu ? (hu.players.find(p => p.name === hero) || {}).stack : null;
@@ -517,6 +569,8 @@ function buildTours() {
     const share = Math.max(0, Math.min(1, (t.startStack + t.ev) / (t.totalChips || 1500))); t.share = share;
     t.evProfit = 3 * t.bi * (1 - r) * share - t.bi + t.rb;
     t.evmProfit = t.bi * t.mult * share - t.bi + t.rb;
+    // setup luck converted at this spin's chip value (no clamping, so it always moves the same way as the cEV)
+    t.evProfitA = t.evProfit + 3 * t.bi * (1 - r) * (t.evA - t.ev) / (t.totalChips || 1500);
     t.nmProfit = (t.place === 1 ? 3 * t.bi * (1 - r) : 0) - t.bi + t.rb;
     tours.push(t);
   }
@@ -662,13 +716,44 @@ function kpis() {
 // ---------- views ----------
 function viewDashboard() {
   const u = S.ui;
-  let h = kpis() + '<div class="bar"><div class="seg">' + [['chips', 'Chips gagnés'], ['br', 'Bankroll'], ['multi', 'Multiplicateurs'], ['stats', 'Stats']].map(([k, l]) => '<button class="' + (u.dash === k ? 'on' : '') + '" data-dash="' + k + '">' + l + '</button>').join('') + '</div><div class="grow"></div>' + filterBar() + '</div>';
+  let h = '<div class="bar"><div class="seg">' + [['chips', 'Chips gagnés'], ['br', 'Bankroll'], ['multi', 'Multiplicateurs'], ['stats', 'Stats']].map(([k, l]) => '<button class="' + (u.dash === k ? 'on' : '') + '" data-dash="' + k + '">' + l + '</button>').join('') + '</div><div class="grow"></div>' + filterBar() + '</div>';
   if (!F.H.length) return h + emptyState();
-  if (u.dash === 'chips') h += '<div class="panel has-qm">' + qm('chips') + '<div class="chart-wrap" id="chart"></div><div class="legend-row">' + rbCtl() + '<div class="legend" id="legend"></div><div></div></div></div>';
-  else if (u.dash === 'br') h += '<div class="panel has-qm">' + qm('br') + '<div class="chart-wrap" id="chart"></div><div class="legend-row">' + rbCtl() + '<div class="legend" id="legend"></div><div></div></div></div>';
-  else if (u.dash === 'multi') h += viewMulti() + '<div class="bar">' + rbCtl() + '</div>';
-  else h += viewStats() + '<div class="bar">' + rbCtl() + '</div>';
+  if (u.dash === 'chips' || u.dash === 'br') h += '<div class="dash-grid"><aside class="dside" aria-label="Résumé">' + dashSide() + '</aside><div class="panel has-qm dchart">' + qm(u.dash) + '<div class="chart-wrap" id="chart"></div><div class="legend-row">' + rbCtl() + '<div class="legend" id="legend"></div><div></div></div></div></div>';
+  else if (u.dash === 'multi') h += kpis() + viewMulti() + '<div class="bar">' + rbCtl() + '</div>';
+  else h += kpis() + viewStats() + '<div class="bar">' + rbCtl() + '</div>';
   return h;
+}
+// left column of the dashboard: results, hourly rates and where the cEV comes from
+function dashSide() {
+  const C = F.C, n = C.length, hrs = hoursPlayed(C);
+  const sum = (f) => C.reduce((x, t) => x + f(t), 0), per = (v) => n ? v / n : NaN, ph = (v) => hrs > 0 ? v / hrs : NaN;
+  const pr = sum(t => t.profit), prEV = sum(t => t.evProfit), prA = sum(t => t.evProfitA), bi = sum(t => t.bi);
+  const net = sum(t => t.net), ev = sum(t => t.ev), evA = sum(t => t.evA), pre = sum(t => t.evPre), post = sum(t => t.evPost), su = sum(t => t.su);
+  const hands = sum(t => t.hands.length), nPre = sum(t => t.nPre);
+  const hu = C.filter(t => t.huEv != null), huEv = hu.reduce((x, t) => x + t.huEv, 0);
+  const T = (lab, help, v, c, sub, x) => '<div class="dt' + (x || '') + '"><div class="l">' + lab + (help != null ? '<button class="qm sm" data-help="dash:' + help + '" aria-label="À quoi correspond ' + lab + ' ?">?</button>' : '') + '</div><div class="v ' + (c || '') + '">' + v + '</div>' + (sub ? '<div class="s">' + sub + '</div>' : '') + '</div>';
+  const S2 = (t) => '<div class="dsec">' + t + '</div>';
+  const eh = (v) => fmtE(v, 2) + '<small>/h</small>';
+  const hm = Math.floor(hrs) + ' h ' + String(Math.round((hrs % 1) * 60)).padStart(2, '0');
+  return S2('Résultats') +
+    T('Profit net', 0, fmtE(pr, 2), cls(pr), 'ROI ' + fmtP(bi ? pr / bi * 100 : NaN, 1)) +
+    T('EV Profit', 1, fmtE(prEV, 2), cls(prEV), 'ROI ' + fmtP(bi ? prEV / bi * 100 : NaN, 1)) +
+    S2('Taux horaire') +
+    T('Net', 2, eh(ph(pr)), cls(pr), 'sur ' + hm + ' de jeu') +
+    T('Expected', 3, eh(ph(prEV)), cls(prEV), 'ajusté setups <b class="' + cls(prA) + '">' + fmtE(ph(prA), 2) + '</b>') +
+    S2('cEV par spin') +
+    T('cEV', 4, fmtS(per(ev), 1), cls(ev), '± ' + fmtN(ci95(C.map(t => t.ev)), 1) + ' (95 %)') +
+    T('cEV ajusté', 5, fmtS(per(evA), 1), cls(evA), '± ' + fmtN(ci95(C.map(t => t.evA)), 1) + ' (95 %)') +
+    T('Préflop', 6, fmtS(per(pre), 1), cls(pre), fmtP(hands ? nPre / hands * 100 : NaN) + ' des mains') +
+    T('Postflop', 7, fmtS(per(post), 1), cls(post), fmtP(hands ? (hands - nPre) / hands * 100 : NaN) + ' des mains') +
+    T('3-way', 8, fmtS(per(ev - huEv), 1), cls(ev - huEv), 'à trois joueurs') +
+    T('Heads-up', 9, fmtS(per(huEv), 1), cls(huEv), fmtS(hu.length ? huEv / hu.length : NaN, 1) + ' par HU joué') +
+    S2('Chance par spin') +
+    T('All-in', 10, fmtS(per(net - ev), 1), cls(net - ev), 'chips réels − cEV') +
+    T('Setups', 11, fmtS(per(ev - evA), 1), cls(ev - evA), su ? fmtN(su) + ' setup' + (su > 1 ? 's' : '') + ' · <button class="lnk" data-act="goSetups">voir</button>' : 'aucun setup') +
+    S2('Volume') +
+    T('Spins', null, fmtN(n), '', fmtN(hands) + ' mains') +
+    T('Temps de jeu', null, hm, '', fmtN(hrs ? n / hrs : NaN, 1) + ' spins/h');
 }
 function rbCtl() { const rb = F.C.reduce((x, t) => x + t.rb, 0); return '<label class="rb-ctl" for="rbIn">Rakeback (%)<input type="number" id="rbIn" min="0" max="100" step="1" value="' + S.prefs.rakeback + '"><span title="Pourcentage du rake payé (rake effectif ' + fmtN(S.prefs.rakeEff, 1) + ' % du buy-in)">' + (rb ? '+' + fmtE(rb, 2) : 'du rake payé') + '</span></label>'; }
 // normal tail probability, and the luck badge shown on the charts
@@ -684,14 +769,14 @@ function emptyState() { return '<div class="panel empty">Aucune main pour ces fi
 function afterDashboard() {
   const u = S.ui; if (!F.H.length) return;
   if (u.dash === 'chips') {
-    const hero = S.hero; const c = [], sd = [], nsd = [], ev = []; let a = 0, b = 0, d = 0, e = 0, dv = 0, vr = 0;
+    const c = [], sd = [], nsd = [], ev = [], ea = []; let a = 0, b = 0, d = 0, e = 0, f = 0, dv = 0, vr = 0;
     const hs = F.H.filter(h => h.hero);
-    for (const h of hs) { const n = NET(h, h.hero); a += n; if (h.sd && !h.folded[h.hero]) b += n; else d += n; e += EVc(h, h.hero); vr += VRc(h, h.hero); c.push(a); sd.push(b); nsd.push(d); ev.push(e); }
+    for (const h of hs) { const n = NET(h, h.hero); a += n; if (h.sd && !h.folded[h.hero]) b += n; else d += n; e += EVc(h, h.hero); f += EVa(h, h.hero); vr += VRc(h, h.hero); c.push(a); sd.push(b); nsd.push(d); ev.push(e); ea.push(f); }
     dv = a - e; const z = vr > 0 ? dv / Math.sqrt(vr) : 0;
     const LB = luckBadge(dv, vr, 'chips');
     const ser = S.ui.series.chips;
-    const series = [{ k: 'c', name: 'Chips', color: '#22c55e', data: c, help: 'chips:0' }, { k: 'ev', name: 'EV (chips)', color: '#fb923c', data: ev, help: 'chips:3' }, { k: 'sd', name: 'Chips (SD)', color: '#3b82f6', data: sd, help: 'chips:1', more: 1 }, { k: 'nsd', name: 'Chips (NSD)', color: '#ef4444', data: nsd, help: 'chips:2', more: 1 }].map(s => Object.assign(s, { on: !!ser[s.k] }));
-    lineChart($('#chart'), { series, xLabel: 'Mains jouées', yFmt: (v) => fmtN(v), tipHead: (i) => 'Main ' + fmtN(i + 1) + ' · ' + fmtDate(hs[i].ts, true) + ' · net ' + fmtS(NET(hs[i], hs[i].hero)) + ' · EV ' + fmtS(EVc(hs[i], hs[i].hero)), onPick: (i) => openReplayer(hs, i, 'Graphique des chips'), badge: LB.html, badgeCls: LB.cls });
+    const series = [{ k: 'c', name: 'Chips', color: '#22c55e', data: c, help: 'chips:0' }, { k: 'ev', name: 'cEV', color: '#fb923c', data: ev, help: 'chips:3' }, { k: 'adj', name: 'cEV ajusté', color: '#f472b6', data: ea, help: 'chips:4' }, { k: 'sd', name: 'Chips (SD)', color: '#3b82f6', data: sd, help: 'chips:1', more: 1 }, { k: 'nsd', name: 'Chips (NSD)', color: '#ef4444', data: nsd, help: 'chips:2', more: 1 }].map(s => Object.assign(s, { on: !!ser[s.k] }));
+    lineChart($('#chart'), { series, xLabel: 'Mains jouées', yFmt: (v) => fmtN(v), tipHead: (i) => 'Main ' + fmtN(i + 1) + ' · ' + fmtDate(hs[i].ts, true) + ' · net ' + fmtS(NET(hs[i], hs[i].hero)) + ' · EV ' + fmtS(EVc(hs[i], hs[i].hero)) + (hs[i].SU ? ' · setup ' + hs[i].SU.keys.join(' vs ') : ''), onPick: (i) => openReplayer(hs, i, 'Graphique des chips'), badge: LB.html, badgeCls: LB.cls });
     legend(series, 'chips');
   } else if (u.dash === 'br') {
     const C = F.C;
@@ -817,7 +902,7 @@ function viewReview() {
   if (S.ui.review === 'spins') return h + '<div class="grow"></div>' + filterBar() + '</div>' + viewSpins();
   h += '<select id="rvPos" aria-label="Position"><option value="all">Toutes positions</option>' + POSKEYS.map(k => '<option ' + (u.pos === k ? 'selected' : '') + '>' + k + '</option>').join('') + '</select>' +
     '<select id="rvProf" aria-label="Adversaire"><option value="all">Tous adversaires</option><option value="reg"' + (u.prof === 'reg' ? ' selected' : '') + '>vs Reg</option><option value="fish"' + (u.prof === 'fish' ? ' selected' : '') + '>vs Fish</option></select>' +
-    '<select id="rvKind" aria-label="Type de main">' + [['all', 'Toutes les mains'], ['allin', 'All-in avec cartes montrées'], ['sd', 'Showdown'], ['vpip', 'Mains jouées (VPIP)'], ['big', 'Gros pots (≥ 10 bb)'], ['fav', 'Favoris']].map(([k, l]) => '<option value="' + k + '"' + (u.kind === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
+    '<select id="rvKind" aria-label="Type de main">' + [['all', 'Toutes les mains'], ['allin', 'All-in avec cartes montrées'], ['sd', 'Showdown'], ['vpip', 'Mains jouées (VPIP)'], ['big', 'Gros pots (≥ 10 bb)'], ['setup', 'Setups préflop'], ['fav', 'Favoris']].map(([k, l]) => '<option value="' + k + '"' + (u.kind === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select>' +
     '<button class="btn small primary" data-act="replayList">▶ Rejouer la liste</button>' +
     (u.gid ? '<button class="chip on" data-act="clearGid">Spin du ' + fmtDate((S.tours.find(t => t.gid === u.gid) || {}).start || 0, true) + ' ✕</button>' : '') + '<div class="grow"></div>' + filterBar() + '</div>';
   let list = (u.gid ? (S.tours.find(t => t.gid === u.gid) || { hands: [] }).hands : F.H).filter(x => x.hero);
@@ -827,6 +912,7 @@ function viewReview() {
   else if (u.kind === 'sd') list = list.filter(x => x.sd && !x.folded[x.hero]);
   else if (u.kind === 'vpip') list = list.filter(x => x.pf[x.hero] && x.pf[x.hero].vpip);
   else if (u.kind === 'big') list = list.filter(x => x.pot >= 10 * x.bb);
+  else if (u.kind === 'setup') list = list.filter(x => x.SU && x.SU.adj[x.hero] != null);
   else if (u.kind === 'fav') list = list.filter(x => S.prefs.favs[x.id]);
   const sk = u.sort === 'ev' ? (x) => EVc(x, x.hero) : u.sort === 'net' ? (x) => NET(x, x.hero) : (x) => x.ts;
   if (u.sort === 'luck') u.sort = 'date';
@@ -1016,6 +1102,7 @@ document.addEventListener('click', (e) => {
   else if (d.mt) { u.mtMode = d.mt; render(); }
   else if (d.act === 'hideBanner') { S.seedBanner = false; LS.set('st_banner_off', '1'); render(); }
   else if (d.act === 'clearGid') { u.rv.gid = null; render(); }
+  else if (d.act === 'goSetups') { S.ui.review = 'hands'; Object.assign(u.rv, { kind: 'setup', pos: 'all', prof: 'all', gid: null, page: 0 }); location.hash = 'review'; }
   else if (d.act === 'copyHH') { try { navigator.clipboard.writeText($('#hhText').textContent).then(() => toast('Historique copié'), () => toast('Copie refusée par le navigateur')); } catch (er) { toast('Copie refusée par le navigateur'); } }
   else if (d.act === 'askClear') { $('#clearAsk').innerHTML = 'Sûr ? Toutes les mains seront supprimées. <button class="btn small danger" data-act="doClear">Oui, vider</button>'; }
   else if (d.act === 'doClear') { clearAll(); }
