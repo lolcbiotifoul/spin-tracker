@@ -1084,7 +1084,9 @@ function buildTours() {
     t.place = fin ? fin.place : null; t.complete = !!fin; t.eur = fin ? fin.eur : 0;
     t.rb = t.bi * r * rb;
     t.profit = t.eur - t.bi + t.rb;
-    const share = Math.max(0, Math.min(1, (t.startStack + t.ev) / (t.totalChips || 1500))); t.share = share;
+    // expected chip share, NOT clamped to [0, 1]: EV in euros is linear in the cEV, and clamping spin by spin
+    // inflates the EV of a lucky player (lost spins with < -500 chips of EV were counted as 0)
+    const share = (t.startStack + t.ev) / (t.totalChips || 1500); t.share = share;
     t.evProfit = 3 * t.bi * (1 - r) * share - t.bi + t.rb;
     t.evmProfit = t.bi * t.mult * share - t.bi + t.rb;
     // setup luck converted at this spin's chip value (no clamping, so it always moves the same way as the cEV)
